@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { GameProvider, useGame } from "./store/gameStore";
+import { ModelProvider } from "./store/modelStore";
 import ConnectForm from "./components/ConnectForm";
 import GameCanvas from "./components/GameCanvas";
 import socket from "./socket/socketClient";
@@ -24,14 +25,16 @@ function AppInner() {
     };
   }, [setConnected, setUsername, setGameStatus]);
 
-  if (!connected) return <ConnectForm />;
+  if (connected) return <ConnectForm />;
   return <GameCanvas />;
 }
 
 export default function App() {
   return (
-    <GameProvider>
-      <AppInner />
-    </GameProvider>
+    <ModelProvider>
+      <GameProvider>
+        <AppInner />
+      </GameProvider>
+    </ModelProvider>
   );
 }

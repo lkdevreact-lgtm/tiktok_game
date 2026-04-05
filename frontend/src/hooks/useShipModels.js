@@ -1,27 +1,17 @@
+/**
+ * useShipModels.js
+ * Dynamic ship model loader — đọc danh sách models từ modelStore.
+ * Hỗ trợ cả built-in GLB và custom GLB được upload.
+ */
 import { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { useModels } from "../store/modelStore";
+
+// Preload built-in models ngay khi module import
 useGLTF.preload("/models/spaceship_1.glb");
 useGLTF.preload("/models/spaceship_2.glb");
 useGLTF.preload("/models/spaceship_3.glb");
-
-export const SHIP_SCALES = {
-  spaceship_1: 0.25,
-  spaceship_2: 0.35,
-  spaceship_3: 0.05,
-};
-
-export const GUN_TIP_OFFSET = {
-  spaceship_1: 0.1,
-  spaceship_2: 0.4,
-  spaceship_3: 0.5,
-};
-
-export const SHIP_ROTATIONS = {
-  spaceship_1: { x: 0, y: 45, z: 0 },
-  spaceship_2: { x: 0, y: 35, z: 0 },
-  spaceship_3: { x: 0, y: 40, z: 0 },
-};
 
 export const SHIP_BULLET_COLORS = {
   spaceship_1: 0x00f5ff,
@@ -30,66 +20,108 @@ export const SHIP_BULLET_COLORS = {
 };
 
 /**
- * Custom hook — load 3 ship GLB models và trả về hàm cloneShipMesh(type)
- * Dùng trong GameScene để spawn tàu imperative (không qua JSX).
- *
- * @returns {{ cloneShipMesh: (type: string) => THREE.Group }}
+ * Inner hook — load 1 GLB và trả về THREE.Scene
+ * Tách ra để gọi theo URL động (hook rules: gọi ở top level)
+ */
+function useGlbScene(url) {
+  const { scene } = useGLTF(url);
+  return scene;
+}
+
+/**
+ * Custom hook — load tất cả ship models và trả về hàm cloneShipMesh(type)
  */
 export function useShipModels() {
-  const { scene: glb1 } = useGLTF("/models/spaceship_1.glb");
-  const { scene: glb2 } = useGLTF("/models/spaceship_2.glb");
-  const { scene: glb3 } = useGLTF("/models/spaceship_3.glb");
+  const { allShipModels: shipModels } = useModels();
 
-  // Lưu ref để cloneShipMesh luôn dùng bản mới nhất mà không cần re-render
+  // Load tối đa 8 model (React hooks không cho dynamic count)
+  // Slots 0–7: built-in (0-2) + custom (3-7)
+  const MAX_MODELS = 8;
+  const urlSlots = Array.from({ length: MAX_MODELS }, (_, i) =>
+    shipModels[i]?.path ?? "/models/spaceship_1.glb"
+  );
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const s0 = useGlbScene(urlSlots[0]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const s1 = useGlbScene(urlSlots[1]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const s2 = useGlbScene(urlSlots[2]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const s3 = useGlbScene(urlSlots[3]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const s4 = useGlbScene(urlSlots[4]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const s5 = useGlbScene(urlSlots[5]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const s6 = useGlbScene(urlSlots[6]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const s7 = useGlbScene(urlSlots[7]);
+
+  const scenesArray = [s0, s1, s2, s3, s4, s5, s6, s7];
+
+  // Map id → { scene, meta }
   const glbRef = useRef({});
   useEffect(() => {
-    glbRef.current = {
-      spaceship_1: glb1,
-      spaceship_2: glb2,
-      spaceship_3: glb3,
-    };
-  }, [glb1, glb2, glb3]);
+    const map = {};
+    shipModels.forEach((model, i) => {
+      if (i < MAX_MODELS && scenesArray[i]) {
+        map[model.id] = { scene: scenesArray[i], meta: model };
+      }
+    });
+    glbRef.current = map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shipModels, s0, s1, s2, s3, s4, s5, s6, s7]);
 
   /**
-   * Clone scene GLB của tàu và chuẩn bị sẵn cho game loop:
-   * - Scale đúng kích thước
-   * - Giữ nguyên material gốc
-   * - Thêm Object3D gun_tip ở mũi tàu
-   *
-   * @param {string} type - "spaceship_1" | "spaceship_2" | "spaceship_3"
+   * Clone scene GLB và chuẩn bị cho game loop
+   * @param {string} type - model id ("spaceship_1", "custom_...", etc)
    * @returns {THREE.Group}
    */
   function cloneShipMesh(type) {
-    const glbScene = glbRef.current[type];
+    const entry = glbRef.current[type];
 
-    if (!glbScene) {
+    if (!entry?.scene) {
+      // Fallback: cube placeholder
       const geo = new THREE.BoxGeometry(0.3, 0.1, 0.1);
       const mat = new THREE.MeshStandardMaterial({ color: 0x00f5ff });
       return new THREE.Mesh(geo, mat);
     }
 
+    const { scene: glbScene, meta } = entry;
     const mesh = glbScene.clone(true);
-    mesh.scale.setScalar(SHIP_SCALES[type] ?? 0.25);
+    mesh.scale.setScalar(meta.scale ?? 0.25);
 
-    // Áp dụng rotation theo từng loại tàu (mỗi GLB có hướng xuất khác nhau)
-    const rot = SHIP_ROTATIONS[type] ?? { x: 0, y: Math.PI, z: 0 };
-    mesh.rotation.set(rot.x, rot.y, rot.z);
+    // Rotation
+    const ry = ((meta.rotationY ?? 0) * Math.PI) / 180;
+    mesh.rotation.set(0, ry, 0);
 
-    // Giữ nguyên material gốc của GLB
+    // Material update
     mesh.traverse((child) => {
       if (child.isMesh && child.material) {
         child.material.needsUpdate = true;
       }
     });
 
-    // Thêm gun_tip ảo để bullet spawn đúng vị trí mũi tàu
+    // Gun tip
     const gunTip = new THREE.Object3D();
     gunTip.name = "gun_tip";
-    gunTip.position.set(GUN_TIP_OFFSET[type] ?? 0.4, 0, 0);
+    gunTip.position.set(meta.gunTipOffset ?? 0.4, 0, 0);
     mesh.add(gunTip);
 
     return mesh;
   }
 
-  return { cloneShipMesh };
+  /**
+   * Lấy bullet color hex number theo model id
+   */
+  function getBulletColor(type) {
+    const entry = glbRef.current[type];
+    if (entry?.meta?.bulletColor) {
+      return parseInt(entry.meta.bulletColor.replace("#", ""), 16);
+    }
+    return SHIP_BULLET_COLORS[type] ?? 0x00f5ff;
+  }
+
+  return { cloneShipMesh, getBulletColor };
 }

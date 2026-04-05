@@ -1,14 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useGame } from "../store/gameStore";
+import { useModels } from "../store/modelStore";
 import socket from "../socket/socketClient";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
-const SPACESHIP_OPTIONS = [
-  { value: "spaceship_1", label: "🔵 Fighter" },
-  { value: "spaceship_2", label: "🟣 Cruiser" },
-  { value: "spaceship_3", label: "🟡 Destroyer" },
-];
+
 
 const DAMAGE_OPTIONS = [1, 2, 3, 4, 5];
 const FIRE_RATE_OPTIONS = [
@@ -21,6 +18,7 @@ const FIRE_RATE_OPTIONS = [
 
 export default function SidebarSetting({ isOpen, onClose }) {
   const { giftMapping, updateGiftMapping } = useGame();
+  const { shipModels } = useModels();
   const [gifts, setGifts] = useState([]);
   const panelRef = useRef(null);
 
@@ -274,7 +272,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
                         label: "Ship",
                         field: "spaceship",
                         value: config.spaceship || "spaceship_1",
-                        options: SPACESHIP_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+                        options: shipModels.map((m) => ({ value: m.id, label: `${m.emoji || "🚀"} ${m.label}` })),
                       },
                       {
                         label: "Dmg",

@@ -3,9 +3,10 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Stars, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useGame } from "../store/gameStore";
+import { useModels } from "../store/modelStore";
 import { createBullet, createExplosion } from "./models";
 import BossModel from "./BossModel";
-import { useShipModels, SHIP_BULLET_COLORS } from "../hooks/useShipModels";
+import { useShipModels } from "../hooks/useShipModels";
 
 const MAX_SHIPS = 50;
 const BOSS_START_X = -11;
@@ -31,7 +32,8 @@ function playAttackSound() {
 export default function GameScene({ onGiftSpawn }) {
   const { scene } = useThree();
   const { setBossHp, setGameStatus, setShipCount, gameStatus } = useGame();
-  const { cloneShipMesh } = useShipModels();
+  const { activeBossModel } = useModels();
+  const { cloneShipMesh, getBulletColor } = useShipModels();
 
   // ── Refs game state (sync, không trigger re-render) ──────────
   const bossRef = useRef(null);
@@ -159,7 +161,7 @@ export default function GameScene({ onGiftSpawn }) {
         .normalize()
         .multiplyScalar(BULLET_SPEED);
 
-      const color = SHIP_BULLET_COLORS[ship.type] ?? 0x00f5ff;
+      const color = getBulletColor(ship.type);
       const bulletMesh = createBullet(color);
       bulletMesh.position.copy(startPos);
       bulletMesh.lookAt(bossPos);
@@ -263,7 +265,7 @@ export default function GameScene({ onGiftSpawn }) {
 
         const exps = createExplosion(
           bullet.mesh.position.clone(),
-          SHIP_BULLET_COLORS[bullet.ownerType] ?? 0xff6600,
+          getBulletColor(bullet.ownerType),
         );
         exps.forEach(({ mesh }) => scene.add(mesh));
         explosionsRef.current.push(...exps);
@@ -332,7 +334,11 @@ export default function GameScene({ onGiftSpawn }) {
   return (
     <>
       <Stars radius={80} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-      <BossModel bossRef={bossRef} scale={4.5} />
+      <BossModel
+        bossRef={bossRef}
+        url={activeBossModel?.path ?? "/models/spaceship_boss.glb"}
+        scale={activeBossModel?.scale ?? 4.5}
+      />
 
       {/* Avatar + tên user nổi trên mỗi tàu */}
       {shipLabels.map(({ id, mesh, nickname, avatarUrl }) =>

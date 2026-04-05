@@ -2,17 +2,21 @@ import { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
-// Preload boss model ngay khi module được import
+// Preload boss model mặc định
 useGLTF.preload("/models/spaceship_boss.glb");
 
 /**
- * BossModel — load spaceship_boss.glb và expose group ref ra ngoài
- * @param {Object} props
- * @param {React.MutableRefObject} props.bossRef  - ref sẽ được set = group Three.js của boss
- * @param {number} [props.scale=3.5]              - scale model
+ * BossModel — load boss GLB động theo url prop
+ * @param {React.MutableRefObject} bossRef - ref sẽ được set = group Three.js của boss
+ * @param {number}  [scale=4.5]            - scale model
+ * @param {string}  [url]                  - đường dẫn GLB, mặc định boss built-in
  */
-export default function BossModel({ bossRef: externalRef, scale = 3.5 }) {
-  const { scene: gltfScene } = useGLTF("/models/spaceship_boss.glb");
+export default function BossModel({
+  bossRef: externalRef,
+  scale = 4.5,
+  url = "/models/spaceship_boss.glb",
+}) {
+  const { scene: gltfScene } = useGLTF(url);
   const groupRef = useRef();
 
   useEffect(() => {
@@ -22,7 +26,6 @@ export default function BossModel({ bossRef: externalRef, scale = 3.5 }) {
     cloned.name = "boss_model";
     cloned.scale.setScalar(scale);
 
-    // Giữ nguyên material gốc của GLB
     cloned.traverse((child) => {
       if (child.isMesh && child.material) {
         child.material.needsUpdate = true;
@@ -31,7 +34,6 @@ export default function BossModel({ bossRef: externalRef, scale = 3.5 }) {
 
     groupRef.current.add(cloned);
 
-    // Expose Three.js group ra ngoài để game loop dùng
     if (externalRef) externalRef.current = groupRef.current;
 
     return () => {

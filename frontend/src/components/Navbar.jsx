@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useGame } from "../store/gameStore";
 import SidebarSetting from "./SidebarSetting";
+import ModelManagerPanel from "./ModelManagerPanel";
 
 export default function Navbar() {
   const { bossHp, shipCount, username, gameStatus } = useGame();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [modelsOpen, setModelsOpen] = useState(false);
 
   const hpPercent = Math.max(0, Math.min(100, bossHp));
   const hpColor =
@@ -146,6 +148,40 @@ export default function Navbar() {
         {/* Separator */}
         <div style={{ width: 1, height: 22, background: "rgba(0,245,255,0.15)" }} />
 
+        {/* Models button */}
+        <button
+          id="btn-open-models"
+          onClick={() => setModelsOpen(true)}
+          title="Model Manager"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "rgba(167,139,250,0.1)",
+            border: "1px solid rgba(167,139,250,0.35)",
+            borderRadius: 8,
+            color: "#a78bfa",
+            cursor: "pointer",
+            padding: "6px 14px",
+            fontSize: "0.68rem",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            fontFamily: "var(--font-game)",
+            transition: "background 0.15s, box-shadow 0.15s",
+            whiteSpace: "nowrap",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(167,139,250,0.2)";
+            e.currentTarget.style.boxShadow = "0 0 14px rgba(167,139,250,0.25)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(167,139,250,0.1)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          🚀 Models
+        </button>
+
         {/* Settings button */}
         <button
           id="btn-open-settings"
@@ -182,6 +218,7 @@ export default function Navbar() {
       </nav>
 
       <SidebarSetting isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ModelManagerPanel isOpen={modelsOpen} onClose={() => setModelsOpen(false)} />
     </>
   );
 }
