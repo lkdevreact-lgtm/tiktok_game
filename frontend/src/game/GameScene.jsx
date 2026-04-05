@@ -3,15 +3,13 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Stars, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useGame } from "../store/gameStore";
-import {
-  createSpaceship1,
-  createSpaceship2,
-  createSpaceship3,
-  createBullet,
-  createExplosion,
-} from "./models";
+import { createBullet, createExplosion } from "./models";
 
+// Preload tất cả models
 useGLTF.preload("/models/spaceship_boss.glb");
+useGLTF.preload("/models/spaceship_1.glb");
+useGLTF.preload("/models/spaceship_2.glb");
+useGLTF.preload("/models/spaceship_3.glb");
 
 function BossModel({ bossRef: externalRef }) {
   const { scene: gltfScene } = useGLTF("/models/spaceship_boss.glb");
@@ -41,10 +39,18 @@ function BossModel({ bossRef: externalRef }) {
   return <group ref={groupRef} />;
 }
 
-const SHIP_FACTORIES = {
-  spaceship_1: createSpaceship1,
-  spaceship_2: createSpaceship2,
-  spaceship_3: createSpaceship3,
+// Scale cho từng loại tàu GLB
+const SHIP_SCALES = {
+  spaceship_1: 0.25,
+  spaceship_2: 0.25,
+  spaceship_3: 0.25,
+};
+
+// Gun tip offset (phía trước tàu theo trục X)
+const GUN_TIP_OFFSET = {
+  spaceship_1: 0.4,
+  spaceship_2: 0.4,
+  spaceship_3: 0.5,
 };
 
 const SHIP_BULLET_COLORS = {
@@ -56,12 +62,27 @@ const SHIP_BULLET_COLORS = {
 const MAX_SHIPS = 50;
 const BOSS_START_X = -5;
 const BOSS_END_X = 4.2;
-const BOSS_SPEED = 0.003;
+const BOSS_SPEED = 0.001;
 const BULLET_SPEED = 0.08;
 
 export default function GameScene({ onGiftSpawn }) {
   const { scene } = useThree();
   const { setBossHp, setGameStatus, setShipCount, gameStatus } = useGame();
+
+  // Load ship GLB models (cached by useGLTF)
+  const { scene: shipGlb1 } = useGLTF("/models/spaceship_1.glb");
+  const { scene: shipGlb2 } = useGLTF("/models/spaceship_2.glb");
+  const { scene: shipGlb3 } = useGLTF("/models/spaceship_3.glb");
+
+  // Lưu vào ref để dùng trong spawnShip mà không cần re-render
+  const shipGlbRef = useRef({});
+  useEffect(() => {
+    shipGlbRef.current = {
+      spaceship_1: shipGlb1,
+      spaceship_2: shipGlb2,
+      spaceship_3: shipGlb3,
+    };
+  }, [shipGlb1, shipGlb2, shipGlb3]);
 
   const bossRef       = useRef(null);
   const bossHpRef     = useRef(100);
@@ -81,14 +102,35 @@ export default function GameScene({ onGiftSpawn }) {
         scene.remove(oldest.mesh);
       }
 
-      const factory = SHIP_FACTORIES[type] || createSpaceship1;
-      const mesh = factory();
+      // Clone từ GLB model đã load
+      const glbScene = shipGlbRef.current[type];
+      let mesh;
+      if (glbScene) {
+        mesh = glbScene.clone(true);
+        const scale = SHIP_SCALES[type] || 0.25;
+        mesh.scale.setScalar(scale);
+        // Giữ nguyên material gốc
+        mesh.traverse((child) => {
+          if (child.isMesh && child.material) {
+            child.material.needsUpdate = true;
+          }
+        });
+        // Thêm gun_tip ảo để bullet spawn từ mũi tàu
+        const gunTip = new THREE.Object3D();
+        gunTip.name = "gun_tip";
+        gunTip.position.set(GUN_TIP_OFFSET[type] || 0.4, 0, 0);
+        mesh.add(gunTip);
+      } else {
+        // fallback: tạm thời dùng box nếu GLB chưa load
+        const geo = new THREE.BoxGeometry(0.3, 0.1, 0.1);
+        const mat = new THREE.MeshStandardMaterial({ color: 0x00f5ff });
+        mesh = new THREE.Mesh(geo, mat);
+      }
 
       const y = (Math.random() - 0.5) * 3.5;
       const z = (Math.random() - 0.5) * 1.5;
       mesh.position.set(4.0, y, z);
-      mesh.rotation.y = -Math.PI / 2;
-
+      mesh.rotation.y = 40; // quay mũi về phía trái (hướng boss)
       scene.add(mesh);
 
       shipsRef.current.push({
