@@ -13,6 +13,24 @@ const BOSS_END_X = 4.2;
 const BOSS_SPEED = 0.001;
 const BULLET_SPEED = 0.08;
 
+// AudioPool: 8 instances → nhiều tàu bắn cùng lúc vẫn phát đủ số lần
+const ATTACK_POOL_SIZE = 8;
+const attackPool = Array.from(
+  { length: ATTACK_POOL_SIZE },
+  () => {
+    const a = new Audio("/sound/sound_attack.mp3");
+    a.volume = 0.35;
+    return a;
+  }
+);
+let attackPoolIdx = 0;
+function playAttackSound() {
+  const audio = attackPool[attackPoolIdx];
+  attackPoolIdx = (attackPoolIdx + 1) % ATTACK_POOL_SIZE;
+  audio.currentTime = 0;
+  audio.play().catch(() => {}); // bỏ qua lỗi autoplay policy
+}
+
 export default function GameScene({ onGiftSpawn }) {
   const { scene } = useThree();
   const { setBossHp, setGameStatus, setShipCount, gameStatus } = useGame();
@@ -208,6 +226,7 @@ export default function GameScene({ onGiftSpawn }) {
       if (ship.fireTimer >= 1 / ship.fireRate) {
         ship.fireTimer = 0;
         fireBullet(ship);
+        playAttackSound();
       }
     });
 
@@ -237,15 +256,25 @@ export default function GameScene({ onGiftSpawn }) {
 
         deadBullets.add(idx);
 
+        // Flash đỏ TOÀN THÂN boss — swap sang red material rồi restore
+        const flashMat = new THREE.MeshBasicMaterial({
+          color: 0xff1111,
+          transparent: true,
+          opacity: 0.2,
+        });
+        const restore = [];
         boss.traverse((child) => {
-          if (child.isMesh && child.material) {
-            const prev = child.material.emissiveIntensity;
-            child.material.emissiveIntensity = 4;
-            setTimeout(() => {
-              if (child.material) child.material.emissiveIntensity = prev;
-            }, 80);
+          if (child.isMesh) {
+            restore.push({ mesh: child, mat: child.material });
+            child.material = flashMat;
           }
         });
+        setTimeout(() => {
+          restore.forEach(({ mesh, mat }) => {
+            if (mesh) mesh.material = mat;
+          });
+          flashMat.dispose();
+        }, 100);
 
         if (bossHpRef.current <= 0) {
           statusRef.current = "win";
