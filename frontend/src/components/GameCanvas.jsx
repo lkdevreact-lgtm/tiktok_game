@@ -35,6 +35,8 @@ export default function GameCanvas() {
             type: config.spaceship || "spaceship_1",
             damage: config.damage || 1,
             fireRate: config.fireRate || 1.0,
+            nickname: nickname || uniqueId || "Viewer",
+            avatarUrl: imgUrl || "",
           });
         }, i * 150);
       }
@@ -53,6 +55,8 @@ export default function GameCanvas() {
           type: config.spaceship || "spaceship_1",
           damage: config.damage || 1,
           fireRate: config.fireRate || 1.0,
+          nickname: "Test User",
+          avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=test",
         });
       }
     };
@@ -72,6 +76,8 @@ export default function GameCanvas() {
         type: config.spaceship || "spaceship_1",
         damage: config.damage || 1,
         fireRate: config.fireRate || 1.0,
+        nickname: "Test User",
+        avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=simulate",
       });
     }
   };

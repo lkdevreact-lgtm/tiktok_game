@@ -1,6 +1,6 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Stars } from "@react-three/drei";
+import { Stars, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useGame } from "../store/gameStore";
 import { createBullet, createExplosion } from "./models";
@@ -47,12 +47,15 @@ export default function GameScene({ onGiftSpawn }) {
   const bossOrigMatsRef = useRef(null); // null = đang không flash
   const bossFlashTimeoutRef = useRef(null);
 
+  const [shipLabels, setShipLabels] = useState([]);
+
   // ── Spawn Ship ───────────────────────────────────────────────
   const spawnShip = useCallback(
-    ({ type, damage, fireRate }) => {
+    ({ type, damage, fireRate, nickname = "", avatarUrl = "" }) => {
       if (shipsRef.current.length >= MAX_SHIPS) {
         const oldest = shipsRef.current.shift();
         scene.remove(oldest.mesh);
+        setShipLabels((prev) => prev.filter((l) => l.mesh !== oldest.mesh));
       }
 
       const mesh = cloneShipMesh(type);
@@ -64,7 +67,9 @@ export default function GameScene({ onGiftSpawn }) {
 
       scene.add(mesh);
 
+      const id = `ship-${Date.now()}-${Math.random()}`;
       shipsRef.current.push({
+        id,
         mesh,
         type,
         damage,
@@ -72,8 +77,14 @@ export default function GameScene({ onGiftSpawn }) {
         fireTimer: Math.random(),
         baseY: y,
         hoverPhase: Math.random() * Math.PI * 2,
+        nickname,
+        avatarUrl,
       });
 
+      setShipLabels((prev) => [
+        ...prev,
+        { id, mesh, nickname, avatarUrl },
+      ]);
       setShipCount(shipsRef.current.length);
     },
     [scene, setShipCount, cloneShipMesh],
@@ -317,16 +328,97 @@ export default function GameScene({ onGiftSpawn }) {
 
   return (
     <>
-      <Stars
-        radius={80}
-        depth={50}
-        count={5000}
-        factor={4}
-        saturation={0}
-        fade
-        speed={1}
-      />
+      <Stars radius={80} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
       <BossModel bossRef={bossRef} scale={4.5} />
+
+      {/* Avatar + tên user nổi trên mỗi tàu */}
+      {shipLabels.map(({ id, mesh, nickname, avatarUrl }) =>
+        nickname || avatarUrl ? (
+          <Html
+            key={id}
+            position={[0, 0.55, 0]}
+            center
+            occlude={false}
+            style={{ pointerEvents: "none" }}
+            ref={(el) => {
+              // gắn label vào mesh để nó follow tàu
+              if (el && mesh) mesh.add(el.parent || el);
+            }}
+          >
+            <Html
+              portal={{ current: null }}
+              position={mesh.position.toArray()}
+              center
+            >
+              {null}
+            </Html>
+          </Html>
+        ) : null
+      )}
+
+      {/* Render labels bằng Html đính vào scene position của từng tàu */}
+      {shipLabels
+        .filter((l) => l.nickname || l.avatarUrl)
+        .map(({ id, mesh, nickname, avatarUrl }) => (
+          <ShipLabel key={id} mesh={mesh} nickname={nickname} avatarUrl={avatarUrl} />
+        ))}
     </>
+  );
+}
+
+function ShipLabel({ mesh, nickname, avatarUrl }) {
+  const groupRef = useRef();
+
+  // Theo dõi vị trí mesh trong game loop
+  useFrame(() => {
+    if (groupRef.current && mesh) {
+      groupRef.current.position.copy(mesh.position);
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      <Html
+        center
+        distanceFactor={8}
+        occlude={false}
+        style={{ pointerEvents: "none", userSelect: "none" }}
+      >
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "2px",
+          transform: "translateY(-52px)",
+        }}>
+          {avatarUrl && (
+            <img
+              src={avatarUrl}
+              alt={nickname}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                border: "1.5px solid rgba(0,245,255,0.8)",
+                objectFit: "cover",
+                boxShadow: "0 0 6px rgba(0,245,255,0.5)",
+              }}
+            />
+          )}
+          {nickname && (
+            <span style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: "#fff",
+              textShadow: "0 0 6px rgba(0,245,255,0.9), 0 1px 2px rgba(0,0,0,0.8)",
+              whiteSpace: "nowrap",
+              letterSpacing: "0.02em",
+            }}>
+              {nickname.length > 12 ? nickname.slice(0, 12) + "…" : nickname}
+            </span>
+          )}
+        </div>
+      </Html>
+    </group>
   );
 }
