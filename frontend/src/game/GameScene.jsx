@@ -184,6 +184,9 @@ export default function GameScene({ onGiftSpawn }) {
     explosionsRef.current.forEach((p) => scene.remove(p.mesh));
     explosionsRef.current = [];
 
+    // Clear ship labels (avatar + tên người donate cũ)
+    setShipLabels([]);
+
     if (bossRef.current) {
       bossRef.current.position.set(BOSS_START_X, 0, 0);
       bossRef.current.rotation.y = Math.PI / 2;

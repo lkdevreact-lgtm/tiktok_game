@@ -2,14 +2,19 @@ import { useRef, useEffect, useCallback } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGame } from "../store/gameStore";
 import GameScene from "../game/GameScene";
-import SidebarSetting from "./SidebarSetting";
+import Navbar from "./Navbar";
 import socket from "../socket/socketClient";
 
 export default function GameCanvas() {
   const {
-    bossHp, gameStatus, setGameStatus, setBossHp,
-    giftMapping, username, shipCount,
-    notifications, addNotification, resetGame,
+    bossHp,
+    gameStatus,
+    setGameStatus,
+    setBossHp,
+    giftMapping,
+    notifications,
+    addNotification,
+    resetGame,
   } = useGame();
 
   const spawnShipRef = useRef(null);
@@ -22,17 +27,24 @@ export default function GameCanvas() {
   useEffect(() => {
     const handleGift = (data) => {
       const {
-        giftId, giftName, uniqueId, nickname, imgUrl,
+        giftId,
+        giftName,
+        uniqueId,
+        nickname,
+        imgUrl,
         avatarUrl: senderAvatar,
         profilePictureUrl,
       } = data;
       const config = giftMapping[giftId];
       if (!config || !config.active) return;
 
-      addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl });
+      addNotification({
+        user: nickname || uniqueId || "Viewer",
+        giftName,
+        imgUrl,
+      });
 
-      const shipAvatar =
-        senderAvatar || profilePictureUrl || "";
+      const shipAvatar = senderAvatar || profilePictureUrl || "";
 
       const count = data.repeatCount || 1;
       const times = Math.min(count, 5);
@@ -67,13 +79,16 @@ export default function GameCanvas() {
         });
       }
     };
-    return () => { delete window.__simulateGift; };
+    return () => {
+      delete window.__simulateGift;
+    };
   }, [giftMapping, addNotification]);
 
-  const handleReset = () => { setBossHp(100); resetGame(); };
+  const handleReset = () => {
+    setBossHp(100);
+    resetGame();
+  };
 
-  const hpPercent = Math.max(0, Math.min(100, bossHp));
-  const hpColor   = hpPercent > 50 ? "#ff3366" : hpPercent > 25 ? "#ff6600" : "#ff0000";
 
   const handleSimulate = () => {
     const config = giftMapping[5655];
@@ -90,9 +105,12 @@ export default function GameCanvas() {
   };
 
   return (
-    <div className="fixed inset-0 flex">
-      {/* 3D Canvas area */}
-      <div className="flex-1 relative">
+    <div className="fixed inset-0 flex flex-col">
+      {/* Top Navbar */}
+      <Navbar />
+
+      {/* 3D Canvas area (below navbar) */}
+      <div className="flex-1 relative" style={{ marginTop: 52 }}>
         <Canvas
           camera={{ position: [0, 1.5, 9], fov: 55 }}
           gl={{ antialias: true, alpha: false }}
@@ -100,50 +118,6 @@ export default function GameCanvas() {
         >
           <GameScene onGiftSpawn={handleGiftSpawn} />
         </Canvas>
-
-        {/* ── HUD ── */}
-        <div className="absolute top-0 left-0 right-0 flex items-center gap-4 px-5 py-4 pointer-events-none z-10">
-          {/* Boss HP */}
-          <div className="flex-1 max-w-[500px]">
-            <div
-              className="text-[0.65rem] uppercase tracking-widest mb-1"
-              style={{ fontFamily: "var(--font-game)", color: "var(--color-danger)" }}
-            >
-              ⚠️ BOSS HP
-            </div>
-            <div
-              className="h-[14px] rounded-[7px] overflow-hidden"
-              style={{ background: "rgba(255,51,102,0.15)", border: "1px solid rgba(255,51,102,0.4)" }}
-            >
-              <div
-                className="h-full rounded-[7px] transition-[width] duration-300 ease-out boss-hp-glow"
-                style={{
-                  width: `${hpPercent}%`,
-                  background: `linear-gradient(90deg, ${hpColor}, ${hpColor}88)`,
-                }}
-              />
-            </div>
-            <div
-              className="text-[0.65rem] mt-0.5"
-              style={{ color: "rgba(255,80,80,0.7)", fontFamily: "var(--font-game)" }}
-            >
-              {hpPercent.toFixed(1)}%
-            </div>
-          </div>
-
-          <div
-            className="text-[0.75rem] whitespace-nowrap"
-            style={{ fontFamily: "var(--font-game)", color: "var(--color-cyan)" }}
-          >
-            🚀 Ships: {shipCount}
-          </div>
-          <div
-            className="text-[0.65rem] whitespace-nowrap"
-            style={{ fontFamily: "var(--font-game)", color: "rgba(180,200,255,0.5)" }}
-          >
-            @{username}
-          </div>
-        </div>
 
         {/* ── Gift Notification Feed ── */}
         <div className="absolute bottom-5 left-5 flex flex-col-reverse gap-2 pointer-events-none z-[15] max-h-60 overflow-hidden">
@@ -158,11 +132,20 @@ export default function GameCanvas() {
               }}
             >
               {n.imgUrl ? (
-                <img src={n.imgUrl} alt={n.giftName} className="w-6 h-6 rounded" />
+                <img
+                  src={n.imgUrl}
+                  alt={n.giftName}
+                  className="w-6 h-6 rounded"
+                />
               ) : (
                 <span>🎁</span>
               )}
-              <span className="font-semibold" style={{ color: "var(--color-cyan)" }}>{n.user}</span>
+              <span
+                className="font-semibold"
+                style={{ color: "var(--color-cyan)" }}
+              >
+                {n.user}
+              </span>
               <span style={{ color: "rgba(180,200,255,0.6)" }}>sent</span>
               <span style={{ color: "var(--color-gold)" }}>{n.giftName}</span>
             </div>
@@ -180,8 +163,12 @@ export default function GameCanvas() {
             color: "var(--color-cyan)",
             fontFamily: "var(--font-game)",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,245,255,0.22)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,245,255,0.12)"; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(0,245,255,0.22)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(0,245,255,0.12)";
+          }}
         >
           🎁 SIMULATE GIFT
         </button>
@@ -190,22 +177,35 @@ export default function GameCanvas() {
         {(gameStatus === "win" || gameStatus === "lose") && (
           <div
             className="absolute inset-0 flex flex-col items-center justify-center gap-5 z-20 animate-fade-in"
-            style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+            style={{
+              background: "rgba(0,0,0,0.7)",
+              backdropFilter: "blur(8px)",
+            }}
           >
             <div
               className={`text-5xl font-black animate-pulse-scale ${gameStatus === "win" ? "neon-success" : "neon-danger"}`}
               style={{
                 fontFamily: "var(--font-game)",
-                textShadow: gameStatus === "win"
-                  ? "0 0 40px var(--color-success)"
-                  : "0 0 40px var(--color-danger)",
-                color: gameStatus === "win" ? "var(--color-success)" : "var(--color-danger)",
+                textShadow:
+                  gameStatus === "win"
+                    ? "0 0 40px var(--color-success)"
+                    : "0 0 40px var(--color-danger)",
+                color:
+                  gameStatus === "win"
+                    ? "var(--color-success)"
+                    : "var(--color-danger)",
               }}
             >
               {gameStatus === "win" ? "🏆 YOU WIN!" : "💀 GAME OVER"}
             </div>
 
-            <div className="text-[0.9rem] text-center" style={{ color: "rgba(180,200,255,0.7)", fontFamily: "var(--font-ui)" }}>
+            <div
+              className="text-[0.9rem] text-center"
+              style={{
+                color: "rgba(180,200,255,0.7)",
+                fontFamily: "var(--font-ui)",
+              }}
+            >
               {gameStatus === "win"
                 ? "The boss has been defeated! Your viewers are amazing! 🎉"
                 : "The boss reached you... Try again! 💪"}
@@ -218,19 +218,22 @@ export default function GameCanvas() {
                          transition-all duration-150 hover:-translate-y-0.5"
               style={{
                 fontFamily: "var(--font-game)",
-                background: "linear-gradient(135deg, var(--color-cyan), #0088aa)",
+                background:
+                  "linear-gradient(135deg, var(--color-cyan), #0088aa)",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,245,255,0.5)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "none"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 8px 30px rgba(0,245,255,0.5)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = "none";
+              }}
             >
               🔄 Play Again
             </button>
           </div>
         )}
       </div>
-
-      {/* Right Sidebar */}
-      <SidebarSetting />
     </div>
   );
 }

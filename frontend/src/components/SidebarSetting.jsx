@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useGame } from "../store/gameStore";
 import socket from "../socket/socketClient";
 
@@ -19,9 +19,10 @@ const FIRE_RATE_OPTIONS = [
   { value: 2.0, label: "Turbo" },
 ];
 
-export default function SidebarSetting() {
+export default function SidebarSetting({ isOpen, onClose }) {
   const { giftMapping, updateGiftMapping } = useGame();
   const [gifts, setGifts] = useState([]);
+  const panelRef = useRef(null);
 
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/gifts`)
@@ -33,6 +34,14 @@ export default function SidebarSetting() {
       })
       .catch(() => {});
   }, []);
+
+  // Close on backdrop click
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen, onClose]);
 
   const handleToggle = (giftId) => {
     const current = giftMapping[giftId];
@@ -51,148 +60,280 @@ export default function SidebarSetting() {
   };
 
   return (
-    <aside
-      className="w-[300px] flex flex-col overflow-hidden"
-      style={{
-        background: "rgba(2,8,20,0.92)",
-        borderLeft: "1px solid var(--color-border)",
-        backdropFilter: "blur(20px)",
-      }}
-    >
-      {/* Header */}
+    <>
+      {/* Backdrop */}
       <div
-        className="flex items-center gap-2 px-4 py-4 text-[0.7rem] uppercase tracking-[0.15em]"
+        onClick={onClose}
         style={{
-          borderBottom: "1px solid var(--color-border)",
-          fontFamily: "var(--font-game)",
-          color: "var(--color-cyan)",
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.55)",
+          backdropFilter: "blur(4px)",
+          zIndex: 90,
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? "auto" : "none",
+          transition: "opacity 0.25s ease",
+        }}
+      />
+
+      {/* Sliding Panel */}
+      <aside
+        ref={panelRef}
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 320,
+          display: "flex",
+          flexDirection: "column",
+          background: "rgba(4,10,28,0.97)",
+          borderLeft: "1px solid rgba(0,245,255,0.18)",
+          backdropFilter: "blur(24px)",
+          zIndex: 100,
+          transform: isOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          boxShadow: isOpen ? "-8px 0 40px rgba(0,0,0,0.6)" : "none",
         }}
       >
-        <span
-          className="w-2 h-2 rounded-full flex-shrink-0 animate-blink"
-          style={{ background: "var(--color-success)", boxShadow: "0 0 8px var(--color-success)" }}
-        />
-        Gift Config
-      </div>
-
-      {/* Scroll area */}
-      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
-        {gifts.length === 0 && (
-          <div
-            className="text-[0.75rem] text-center p-5"
-            style={{ color: "rgba(180,200,255,0.3)" }}
-          >
-            Loading gifts...
-          </div>
-        )}
-
-        {gifts.map((gift) => {
-          const config   = giftMapping[gift.giftId] || {};
-          const isActive = config.active ?? false;
-
-          return (
-            <div
-              key={gift.giftId}
-              className="rounded-lg p-[10px_12px] flex flex-col gap-2 transition-colors duration-200"
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "16px 18px",
+            borderBottom: "1px solid rgba(0,245,255,0.15)",
+            fontFamily: "var(--font-game)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
               style={{
-                background: isActive ? "rgba(0,245,255,0.06)" : "rgba(0,245,255,0.03)",
-                border: `1px solid ${isActive ? "rgba(0,245,255,0.35)" : "rgba(0,245,255,0.1)"}`,
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "var(--color-success)",
+                boxShadow: "0 0 8px var(--color-success)",
+                flexShrink: 0,
+                display: "inline-block",
+              }}
+            />
+            <span
+              style={{
+                fontSize: "0.7rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+                color: "var(--color-cyan)",
               }}
             >
-              {/* Top row */}
-              <div className="flex items-center gap-[10px]">
-                {gift.image ? (
-                  <img
-                    src={gift.image}
-                    alt={gift.giftName}
-                    className="w-9 h-9 rounded-md object-contain"
-                    style={{ background: "rgba(255,255,255,0.05)" }}
-                  />
-                ) : (
-                  <div
-                    className="w-9 h-9 rounded-md flex items-center justify-center text-xl"
-                    style={{ background: "rgba(255,255,255,0.05)" }}
+              Gift Config
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            title="Close"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 8,
+              color: "rgba(200,220,255,0.7)",
+              cursor: "pointer",
+              padding: "4px 10px",
+              fontSize: "0.8rem",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Scroll area */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          {gifts.length === 0 && (
+            <div
+              style={{
+                fontSize: "0.75rem",
+                textAlign: "center",
+                padding: 20,
+                color: "rgba(180,200,255,0.3)",
+              }}
+            >
+              Loading gifts...
+            </div>
+          )}
+
+          {gifts.map((gift) => {
+            const config   = giftMapping[gift.giftId] || {};
+            const isActive = config.active ?? false;
+
+            return (
+              <div
+                key={gift.giftId}
+                style={{
+                  borderRadius: 10,
+                  padding: "10px 12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  background: isActive ? "rgba(0,245,255,0.06)" : "rgba(0,245,255,0.03)",
+                  border: `1px solid ${isActive ? "rgba(0,245,255,0.35)" : "rgba(0,245,255,0.1)"}`,
+                  transition: "border-color 0.2s, background 0.2s",
+                }}
+              >
+                {/* Top row */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {gift.image ? (
+                    <img
+                      src={gift.image}
+                      alt={gift.giftName}
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        objectFit: "contain",
+                        background: "rgba(255,255,255,0.05)",
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 20,
+                        background: "rgba(255,255,255,0.05)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      🎁
+                    </div>
+                  )}
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "#e0e8ff", marginBottom: 2 }}>
+                      {gift.giftName}
+                    </div>
+                    <div style={{ fontSize: "0.68rem", color: "var(--color-gold)" }}>
+                      💎 {gift.diamonds}
+                    </div>
+                  </div>
+
+                  {/* Toggle switch */}
+                  <button
+                    onClick={() => handleToggle(gift.giftId)}
+                    title={isActive ? "Deactivate" : "Activate"}
+                    style={{
+                      width: 36,
+                      height: 20,
+                      borderRadius: 10,
+                      position: "relative",
+                      flexShrink: 0,
+                      cursor: "pointer",
+                      transition: "background 0.2s, border-color 0.2s",
+                      background: isActive ? "var(--color-cyan)" : "rgba(255,255,255,0.1)",
+                      border: `1px solid ${isActive ? "var(--color-cyan)" : "rgba(255,255,255,0.2)"}`,
+                    }}
                   >
-                    🎁
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: 2,
+                        left: isActive ? "calc(100% - 18px)" : 2,
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        background: "#fff",
+                        transition: "left 0.2s",
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.4)",
+                      }}
+                    />
+                  </button>
+                </div>
+
+                {/* Controls (only when active) */}
+                {isActive && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                    {[
+                      {
+                        label: "Ship",
+                        field: "spaceship",
+                        value: config.spaceship || "spaceship_1",
+                        options: SPACESHIP_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+                      },
+                      {
+                        label: "Dmg",
+                        field: "damage",
+                        value: config.damage ?? 1,
+                        options: DAMAGE_OPTIONS.map((d) => ({ value: d, label: d })),
+                        parseNum: true,
+                      },
+                      {
+                        label: "Fire Rate",
+                        field: "fireRate",
+                        value: config.fireRate ?? 1.0,
+                        options: FIRE_RATE_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+                        parseNum: true,
+                      },
+                    ].map(({ label, field, value, options, parseNum }) => (
+                      <div key={field}>
+                        <label
+                          style={{
+                            display: "block",
+                            fontSize: "0.6rem",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            marginBottom: 4,
+                            fontFamily: "var(--font-game)",
+                            color: "rgba(180,200,255,0.5)",
+                          }}
+                        >
+                          {label}
+                        </label>
+                        <select
+                          style={{
+                            width: "100%",
+                            borderRadius: 4,
+                            fontSize: "0.72rem",
+                            padding: "4px 6px",
+                            outline: "none",
+                            color: "#e0e8ff",
+                            background: "rgba(0,0,0,0.4)",
+                            border: "1px solid var(--color-border)",
+                          }}
+                          value={value}
+                          onChange={(e) =>
+                            handleChange(gift.giftId, field, parseNum ? Number(e.target.value) : e.target.value)
+                          }
+                        >
+                          {options.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
                   </div>
                 )}
-
-                <div className="flex-1">
-                  <div className="text-[0.8rem] font-semibold text-[#e0e8ff] mb-0.5">
-                    {gift.giftName}
-                  </div>
-                  <div className="text-[0.68rem]" style={{ color: "var(--color-gold)" }}>
-                    💎 {gift.diamonds}
-                  </div>
-                </div>
-
-                {/* Toggle switch */}
-                <button
-                  onClick={() => handleToggle(gift.giftId)}
-                  title={isActive ? "Deactivate" : "Activate"}
-                  className={`gift-toggle-thumb w-9 h-5 rounded-[10px] relative flex-shrink-0 cursor-pointer transition-colors duration-200 ${isActive ? "on" : ""}`}
-                  style={{
-                    background: isActive ? "var(--color-cyan)" : "rgba(255,255,255,0.1)",
-                    border: `1px solid ${isActive ? "var(--color-cyan)" : "rgba(255,255,255,0.2)"}`,
-                  }}
-                />
               </div>
-
-              {/* Controls (only when active) */}
-              {isActive && (
-                <div className="grid grid-cols-2 gap-1.5">
-                  {[
-                    {
-                      label: "Ship",
-                      field: "spaceship",
-                      value: config.spaceship || "spaceship_1",
-                      options: SPACESHIP_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
-                    },
-                    {
-                      label: "Dmg",
-                      field: "damage",
-                      value: config.damage ?? 1,
-                      options: DAMAGE_OPTIONS.map((d) => ({ value: d, label: d })),
-                      parseNum: true,
-                    },
-                    {
-                      label: "Fire Rate",
-                      field: "fireRate",
-                      value: config.fireRate ?? 1.0,
-                      options: FIRE_RATE_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
-                      parseNum: true,
-                    },
-                  ].map(({ label, field, value, options, parseNum }) => (
-                    <div key={field}>
-                      <label
-                        className="block text-[0.6rem] uppercase tracking-[0.08em] mb-1"
-                        style={{ fontFamily: "var(--font-game)", color: "rgba(180,200,255,0.5)" }}
-                      >
-                        {label}
-                      </label>
-                      <select
-                        className="w-full rounded text-[0.72rem] px-1.5 py-1 outline-none text-[#e0e8ff]"
-                        style={{
-                          background: "rgba(0,0,0,0.4)",
-                          border: "1px solid var(--color-border)",
-                        }}
-                        value={value}
-                        onChange={(e) =>
-                          handleChange(gift.giftId, field, parseNum ? Number(e.target.value) : e.target.value)
-                        }
-                      >
-                        {options.map((o) => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </aside>
+            );
+          })}
+        </div>
+      </aside>
+    </>
   );
 }
