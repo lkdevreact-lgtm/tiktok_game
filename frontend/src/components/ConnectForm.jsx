@@ -66,18 +66,7 @@ export default function ConnectForm() {
           border: "1px solid var(--color-border)",
         }}
       >
-        {/* Title */}
-        <h1
-          className="text-center text-[1.6rem] font-black"
-          style={{
-            fontFamily: "var(--font-game)",
-            background:
-              "linear-gradient(135deg, var(--color-cyan), var(--color-purple))",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-        >
+        <h1 className="text-center text-4xl font-bold text-shadow-2xs text-shadow-cyan-300">
           Star Wars
         </h1>
 
@@ -88,15 +77,8 @@ export default function ConnectForm() {
           TikTok Live Gift Battle Game
         </p>
 
-        {/* Input */}
         <div className="flex flex-col gap-2">
-          <label
-            className="text-[0.75rem] uppercase tracking-widest"
-            style={{
-              fontFamily: "var(--font-game)",
-              color: "var(--color-cyan)",
-            }}
-          >
+          <label className="text-xs text-cyan-1 uppercase tracking-widest">
             TikTok Username
           </label>
           <input
@@ -108,7 +90,7 @@ export default function ConnectForm() {
             onKeyDown={handleKeyDown}
             disabled={loading}
             autoFocus
-            className="rounded-lg px-4 py-3 text-base outline-none transition-all duration-200 text-[#e0e8ff]"
+            className="rounded-lg px-4 py-3 text-base outline-none transition-all duration-200 text-white"
             style={{
               background: "rgba(0,245,255,0.05)",
               border: "1px solid var(--color-border)",
@@ -125,8 +107,6 @@ export default function ConnectForm() {
             }}
           />
         </div>
-
-        {/* Error */}
         {error && (
           <div
             className="text-[0.8rem] text-center px-3 py-2 rounded-md"
@@ -136,11 +116,10 @@ export default function ConnectForm() {
               border: "1px solid rgba(255,51,102,0.3)",
             }}
           >
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
-        {/* Button */}
         <button
           id="btn-connect-live"
           onClick={handleConnect}
@@ -150,7 +129,7 @@ export default function ConnectForm() {
                      hover:not-disabled:-translate-y-0.5"
           style={{
             fontFamily: "var(--font-game)",
-            background: "linear-gradient(135deg, var(--color-cyan), #0088aa)",
+            background: "linear-gradient(135deg, cyan, #0088aa)",
           }}
           onMouseEnter={(e) => {
             if (!loading)
@@ -161,14 +140,14 @@ export default function ConnectForm() {
             e.currentTarget.style.boxShadow = "none";
           }}
         >
-          {loading ? "Connecting..." : "🚀 Connect Live"}
+          {loading ? "Connecting..." : "Connect Live"}
         </button>
 
         <div
           className="text-center text-[0.72rem]"
           style={{ color: "rgba(180,200,255,0.4)" }}
         >
-          Viewers send gifts → Spaceships spawn → Defeat the Boss!
+          Send gifts, summon your fleet, and take down the Boss!
         </div>
       </div>
     </div>
@@ -184,22 +163,53 @@ const STARS = Array.from({ length: 80 }, (_, i) => ({
   duration: Math.random() * 3 + 2,
 }));
 
-function StarsBg() {
-  const stars = STARS;
+const METEORS = Array.from({ length: 70 }, (_, i) => ({
+  id: i,
+  startX: -20 + Math.random() * 140,
+  startY: -20 + Math.random() * 70,
+  length: Math.random() * 60 + 15,
+  delay: -(Math.random() * 12),
+  duration: Math.random() * 2 + 1.2,
+  opacity: Math.random() * 0.3 + 0.15,
+  thickness: Math.random() * 0.6 + 0.6,
+}));
 
+function StarsBg() {
   return (
     <div className="fixed inset-0 overflow-hidden -z-[1]">
-      {stars.map((s) => (
+      {STARS.map((s) => (
         <div
           key={s.id}
-          className="absolute rounded-full opacity-60"
+          className="absolute rounded-full left-[${}]"
           style={{
             left: `${s.x}%`,
             top: `${s.y}%`,
             width: `${s.size}px`,
             height: `${s.size}px`,
             background: "white",
+            opacity: 0.6,
             animation: `twinkle ${s.duration}s ${s.delay}s ease-in-out infinite alternate`,
+          }}
+        />
+      ))}
+
+      {METEORS.map((m) => (
+        <div
+          key={m.id}
+          className="absolute"
+          style={{
+            left: `${m.startX}%`,
+            top: `${m.startY}%`,
+            width: `${m.length}px`,
+            height: `${m.thickness}px`,
+            background:
+              "linear-gradient(270deg, transparent 0%, rgba(160,210,255,0.3) 35%, rgba(220,240,255,0.9) 100%)",
+            borderRadius: "100px",
+            opacity: m.opacity,
+            transform: "rotate(27deg)",
+            transformOrigin: "right center",
+            animation: `meteor ${m.duration}s ${m.delay}s linear infinite`,
+            filter: "drop-shadow(0 0 2px rgba(180,220,255,0.5))",
           }}
         />
       ))}

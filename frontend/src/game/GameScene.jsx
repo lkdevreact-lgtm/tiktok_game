@@ -7,27 +7,27 @@ import { createBullet, createExplosion } from "./models";
 import BossModel from "./BossModel";
 import { useShipModels, SHIP_BULLET_COLORS } from "../hooks/useShipModels";
 
-const MAX_SHIPS   = 50;
+const MAX_SHIPS = 50;
 const BOSS_START_X = -5;
-const BOSS_END_X   = 4.2;
-const BOSS_SPEED   = 0.001;
+const BOSS_END_X = 4.2;
+const BOSS_SPEED = 0.001;
 const BULLET_SPEED = 0.08;
 
 export default function GameScene({ onGiftSpawn }) {
-  const { scene }    = useThree();
+  const { scene } = useThree();
   const { setBossHp, setGameStatus, setShipCount, gameStatus } = useGame();
   const { cloneShipMesh } = useShipModels();
 
   // ── Refs game state (sync, không trigger re-render) ──────────
-  const bossRef        = useRef(null);
-  const bossHpRef      = useRef(100);
-  const shipsRef       = useRef([]);
-  const bulletsRef     = useRef([]);
-  const explosionsRef  = useRef([]);
-  const gameActiveRef  = useRef(false);
-  const statusRef      = useRef("idle");
+  const bossRef = useRef(null);
+  const bossHpRef = useRef(100);
+  const shipsRef = useRef([]);
+  const bulletsRef = useRef([]);
+  const explosionsRef = useRef([]);
+  const gameActiveRef = useRef(false);
+  const statusRef = useRef("idle");
   const prevGameStatus = useRef("idle");
-  const spawnShipFn    = useRef(null);
+  const spawnShipFn = useRef(null);
 
   // ── Spawn Ship ───────────────────────────────────────────────
   const spawnShip = useCallback(
@@ -58,10 +58,12 @@ export default function GameScene({ onGiftSpawn }) {
 
       setShipCount(shipsRef.current.length);
     },
-    [scene, setShipCount, cloneShipMesh]
+    [scene, setShipCount, cloneShipMesh],
   );
 
-  useEffect(() => { spawnShipFn.current = spawnShip; }, [spawnShip]);
+  useEffect(() => {
+    spawnShipFn.current = spawnShip;
+  }, [spawnShip]);
 
   useEffect(() => {
     if (onGiftSpawn) onGiftSpawn((args) => spawnShipFn.current?.(args));
@@ -69,23 +71,23 @@ export default function GameScene({ onGiftSpawn }) {
 
   // ── Init scene (lights + starter ships) ─────────────────────
   useEffect(() => {
-    const ambient   = new THREE.AmbientLight(0xffffff, 3.0);
-    const dirLight  = new THREE.DirectionalLight(0xffffff, 4);
+    const ambient = new THREE.AmbientLight(0xffffff, 3.0);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 4);
     dirLight.position.set(5, 5, 5);
     const bossLight = new THREE.DirectionalLight(0xffffff, 3);
     bossLight.position.set(-8, 2, 4);
     const pointCyan = new THREE.PointLight(0x00f5ff, 1.5, 25);
     pointCyan.position.set(2, 2, 3);
-    const pointRed  = new THREE.PointLight(0xff4466, 1.5, 25);
+    const pointRed = new THREE.PointLight(0xff4466, 1.5, 25);
     pointRed.position.set(-6, 0, 2);
 
     scene.add(ambient, dirLight, bossLight, pointCyan, pointRed);
     spawnShip({ type: "spaceship_1", damage: 1, fireRate: 1.0 });
     spawnShip({ type: "spaceship_2", damage: 3, fireRate: 0.5 });
 
-    bossHpRef.current   = 100;
+    bossHpRef.current = 100;
     gameActiveRef.current = true;
-    statusRef.current   = "playing";
+    statusRef.current = "playing";
     prevGameStatus.current = "playing";
 
     return () => {
@@ -93,8 +95,8 @@ export default function GameScene({ onGiftSpawn }) {
       shipsRef.current.forEach((s) => scene.remove(s.mesh));
       bulletsRef.current.forEach((b) => scene.remove(b.mesh));
       explosionsRef.current.forEach((p) => scene.remove(p.mesh));
-      shipsRef.current    = [];
-      bulletsRef.current  = [];
+      shipsRef.current = [];
+      bulletsRef.current = [];
       explosionsRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,10 +117,10 @@ export default function GameScene({ onGiftSpawn }) {
     (ship) => {
       if (!bossRef.current) return;
 
-      const gunTip  = ship.mesh.getObjectByName("gun_tip");
+      const gunTip = ship.mesh.getObjectByName("gun_tip");
       const startPos = new THREE.Vector3();
       if (gunTip) gunTip.getWorldPosition(startPos);
-      else         ship.mesh.getWorldPosition(startPos);
+      else ship.mesh.getWorldPosition(startPos);
 
       const bossPos = new THREE.Vector3();
       bossRef.current.getWorldPosition(bossPos);
@@ -128,20 +130,20 @@ export default function GameScene({ onGiftSpawn }) {
         .normalize()
         .multiplyScalar(BULLET_SPEED);
 
-      const color      = SHIP_BULLET_COLORS[ship.type] ?? 0x00f5ff;
+      const color = SHIP_BULLET_COLORS[ship.type] ?? 0x00f5ff;
       const bulletMesh = createBullet(color);
       bulletMesh.position.copy(startPos);
       bulletMesh.lookAt(bossPos);
 
       scene.add(bulletMesh);
       bulletsRef.current.push({
-        mesh:      bulletMesh,
-        velocity:  velocity.clone(),
-        damage:    ship.damage * 0.1,
+        mesh: bulletMesh,
+        velocity: velocity.clone(),
+        damage: ship.damage * 0.1,
         ownerType: ship.type,
       });
     },
-    [scene]
+    [scene],
   );
 
   // ── Reset ────────────────────────────────────────────────────
@@ -228,7 +230,7 @@ export default function GameScene({ onGiftSpawn }) {
 
         const exps = createExplosion(
           bullet.mesh.position.clone(),
-          SHIP_BULLET_COLORS[bullet.ownerType] ?? 0xff6600
+          SHIP_BULLET_COLORS[bullet.ownerType] ?? 0xff6600,
         );
         exps.forEach(({ mesh }) => scene.add(mesh));
         explosionsRef.current.push(...exps);
@@ -256,7 +258,10 @@ export default function GameScene({ onGiftSpawn }) {
 
     if (deadBullets.size > 0) {
       bulletsRef.current = bulletsRef.current.filter((b, idx) => {
-        if (deadBullets.has(idx)) { scene.remove(b.mesh); return false; }
+        if (deadBullets.has(idx)) {
+          scene.remove(b.mesh);
+          return false;
+        }
         return true;
       });
     }
@@ -278,7 +283,15 @@ export default function GameScene({ onGiftSpawn }) {
 
   return (
     <>
-      <Stars radius={80} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+      <Stars
+        radius={80}
+        depth={50}
+        count={5000}
+        factor={4}
+        saturation={0}
+        fade
+        speed={1}
+      />
       <BossModel bossRef={bossRef} scale={4.5} />
     </>
   );
