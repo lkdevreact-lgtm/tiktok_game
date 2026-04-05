@@ -13,6 +13,17 @@ useGLTF.preload("/models/spaceship_1.glb");
 useGLTF.preload("/models/spaceship_2.glb");
 useGLTF.preload("/models/spaceship_3.glb");
 
+// Xóa cache lỗi cho tất cả custom models từ localStorage
+// để tránh lỗi "Unexpected token '<'" khi Suspense cache giữ 404 cũ
+try {
+  const cached = JSON.parse(localStorage.getItem("modelsCache") || "[]");
+  cached.forEach((m) => {
+    if (!m.builtIn && m.path) {
+      useGLTF.clear(m.path);
+    }
+  });
+} catch (_) {}
+
 export const SHIP_BULLET_COLORS = {
   spaceship_1: 0x00f5ff,
   spaceship_2: 0xbf00ff,

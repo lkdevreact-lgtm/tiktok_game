@@ -1,227 +1,145 @@
 /**
  * modelStore.jsx
- * Quản lý toàn bộ models (built-in + custom).
+ * Nguồn sự thật duy nhất: backend/data/models.json
  *
- * Mỗi model có:
- *  - role: "ship" | "boss"
- *  - active:
- *      ship  → có hiện trong dropdown gift config không
- *      boss  → có đang được render trong game không (chỉ 1 active tại một thời điểm)
+ * - Load tất cả models từ GET /api/models khi khởi động
+ * - Thêm (upload) → POST /api/models/upload → append JSON
+ * - Sửa → PUT /api/models/:id → update JSON
+ * - Xóa → DELETE /api/models/:id → xóa JSON (+ file GLB nếu custom)
+ * - localStorage chỉ cache để tránh flash khi reload
  *
- * Persist vào localStorage.
+ * UI preferences (active state, active boss) lưu localStorage vì chúng
+ * là runtime state không cần persist vào source.
  */
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 
-// ═══════════════════════════════════════════════════════════════
-// Built-in defaults
-// ═══════════════════════════════════════════════════════════════
-export const BUILTIN_MODELS = [
-  {
-    id: "spaceship_1",
-    label: "Fighter",
-    emoji: "🔵",
-    role: "ship",
-    path: "/models/spaceship_1.glb",
-    scale: 0.25,
-    gunTipOffset: 0.1,
-    rotationY: 45,
-    bulletColor: "#00f5ff",
-    builtIn: true,
-  },
-  {
-    id: "spaceship_2",
-    label: "Cruiser",
-    emoji: "🟣",
-    role: "ship",
-    path: "/models/spaceship_2.glb",
-    scale: 0.35,
-    gunTipOffset: 0.4,
-    rotationY: 35,
-    bulletColor: "#bf00ff",
-    builtIn: true,
-  },
-  {
-    id: "spaceship_3",
-    label: "Destroyer",
-    emoji: "🟡",
-    role: "ship",
-    path: "/models/spaceship_3.glb",
-    scale: 0.05,
-    gunTipOffset: 0.5,
-    rotationY: 40,
-    bulletColor: "#ffaa00",
-    builtIn: true,
-  },
-  {
-    id: "spaceship_boss",
-    label: "Boss (Default)",
-    emoji: "💀",
-    role: "boss",
-    path: "/models/spaceship_boss.glb",
-    scale: 4.5,
-    gunTipOffset: 0,
-    rotationY: 90,
-    bulletColor: "#ff0044",
-    builtIn: true,
-  },
-];
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8888";
 
-// ═══════════════════════════════════════════════════════════════
-// localStorage helpers
-// ═══════════════════════════════════════════════════════════════
+// Cache localStorage helpers
 const ls = {
-  get: (key, fallback) => {
-    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-    catch { return fallback; }
-  },
-  set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
+  get: (key, fb) => { try { return JSON.parse(localStorage.getItem(key)) ?? fb; } catch { return fb; } },
+  set: (key, v) => localStorage.setItem(key, JSON.stringify(v)),
 };
 
-// ═══════════════════════════════════════════════════════════════
-// Context
-// ═══════════════════════════════════════════════════════════════
 const ModelContext = createContext(null);
 
 export function ModelProvider({ children }) {
-  // Custom models list (ship + boss)
-  const [customModels, setCustomModels] = useState(() => ls.get("customModels", []));
+  // Tất cả models từ JSON (hiển thị cache trước khi fetch xong)
+  const [models, setModels]   = useState(() => ls.get("modelsCache", []));
+  const [loading, setLoading] = useState(true);
 
-  // Built-in parameter overrides: { [id]: { scale, gunTipOffset, ... } }
-  const [builtinOverrides, setBuiltinOverrides] = useState(() => ls.get("builtinOverrides", {}));
+  // UI preferences — localStorage
+  const [shipActive,      setShipActive]      = useState(() => ls.get("shipActive", {}));
+  const [activeBossId,    setActiveBossIdState] = useState(() => ls.get("activeBossId", null) ?? "spaceship_boss");
 
-  // Ship active state: { [id]: boolean } — default true
-  const [shipActive, setShipActive] = useState(() => ls.get("shipActive", {}));
+  // ── Load từ API khi mount ─────────────────────────────────────
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/api/models`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setModels(data);
+          ls.set("modelsCache", data);
+        }
+      })
+      .catch(() => { /* giữ cache */ })
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Active boss id
-  const [activeBossId, setActiveBossIdState] = useState(
-    () => ls.get("activeBossId", null) ?? "spaceship_boss"
-  );
-
-  // ── Computed ─────────────────────────────────────────────────
-
-  // Built-in with overrides merged
-  const builtinModels = BUILTIN_MODELS.map((m) =>
-    builtinOverrides[m.id] ? { ...m, ...builtinOverrides[m.id] } : m
-  );
-
-  const allModels = [...builtinModels, ...customModels];
-
-  // Enrich với active field
-  const allModelsWithActive = allModels.map((m) => ({
+  // ── Computed views ────────────────────────────────────────────
+  const modelsWithActive = models.map((m) => ({
     ...m,
     active: m.role === "boss"
       ? m.id === activeBossId
-      : (shipActive[m.id] !== false), // ships default active
+      : shipActive[m.id] !== false, // ships default active
   }));
 
-  // Ship models (all) + active ship models (for gift dropdown)
-  const allShipModels = allModelsWithActive.filter((m) => m.role === "ship");
-  const shipModels    = allShipModels.filter((m) => m.active);
-
-  // All boss models + active boss
-  const allBossModels  = allModelsWithActive.filter((m) => m.role === "boss");
+  const allShipModels   = modelsWithActive.filter((m) => m.role === "ship");
+  const allBossModels   = modelsWithActive.filter((m) => m.role === "boss");
+  const shipModels      = allShipModels.filter((m) => m.active);        // cho gift config dropdown
   const activeBossModel = allBossModels.find((m) => m.active) ?? allBossModels[0];
 
-  // ── Built-in: update / reset ──────────────────────────────────
-  const updateBuiltinModel = useCallback((id, changes) => {
-    setBuiltinOverrides((prev) => {
-      const next = { ...prev, [id]: { ...(prev[id] ?? {}), ...changes } };
-      ls.set("builtinOverrides", next);
+  // ── Helper cập nhật local state + cache ─────────────────────
+  const _setAndCache = (updater) => {
+    setModels((prev) => {
+      const next = updater(prev);
+      ls.set("modelsCache", next);
       return next;
     });
+  };
+
+  // ── Add model (sau khi upload thành công) ────────────────────
+  const addModel = useCallback((model) => {
+    _setAndCache((prev) => [...prev, model]);
   }, []);
 
-  const resetBuiltinModel = useCallback((id) => {
-    setBuiltinOverrides((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      ls.set("builtinOverrides", next);
-      return next;
-    });
+  // ── Update model → PUT API + local ──────────────────────────
+  const updateModel = useCallback(async (id, changes) => {
+    // Optimistic update
+    _setAndCache((prev) => prev.map((m) => (m.id === id ? { ...m, ...changes } : m)));
+
+    try {
+      await fetch(`${BACKEND_URL}/api/models/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(changes),
+      });
+    } catch { /* ignore offline */ }
   }, []);
 
-  const hasOverride = useCallback(
-    (id) => !!builtinOverrides[id],
-    [builtinOverrides]
-  );
+  // ── Delete model → DELETE API + local ───────────────────────
+  const removeModel = useCallback(async (id) => {
+    _setAndCache((prev) => prev.filter((m) => m.id !== id));
 
-  // ── Custom: add / update / remove ────────────────────────────
-  const addCustomModel = useCallback((model) => {
-    setCustomModels((prev) => {
-      const next = [...prev, model];
-      ls.set("customModels", next);
-      return next;
-    });
-  }, []);
+    try {
+      await fetch(`${BACKEND_URL}/api/models/${id}`, { method: "DELETE" });
+    } catch { /* ignore */ }
 
-  const updateCustomModel = useCallback((id, changes) => {
-    setCustomModels((prev) => {
-      const next = prev.map((m) => (m.id === id ? { ...m, ...changes } : m));
-      ls.set("customModels", next);
-      return next;
-    });
-  }, []);
-
-  const removeCustomModel = useCallback((id) => {
-    setCustomModels((prev) => {
-      const next = prev.filter((m) => m.id !== id);
-      ls.set("customModels", next);
-      return next;
-    });
-    // Nếu xóa boss đang active → chuyển về default
     if (id === activeBossId) {
       setActiveBossIdState("spaceship_boss");
       ls.set("activeBossId", "spaceship_boss");
     }
   }, [activeBossId]);
 
-  // ── Active ship toggle ────────────────────────────────────────
+  // ── Ship active toggle ───────────────────────────────────────
   const toggleShipActive = useCallback((id) => {
     setShipActive((prev) => {
-      const current = prev[id] !== false; // default true
-      const next = { ...prev, [id]: !current };
+      const next = { ...prev, [id]: prev[id] === false ? true : false };
       ls.set("shipActive", next);
       return next;
     });
   }, []);
 
-  // ── Active boss setter ────────────────────────────────────────
+  // ── Active boss ──────────────────────────────────────────────
   const setActiveBoss = useCallback((id) => {
     setActiveBossIdState(id);
     ls.set("activeBossId", id);
   }, []);
 
-  // ── getModel ──────────────────────────────────────────────────
-  const getModel = useCallback(
-    (id) => allModelsWithActive.find((m) => m.id === id),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [customModels, builtinOverrides, shipActive, activeBossId]
-  );
+  // ── Refresh từ server (dùng sau upload) ─────────────────────
+  const refreshModels = useCallback(() => {
+    fetch(`${BACKEND_URL}/api/models`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) { setModels(data); ls.set("modelsCache", data); } })
+      .catch(() => {});
+  }, []);
 
   return (
     <ModelContext.Provider
       value={{
-        // All models (enriched with active)
-        allModels: allModelsWithActive,
+        loading,
+        models: modelsWithActive,
         allShipModels,
         allBossModels,
-        // For gift config dropdown (active ships only)
         shipModels,
-        // Raw custom models list (for ModelManager)
-        customModels,
-        // For game rendering
         activeBossModel,
         activeBossId,
-        // CRUD
-        updateBuiltinModel,
-        resetBuiltinModel,
-        hasOverride,
-        addCustomModel,
-        updateCustomModel,
-        removeCustomModel,
+        addModel,
+        updateModel,
+        removeModel,
         toggleShipActive,
         setActiveBoss,
-        getModel,
+        refreshModels,
       }}
     >
       {children}

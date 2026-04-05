@@ -9,9 +9,10 @@
  * - Reset built-in về mặc định
  */
 import { useState, useRef, useEffect } from "react";
+import { useGLTF } from "@react-three/drei";
 import { useModels } from "../store/modelStore";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8888";
 
 // ── Shared styles ─────────────────────────────────────────────
 const inputStyle = {
@@ -424,24 +425,26 @@ function UploadForm({ onSuccess }) {
     setError("");
     try {
       const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch(`${BACKEND_URL}/api/upload-model`, { method: "POST", body: fd });
+      fd.append("file",         file);
+      fd.append("label",        params.label.trim());
+      fd.append("emoji",        params.emoji || "🚀");
+      fd.append("role",         params.role);
+      fd.append("scale",        params.scale);
+      fd.append("gunTipOffset", params.gunTipOffset);
+      fd.append("rotationY",    params.rotationY);
+      fd.append("bulletColor",  params.bulletColor);
+
+      const res = await fetch(`${BACKEND_URL}/api/models/upload`, { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload thất bại");
 
-      onSuccess({
-        id: data.filename.replace(".glb", ""),
-        label: params.label.trim(),
-        emoji: params.emoji || "🚀",
-        role: params.role,
-        path: data.url,
-        scale:        parseFloat(params.scale),
-        gunTipOffset: parseFloat(params.gunTipOffset),
-        rotationY:    parseFloat(params.rotationY),
-        bulletColor:  params.bulletColor,
-        builtIn: false,
-        active: params.role === "ship" ? true : false,
-      });
+      // Xóa Suspense cache của useGLTF để tránh lỗi "Unexpected token '<'"
+      // (cache có thể giữ lỗi 404 từ khi file chưa tồn tại)
+      if (data.path) {
+        try { useGLTF.clear(data.path); } catch (_) {}
+      }
+
+      onSuccess(data); // backend trả về full model object đã lưu vào JSON
 
       setFile(null);
       setParams({ label: "", emoji: "🚀", role: "ship", scale: 0.25, gunTipOffset: 0.4, rotationY: 0, bulletColor: "#00f5ff" });
@@ -640,16 +643,13 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
   const {
     allShipModels,
     allBossModels,
-    customModels,
     activeBossId,
-    updateBuiltinModel,
-    resetBuiltinModel,
-    hasOverride,
-    addCustomModel,
-    updateCustomModel,
-    removeCustomModel,
+    addModel,
+    updateModel,
+    removeModel,
     toggleShipActive,
     setActiveBoss,
+    loading,
   } = useModels();
 
   useEffect(() => {
@@ -659,20 +659,8 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, onClose]);
 
-  const handleDeleteCustom = async (id) => {
-    const filename = `${id}.glb`;
-    try { await fetch(`${BACKEND_URL}/api/models/${filename}`, { method: "DELETE" }); }
-    catch { /* ignore */ }
-    removeCustomModel(id);
-  };
-
-  // Custom models by role
-  const customShips = customModels.filter((m) => m.role === "ship");
-  const customBosses = customModels.filter((m) => m.role === "boss");
-
-  // Built-in ships / boss
-  const builtinShips = allShipModels.filter((m) => m.builtIn);
-  const builtinBosses = allBossModels.filter((m) => m.builtIn);
+  const ships  = allShipModels;
+  const bosses = allBossModels;
 
   return (
     <>
@@ -728,9 +716,9 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: "0.6rem", color: "rgba(180,200,255,0.4)" }}>
             <RoleBadge role="ship" />
-            <span>{allShipModels.length} models</span>
+            <span>{ships.length}</span>
             <RoleBadge role="boss" />
-            <span>{allBossModels.length} models</span>
+            <span>{bosses.length}</span>
             <button
               onClick={onClose}
               style={{ ...btnBase, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(200,220,255,0.7)", marginLeft: 4 }}
@@ -743,33 +731,23 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
         {/* Content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 18 }}>
 
-          {/* ── Built-in Ships ── */}
-          <section>
-            <SectionHeader icon="✦" label="Built-in Ships" color="rgba(0,245,255,0.65)" count={builtinShips.length} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {builtinShips.map((m) => (
-                <ModelCard
-                  key={m.id}
-                  model={m}
-                  onUpdate={updateBuiltinModel}
-                  onReset={hasOverride(m.id) ? resetBuiltinModel : undefined}
-                  onToggleShip={toggleShipActive}
-                />
-              ))}
+          {loading && (
+            <div style={{ textAlign: "center", color: "rgba(180,200,255,0.4)", fontSize: "0.75rem", padding: "20px 0" }}>
+              ⏳ Đang tải models từ server...
             </div>
-          </section>
+          )}
 
-          {/* ── Custom Ships ── */}
-          {customShips.length > 0 && (
+          {/* ── Ships ── */}
+          {ships.length > 0 && (
             <section>
-              <SectionHeader icon="✦" label="Custom Ships" color="rgba(0,245,255,0.5)" count={customShips.length} />
+              <SectionHeader icon="✦" label="Ships" color="rgba(0,245,255,0.65)" count={ships.length} />
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {customShips.map((m) => (
+                {ships.map((m) => (
                   <ModelCard
                     key={m.id}
                     model={m}
-                    onUpdate={updateCustomModel}
-                    onDelete={handleDeleteCustom}
+                    onUpdate={(id, changes) => updateModel(id, changes)}
+                    onDelete={(id) => removeModel(id)}
                     onToggleShip={toggleShipActive}
                   />
                 ))}
@@ -777,35 +755,18 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
             </section>
           )}
 
-          {/* ── Built-in Boss ── */}
-          <section>
-            <SectionHeader icon="☠" label="Built-in Boss" color="rgba(255,80,100,0.7)" count={builtinBosses.length} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {builtinBosses.map((m) => (
-                <ModelCard
-                  key={m.id}
-                  model={m}
-                  isActiveBoss={m.id === activeBossId}
-                  onUpdate={updateBuiltinModel}
-                  onReset={hasOverride(m.id) ? resetBuiltinModel : undefined}
-                  onSetActiveBoss={setActiveBoss}
-                />
-              ))}
-            </div>
-          </section>
-
-          {/* ── Custom Bosses ── */}
-          {customBosses.length > 0 && (
+          {/* ── Bosses ── */}
+          {bosses.length > 0 && (
             <section>
-              <SectionHeader icon="☠" label="Custom Boss" color="rgba(255,60,90,0.6)" count={customBosses.length} />
+              <SectionHeader icon="☠" label="Boss" color="rgba(255,80,100,0.7)" count={bosses.length} />
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {customBosses.map((m) => (
+                {bosses.map((m) => (
                   <ModelCard
                     key={m.id}
                     model={m}
                     isActiveBoss={m.id === activeBossId}
-                    onUpdate={updateCustomModel}
-                    onDelete={handleDeleteCustom}
+                    onUpdate={(id, changes) => updateModel(id, changes)}
+                    onDelete={(id) => removeModel(id)}
                     onSetActiveBoss={setActiveBoss}
                   />
                 ))}
@@ -815,7 +776,7 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
 
           {/* ── Upload ── */}
           <section>
-            <UploadForm onSuccess={addCustomModel} />
+            <UploadForm onSuccess={addModel} />
           </section>
         </div>
       </aside>

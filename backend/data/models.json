@@ -1,0 +1,50 @@
+[
+  {
+    "id": "spaceship_1",
+    "label": "Fighter",
+    "emoji": "🔵",
+    "role": "ship",
+    "path": "/models/spaceship_1.glb",
+    "scale": 0.25,
+    "gunTipOffset": 0.1,
+    "rotationY": 45,
+    "bulletColor": "#00f5ff",
+    "builtIn": true
+  },
+  {
+    "id": "spaceship_2",
+    "label": "Cruiser",
+    "emoji": "🟣",
+    "role": "ship",
+    "path": "/models/spaceship_2.glb",
+    "scale": 0.35,
+    "gunTipOffset": 0.4,
+    "rotationY": 35,
+    "bulletColor": "#bf00ff",
+    "builtIn": true
+  },
+  {
+    "id": "spaceship_3",
+    "label": "Destroyer",
+    "emoji": "🟡",
+    "role": "ship",
+    "path": "/models/spaceship_3.glb",
+    "scale": 0.05,
+    "gunTipOffset": 0.5,
+    "rotationY": 40,
+    "bulletColor": "#ffaa00",
+    "builtIn": true
+  },
+  {
+    "id": "spaceship_boss",
+    "label": "Boss (Default)",
+    "emoji": "💀",
+    "role": "boss",
+    "path": "/models/spaceship_boss.glb",
+    "scale": 4.5,
+    "gunTipOffset": 0,
+    "rotationY": 90,
+    "bulletColor": "#ff0044",
+    "builtIn": true
+  }
+]
