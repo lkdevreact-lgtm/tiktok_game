@@ -1,16 +1,45 @@
 import { useRef, useEffect, useCallback } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Stars } from "@react-three/drei";
+import { Stars, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useGame } from "../store/gameStore";
 import {
   createSpaceship1,
   createSpaceship2,
   createSpaceship3,
-  createBoss,
   createBullet,
   createExplosion,
 } from "./models";
+
+useGLTF.preload("/models/spaceship_boss.glb");
+
+function BossModel({ bossRef: externalRef }) {
+  const { scene: gltfScene } = useGLTF("/models/spaceship_boss.glb");
+  const groupRef = useRef();
+
+  useEffect(() => {
+    if (!groupRef.current) return;
+    const cloned = gltfScene.clone(true);
+    cloned.name = "boss";
+
+    cloned.scale.setScalar(3.5);
+
+    cloned.traverse((child) => {
+      if (child.isMesh && child.material) {
+        child.material.needsUpdate = true;
+      }
+    });
+
+    groupRef.current.add(cloned);
+    if (externalRef) externalRef.current = groupRef.current;
+
+    return () => {
+      groupRef.current?.remove(cloned);
+    };
+  }, [gltfScene, externalRef]);
+
+  return <group ref={groupRef} />;
+}
 
 const SHIP_FACTORIES = {
   spaceship_1: createSpaceship1,
@@ -34,7 +63,6 @@ export default function GameScene({ onGiftSpawn }) {
   const { scene } = useThree();
   const { setBossHp, setGameStatus, setShipCount, gameStatus } = useGame();
 
-  // All game state as mutable refs (not React state — game loop needs sync updates)
   const bossRef       = useRef(null);
   const bossHpRef     = useRef(100);
   const shipsRef      = useRef([]);
@@ -44,7 +72,6 @@ export default function GameScene({ onGiftSpawn }) {
   const statusRef     = useRef("idle");
   const prevGameStatus= useRef("idle");
 
-  // ── Spawn Ship (stable ref) ─────────────────────────────────
   const spawnShipFn = useRef(null);
 
   const spawnShip = useCallback(
@@ -79,39 +106,28 @@ export default function GameScene({ onGiftSpawn }) {
     [scene, setShipCount]
   );
 
-  // Keep spawnShipFn ref updated
   useEffect(() => {
     spawnShipFn.current = spawnShip;
   }, [spawnShip]);
 
-  // Expose spawn to GameCanvas
   useEffect(() => {
     if (onGiftSpawn) {
       onGiftSpawn((args) => spawnShipFn.current?.(args));
     }
   }, [onGiftSpawn]);
 
-  // ── Init scene once ─────────────────────────────────────────
   useEffect(() => {
-    // Lighting
-    const ambient = new THREE.AmbientLight(0x111133, 1.5);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    const ambient = new THREE.AmbientLight(0xffffff, 3.0);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 4);
     dirLight.position.set(5, 5, 5);
-    const pointCyan = new THREE.PointLight(0x00f5ff, 2, 20);
+    const bossLight = new THREE.DirectionalLight(0xffffff, 3);
+    bossLight.position.set(-8, 2, 4);
+    const pointCyan = new THREE.PointLight(0x00f5ff, 1.5, 25);
     pointCyan.position.set(2, 2, 3);
-    const pointRed = new THREE.PointLight(0xff0066, 2, 20);
-    pointRed.position.set(-4, 0, 2);
+    const pointRed = new THREE.PointLight(0xff4466, 1.5, 25);
+    pointRed.position.set(-6, 0, 2);
 
-    scene.add(ambient, dirLight, pointCyan, pointRed);
-
-    // Boss
-    const boss = createBoss();
-    boss.position.set(BOSS_START_X, 0, 0);
-    boss.rotation.y = Math.PI / 2;
-    scene.add(boss);
-    bossRef.current = boss;
-
-    // Starter ships
+    scene.add(ambient, dirLight, bossLight, pointCyan, pointRed);
     spawnShip({ type: "spaceship_1", damage: 1, fireRate: 1.0 });
     spawnShip({ type: "spaceship_2", damage: 3, fireRate: 0.5 });
 
@@ -122,8 +138,7 @@ export default function GameScene({ onGiftSpawn }) {
 
     return () => {
       // Full cleanup on unmount
-      scene.remove(ambient, dirLight, pointCyan, pointRed);
-      if (bossRef.current) scene.remove(bossRef.current);
+      scene.remove(ambient, dirLight, bossLight, pointCyan, pointRed);
       shipsRef.current.forEach((s) => scene.remove(s.mesh));
       bulletsRef.current.forEach((b) => scene.remove(b.mesh));
       explosionsRef.current.forEach((p) => scene.remove(p.mesh));
@@ -133,6 +148,16 @@ export default function GameScene({ onGiftSpawn }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
+
+  // ── Set initial boss position once ref is available ──────────
+  const bossInitializedRef = useRef(false);
+  useEffect(() => {
+    if (bossRef.current && !bossInitializedRef.current) {
+      bossRef.current.position.set(BOSS_START_X, 0, 0);
+      bossRef.current.rotation.y = Math.PI / 2;
+      bossInitializedRef.current = true;
+    }
+  });
 
   // ── Fire bullet ─────────────────────────────────────────────
   const fireBullet = useCallback(
@@ -201,9 +226,7 @@ export default function GameScene({ onGiftSpawn }) {
     statusRef.current = "playing";
   }, [scene, setBossHp, setShipCount]);
 
-  // ── Watch external gameStatus for reset trigger ──────────────
   useEffect(() => {
-    // When parent sets gameStatus back to "playing" after win/lose → reset
     if (
       gameStatus === "playing" &&
       (prevGameStatus.current === "win" || prevGameStatus.current === "lose")
@@ -213,27 +236,14 @@ export default function GameScene({ onGiftSpawn }) {
     prevGameStatus.current = gameStatus;
   }, [gameStatus, doReset]);
 
-  // ── Game Loop ────────────────────────────────────────────────
   useFrame((_, delta) => {
     if (!gameActiveRef.current || statusRef.current !== "playing") return;
 
     const boss = bossRef.current;
     if (!boss) return;
 
-    // Boss moves left → right
     boss.position.x += BOSS_SPEED * 60 * delta;
-    boss.rotation.y += 0.01;
 
-    // Animate rings
-    const ring = boss.getObjectByName("boss_ring");
-    if (ring) ring.rotation.z += 0.02;
-    const core = boss.getObjectByName("boss_core");
-    if (core) {
-      const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.25;
-      core.scale.setScalar(pulse);
-    }
-
-    // ── Lose check ──
     if (boss.position.x >= BOSS_END_X) {
       statusRef.current = "lose";
       gameActiveRef.current = false;
@@ -242,7 +252,6 @@ export default function GameScene({ onGiftSpawn }) {
       return;
     }
 
-    // ── Ships: hover + fire ──
     shipsRef.current.forEach((ship) => {
       ship.hoverPhase += delta * 1.5;
       ship.mesh.position.y = ship.baseY + Math.sin(ship.hoverPhase) * 0.07;
@@ -255,7 +264,6 @@ export default function GameScene({ onGiftSpawn }) {
       }
     });
 
-    // ── Bullets: move + collision ──
     const bossBox = new THREE.Box3().setFromObject(boss);
     bossBox.expandByScalar(0.12);
 
@@ -333,6 +341,9 @@ export default function GameScene({ onGiftSpawn }) {
   });
 
   return (
-    <Stars radius={80} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+    <>
+      <Stars radius={80} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+      <BossModel bossRef={bossRef} />
+    </>
   );
 }
