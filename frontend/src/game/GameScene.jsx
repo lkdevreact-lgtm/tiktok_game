@@ -8,7 +8,7 @@ import BossModel from "./BossModel";
 import { useShipModels, SHIP_BULLET_COLORS } from "../hooks/useShipModels";
 
 const MAX_SHIPS = 50;
-const BOSS_START_X = -5;
+const BOSS_START_X = -9;
 const BOSS_END_X = 4.2;
 const BOSS_SPEED = 0.001;
 const BULLET_SPEED = 0.08;
@@ -41,8 +41,8 @@ export default function GameScene({ onGiftSpawn }) {
 
       const y = (Math.random() - 0.5) * 3.5;
       const z = (Math.random() - 0.5) * 1.5;
-      mesh.position.set(4.0, y, z);
-      mesh.rotation.y = 40; // user đã chỉnh
+      mesh.position.set(6.0, y, z);
+      mesh.rotation.y = 20; // user đã chỉnh
 
       scene.add(mesh);
 
