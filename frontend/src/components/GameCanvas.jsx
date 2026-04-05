@@ -14,17 +14,15 @@ export default function GameCanvas() {
 
   const spawnShipRef = useRef(null);
 
-  // Receive spawn function from GameScene
   const handleGiftSpawn = useCallback((fn) => {
     spawnShipRef.current = fn;
   }, []);
 
-  // ── Listen for TikTok gifts via socket ──
+  // Listen for TikTok gifts via socket
   useEffect(() => {
     const handleGift = (data) => {
       const { giftId, giftName, uniqueId, nickname, imgUrl } = data;
       const config = giftMapping[giftId];
-
       if (!config || !config.active) return;
 
       addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl });
@@ -33,22 +31,19 @@ export default function GameCanvas() {
       const times = Math.min(count, 5);
       for (let i = 0; i < times; i++) {
         setTimeout(() => {
-          if (spawnShipRef.current) {
-            spawnShipRef.current({
-              type: config.spaceship || "spaceship_1",
-              damage: config.damage || 1,
-              fireRate: config.fireRate || 1.0,
-            });
-          }
+          spawnShipRef.current?.({
+            type: config.spaceship || "spaceship_1",
+            damage: config.damage || 1,
+            fireRate: config.fireRate || 1.0,
+          });
         }, i * 150);
       }
     };
-
     socket.on("gift_received", handleGift);
     return () => socket.off("gift_received", handleGift);
   }, [giftMapping, addNotification]);
 
-  // ── Dev: expose simulate helper via console ──
+  // Dev: expose simulate helper
   useEffect(() => {
     window.__simulateGift = (giftId = 5655) => {
       const config = giftMapping[giftId];
@@ -64,13 +59,10 @@ export default function GameCanvas() {
     return () => { delete window.__simulateGift; };
   }, [giftMapping, addNotification]);
 
-  const handleReset = () => {
-    setBossHp(100);
-    resetGame();
-  };
+  const handleReset = () => { setBossHp(100); resetGame(); };
 
   const hpPercent = Math.max(0, Math.min(100, bossHp));
-  const hpColor = hpPercent > 50 ? "#ff3366" : hpPercent > 25 ? "#ff6600" : "#ff0000";
+  const hpColor   = hpPercent > 50 ? "#ff3366" : hpPercent > 25 ? "#ff6600" : "#ff0000";
 
   const handleSimulate = () => {
     const config = giftMapping[5655];
@@ -85,9 +77,9 @@ export default function GameCanvas() {
   };
 
   return (
-    <div className="game-wrapper">
-      {/* 3D Canvas */}
-      <div className="game-canvas-area">
+    <div className="fixed inset-0 flex">
+      {/* 3D Canvas area */}
+      <div className="flex-1 relative">
         <Canvas
           camera={{ position: [0, 1.5, 9], fov: 55 }}
           gl={{ antialias: true, alpha: false }}
@@ -97,39 +89,69 @@ export default function GameCanvas() {
         </Canvas>
 
         {/* ── HUD ── */}
-        <div className="hud">
-          <div className="boss-hp-bar-wrap">
-            <div className="hud-boss-label">⚠️ BOSS HP</div>
-            <div className="boss-hp-bar-bg">
+        <div className="absolute top-0 left-0 right-0 flex items-center gap-4 px-5 py-4 pointer-events-none z-10">
+          {/* Boss HP */}
+          <div className="flex-1 max-w-[500px]">
+            <div
+              className="text-[0.65rem] uppercase tracking-widest mb-1"
+              style={{ fontFamily: "var(--font-game)", color: "var(--color-danger)" }}
+            >
+              ⚠️ BOSS HP
+            </div>
+            <div
+              className="h-[14px] rounded-[7px] overflow-hidden"
+              style={{ background: "rgba(255,51,102,0.15)", border: "1px solid rgba(255,51,102,0.4)" }}
+            >
               <div
-                className="boss-hp-bar-fill"
+                className="h-full rounded-[7px] transition-[width] duration-300 ease-out boss-hp-glow"
                 style={{
                   width: `${hpPercent}%`,
                   background: `linear-gradient(90deg, ${hpColor}, ${hpColor}88)`,
                 }}
               />
             </div>
-            <div style={{ fontSize: "0.65rem", color: "rgba(255,80,80,0.7)", marginTop: "2px", fontFamily: "var(--font-game)" }}>
+            <div
+              className="text-[0.65rem] mt-0.5"
+              style={{ color: "rgba(255,80,80,0.7)", fontFamily: "var(--font-game)" }}
+            >
               {hpPercent.toFixed(1)}%
             </div>
           </div>
 
-          <div className="hud-ships-count">🚀 Ships: {shipCount}</div>
-          <div className="hud-username">@{username}</div>
+          <div
+            className="text-[0.75rem] whitespace-nowrap"
+            style={{ fontFamily: "var(--font-game)", color: "var(--color-cyan)" }}
+          >
+            🚀 Ships: {shipCount}
+          </div>
+          <div
+            className="text-[0.65rem] whitespace-nowrap"
+            style={{ fontFamily: "var(--font-game)", color: "rgba(180,200,255,0.5)" }}
+          >
+            @{username}
+          </div>
         </div>
 
         {/* ── Gift Notification Feed ── */}
-        <div className="gift-feed">
+        <div className="absolute bottom-5 left-5 flex flex-col-reverse gap-2 pointer-events-none z-[15] max-h-60 overflow-hidden">
           {notifications.map((n) => (
-            <div key={n.id} className="gift-notification">
+            <div
+              key={n.id}
+              className="flex items-center gap-2 px-[14px] py-2 rounded-[30px] text-[0.8rem] animate-slide-in animate-fade-out"
+              style={{
+                background: "rgba(5,15,30,0.88)",
+                border: "1px solid var(--color-border)",
+                backdropFilter: "blur(8px)",
+              }}
+            >
               {n.imgUrl ? (
-                <img src={n.imgUrl} alt={n.giftName} />
+                <img src={n.imgUrl} alt={n.giftName} className="w-6 h-6 rounded" />
               ) : (
                 <span>🎁</span>
               )}
-              <span className="notif-user">{n.user}</span>
+              <span className="font-semibold" style={{ color: "var(--color-cyan)" }}>{n.user}</span>
               <span style={{ color: "rgba(180,200,255,0.6)" }}>sent</span>
-              <span className="notif-gift">{n.giftName}</span>
+              <span style={{ color: "var(--color-gold)" }}>{n.giftName}</span>
             </div>
           ))}
         </div>
@@ -138,40 +160,56 @@ export default function GameCanvas() {
         <button
           id="btn-simulate-gift"
           onClick={handleSimulate}
+          className="absolute bottom-5 right-[316px] rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer z-[15] transition-colors duration-200"
           style={{
-            position: "absolute",
-            bottom: 20,
-            right: 316,
             background: "rgba(0,245,255,0.12)",
             border: "1px solid rgba(0,245,255,0.35)",
-            borderRadius: "8px",
-            padding: "8px 16px",
             color: "var(--color-cyan)",
             fontFamily: "var(--font-game)",
-            fontSize: "0.65rem",
-            cursor: "pointer",
-            letterSpacing: "0.08em",
-            zIndex: 15,
-            transition: "background 0.2s",
           }}
-          onMouseEnter={e => e.target.style.background = "rgba(0,245,255,0.22)"}
-          onMouseLeave={e => e.target.style.background = "rgba(0,245,255,0.12)"}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,245,255,0.22)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,245,255,0.12)"; }}
         >
           🎁 SIMULATE GIFT
         </button>
 
         {/* ── Win / Lose Screen ── */}
         {(gameStatus === "win" || gameStatus === "lose") && (
-          <div className="game-result-overlay">
-            <div className={`result-title ${gameStatus}`}>
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-5 z-20 animate-fade-in"
+            style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+          >
+            <div
+              className={`text-5xl font-black animate-pulse-scale ${gameStatus === "win" ? "neon-success" : "neon-danger"}`}
+              style={{
+                fontFamily: "var(--font-game)",
+                textShadow: gameStatus === "win"
+                  ? "0 0 40px var(--color-success)"
+                  : "0 0 40px var(--color-danger)",
+                color: gameStatus === "win" ? "var(--color-success)" : "var(--color-danger)",
+              }}
+            >
               {gameStatus === "win" ? "🏆 YOU WIN!" : "💀 GAME OVER"}
             </div>
-            <div style={{ color: "rgba(180,200,255,0.7)", fontFamily: "var(--font-ui)", fontSize: "0.9rem", textAlign: "center" }}>
+
+            <div className="text-[0.9rem] text-center" style={{ color: "rgba(180,200,255,0.7)", fontFamily: "var(--font-ui)" }}>
               {gameStatus === "win"
                 ? "The boss has been defeated! Your viewers are amazing! 🎉"
                 : "The boss reached you... Try again! 💪"}
             </div>
-            <button id="btn-reset-game" className="btn-reset" onClick={handleReset}>
+
+            <button
+              id="btn-reset-game"
+              onClick={handleReset}
+              className="rounded-lg px-8 py-3 text-black font-bold text-[0.85rem] uppercase tracking-widest cursor-pointer
+                         transition-all duration-150 hover:-translate-y-0.5"
+              style={{
+                fontFamily: "var(--font-game)",
+                background: "linear-gradient(135deg, var(--color-cyan), #0088aa)",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,245,255,0.5)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "none"; }}
+            >
               🔄 Play Again
             </button>
           </div>
