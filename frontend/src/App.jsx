@@ -1,13 +1,37 @@
-import { Canvas } from "@react-three/fiber";
-import Experience from "./components/Experience";
+import { useEffect } from "react";
+import { GameProvider, useGame } from "./store/gameStore";
+import ConnectForm from "./components/ConnectForm";
+import GameCanvas from "./components/GameCanvas";
+import socket from "./socket/socketClient";
 
-const App = () => {
+function AppInner() {
+  const { connected, setConnected, setUsername, setGameStatus } = useGame();
+
+  useEffect(() => {
+    socket.on("tiktok_connected", ({ username }) => {
+      setUsername(username);
+      setConnected(true);
+      setGameStatus("playing");
+    });
+
+    socket.on("tiktok_disconnected", () => {
+      console.warn("TikTok disconnected");
+    });
+
+    return () => {
+      socket.off("tiktok_connected");
+      socket.off("tiktok_disconnected");
+    };
+  }, [setConnected, setUsername, setGameStatus]);
+
+  if (!connected) return <ConnectForm />;
+  return <GameCanvas />;
+}
+
+export default function App() {
   return (
-    <Canvas shadows camera={{position: [0,8,12], fov: 10}}>
-      <color attach="background" args={["ececec"]} />
-      <Experience />
-    </Canvas>
+    <GameProvider>
+      <AppInner />
+    </GameProvider>
   );
-};
-
-export default App;
+}
