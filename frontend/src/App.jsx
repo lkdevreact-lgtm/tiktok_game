@@ -1,17 +1,12 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
-import HomePage from "./pages/HomePage";
-import { ROUTE_URLS } from "./utils/constant";
+import { Canvas } from "@react-three/fiber";
+import Experience from "./components/Experience";
 
 const App = () => {
   return (
-    <div>
-      <main>
-        <Routes>
-          <Route path={ROUTE_URLS.HOME} element={<HomePage />} />
-        </Routes>
-      </main>
-    </div>
+    <Canvas shadows camera={{position: [0,8,12], fov: 10}}>
+      <color attach="background" args={["ececec"]} />
+      <Experience />
+    </Canvas>
   );
 };
 
