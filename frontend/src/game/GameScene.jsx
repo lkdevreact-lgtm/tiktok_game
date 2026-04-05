@@ -1,100 +1,35 @@
 import { useRef, useEffect, useCallback } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Stars, useGLTF } from "@react-three/drei";
+import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 import { useGame } from "../store/gameStore";
 import { createBullet, createExplosion } from "./models";
+import BossModel from "./BossModel";
+import { useShipModels, SHIP_BULLET_COLORS } from "../hooks/useShipModels";
 
-// Preload tất cả models
-useGLTF.preload("/models/spaceship_boss.glb");
-useGLTF.preload("/models/spaceship_1.glb");
-useGLTF.preload("/models/spaceship_2.glb");
-useGLTF.preload("/models/spaceship_3.glb");
-
-function BossModel({ bossRef: externalRef }) {
-  const { scene: gltfScene } = useGLTF("/models/spaceship_boss.glb");
-  const groupRef = useRef();
-
-  useEffect(() => {
-    if (!groupRef.current) return;
-    const cloned = gltfScene.clone(true);
-    cloned.name = "boss";
-
-    cloned.scale.setScalar(3.5);
-
-    cloned.traverse((child) => {
-      if (child.isMesh && child.material) {
-        child.material.needsUpdate = true;
-      }
-    });
-
-    groupRef.current.add(cloned);
-    if (externalRef) externalRef.current = groupRef.current;
-
-    return () => {
-      groupRef.current?.remove(cloned);
-    };
-  }, [gltfScene, externalRef]);
-
-  return <group ref={groupRef} />;
-}
-
-// Scale cho từng loại tàu GLB
-const SHIP_SCALES = {
-  spaceship_1: 0.25,
-  spaceship_2: 0.25,
-  spaceship_3: 0.25,
-};
-
-// Gun tip offset (phía trước tàu theo trục X)
-const GUN_TIP_OFFSET = {
-  spaceship_1: 0.4,
-  spaceship_2: 0.4,
-  spaceship_3: 0.5,
-};
-
-const SHIP_BULLET_COLORS = {
-  spaceship_1: 0x00f5ff,
-  spaceship_2: 0xbf00ff,
-  spaceship_3: 0xffaa00,
-};
-
-const MAX_SHIPS = 50;
+const MAX_SHIPS   = 50;
 const BOSS_START_X = -5;
-const BOSS_END_X = 4.2;
-const BOSS_SPEED = 0.001;
+const BOSS_END_X   = 4.2;
+const BOSS_SPEED   = 0.001;
 const BULLET_SPEED = 0.08;
 
 export default function GameScene({ onGiftSpawn }) {
-  const { scene } = useThree();
+  const { scene }    = useThree();
   const { setBossHp, setGameStatus, setShipCount, gameStatus } = useGame();
+  const { cloneShipMesh } = useShipModels();
 
-  // Load ship GLB models (cached by useGLTF)
-  const { scene: shipGlb1 } = useGLTF("/models/spaceship_1.glb");
-  const { scene: shipGlb2 } = useGLTF("/models/spaceship_2.glb");
-  const { scene: shipGlb3 } = useGLTF("/models/spaceship_3.glb");
+  // ── Refs game state (sync, không trigger re-render) ──────────
+  const bossRef        = useRef(null);
+  const bossHpRef      = useRef(100);
+  const shipsRef       = useRef([]);
+  const bulletsRef     = useRef([]);
+  const explosionsRef  = useRef([]);
+  const gameActiveRef  = useRef(false);
+  const statusRef      = useRef("idle");
+  const prevGameStatus = useRef("idle");
+  const spawnShipFn    = useRef(null);
 
-  // Lưu vào ref để dùng trong spawnShip mà không cần re-render
-  const shipGlbRef = useRef({});
-  useEffect(() => {
-    shipGlbRef.current = {
-      spaceship_1: shipGlb1,
-      spaceship_2: shipGlb2,
-      spaceship_3: shipGlb3,
-    };
-  }, [shipGlb1, shipGlb2, shipGlb3]);
-
-  const bossRef       = useRef(null);
-  const bossHpRef     = useRef(100);
-  const shipsRef      = useRef([]);
-  const bulletsRef    = useRef([]);
-  const explosionsRef = useRef([]);
-  const gameActiveRef = useRef(false);
-  const statusRef     = useRef("idle");
-  const prevGameStatus= useRef("idle");
-
-  const spawnShipFn = useRef(null);
-
+  // ── Spawn Ship ───────────────────────────────────────────────
   const spawnShip = useCallback(
     ({ type, damage, fireRate }) => {
       if (shipsRef.current.length >= MAX_SHIPS) {
@@ -102,35 +37,13 @@ export default function GameScene({ onGiftSpawn }) {
         scene.remove(oldest.mesh);
       }
 
-      // Clone từ GLB model đã load
-      const glbScene = shipGlbRef.current[type];
-      let mesh;
-      if (glbScene) {
-        mesh = glbScene.clone(true);
-        const scale = SHIP_SCALES[type] || 0.25;
-        mesh.scale.setScalar(scale);
-        // Giữ nguyên material gốc
-        mesh.traverse((child) => {
-          if (child.isMesh && child.material) {
-            child.material.needsUpdate = true;
-          }
-        });
-        // Thêm gun_tip ảo để bullet spawn từ mũi tàu
-        const gunTip = new THREE.Object3D();
-        gunTip.name = "gun_tip";
-        gunTip.position.set(GUN_TIP_OFFSET[type] || 0.4, 0, 0);
-        mesh.add(gunTip);
-      } else {
-        // fallback: tạm thời dùng box nếu GLB chưa load
-        const geo = new THREE.BoxGeometry(0.3, 0.1, 0.1);
-        const mat = new THREE.MeshStandardMaterial({ color: 0x00f5ff });
-        mesh = new THREE.Mesh(geo, mat);
-      }
+      const mesh = cloneShipMesh(type);
 
       const y = (Math.random() - 0.5) * 3.5;
       const z = (Math.random() - 0.5) * 1.5;
       mesh.position.set(4.0, y, z);
-      mesh.rotation.y = 40; // quay mũi về phía trái (hướng boss)
+      mesh.rotation.y = 40; // user đã chỉnh
+
       scene.add(mesh);
 
       shipsRef.current.push({
@@ -145,53 +58,49 @@ export default function GameScene({ onGiftSpawn }) {
 
       setShipCount(shipsRef.current.length);
     },
-    [scene, setShipCount]
+    [scene, setShipCount, cloneShipMesh]
   );
 
-  useEffect(() => {
-    spawnShipFn.current = spawnShip;
-  }, [spawnShip]);
+  useEffect(() => { spawnShipFn.current = spawnShip; }, [spawnShip]);
 
   useEffect(() => {
-    if (onGiftSpawn) {
-      onGiftSpawn((args) => spawnShipFn.current?.(args));
-    }
+    if (onGiftSpawn) onGiftSpawn((args) => spawnShipFn.current?.(args));
   }, [onGiftSpawn]);
 
+  // ── Init scene (lights + starter ships) ─────────────────────
   useEffect(() => {
-    const ambient = new THREE.AmbientLight(0xffffff, 3.0);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 4);
+    const ambient   = new THREE.AmbientLight(0xffffff, 3.0);
+    const dirLight  = new THREE.DirectionalLight(0xffffff, 4);
     dirLight.position.set(5, 5, 5);
     const bossLight = new THREE.DirectionalLight(0xffffff, 3);
     bossLight.position.set(-8, 2, 4);
     const pointCyan = new THREE.PointLight(0x00f5ff, 1.5, 25);
     pointCyan.position.set(2, 2, 3);
-    const pointRed = new THREE.PointLight(0xff4466, 1.5, 25);
+    const pointRed  = new THREE.PointLight(0xff4466, 1.5, 25);
     pointRed.position.set(-6, 0, 2);
 
     scene.add(ambient, dirLight, bossLight, pointCyan, pointRed);
     spawnShip({ type: "spaceship_1", damage: 1, fireRate: 1.0 });
     spawnShip({ type: "spaceship_2", damage: 3, fireRate: 0.5 });
 
-    bossHpRef.current = 100;
+    bossHpRef.current   = 100;
     gameActiveRef.current = true;
-    statusRef.current = "playing";
+    statusRef.current   = "playing";
     prevGameStatus.current = "playing";
 
     return () => {
-      // Full cleanup on unmount
       scene.remove(ambient, dirLight, bossLight, pointCyan, pointRed);
       shipsRef.current.forEach((s) => scene.remove(s.mesh));
       bulletsRef.current.forEach((b) => scene.remove(b.mesh));
       explosionsRef.current.forEach((p) => scene.remove(p.mesh));
-      shipsRef.current = [];
-      bulletsRef.current = [];
+      shipsRef.current    = [];
+      bulletsRef.current  = [];
       explosionsRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
 
-  // ── Set initial boss position once ref is available ──────────
+  // ── Set boss initial position khi BossModel mount xong ───────
   const bossInitializedRef = useRef(false);
   useEffect(() => {
     if (bossRef.current && !bossInitializedRef.current) {
@@ -201,56 +110,49 @@ export default function GameScene({ onGiftSpawn }) {
     }
   });
 
-  // ── Fire bullet ─────────────────────────────────────────────
+  // ── Fire Bullet ──────────────────────────────────────────────
   const fireBullet = useCallback(
     (ship) => {
       if (!bossRef.current) return;
 
-      const gunTip = ship.mesh.getObjectByName("gun_tip");
+      const gunTip  = ship.mesh.getObjectByName("gun_tip");
       const startPos = new THREE.Vector3();
-      if (gunTip) {
-        gunTip.getWorldPosition(startPos);
-      } else {
-        ship.mesh.getWorldPosition(startPos);
-      }
+      if (gunTip) gunTip.getWorldPosition(startPos);
+      else         ship.mesh.getWorldPosition(startPos);
 
       const bossPos = new THREE.Vector3();
       bossRef.current.getWorldPosition(bossPos);
 
-      const direction = new THREE.Vector3()
+      const velocity = new THREE.Vector3()
         .subVectors(bossPos, startPos)
-        .normalize();
-      const velocity = direction.multiplyScalar(BULLET_SPEED);
+        .normalize()
+        .multiplyScalar(BULLET_SPEED);
 
-      const color = SHIP_BULLET_COLORS[ship.type] || 0x00f5ff;
+      const color      = SHIP_BULLET_COLORS[ship.type] ?? 0x00f5ff;
       const bulletMesh = createBullet(color);
       bulletMesh.position.copy(startPos);
       bulletMesh.lookAt(bossPos);
 
       scene.add(bulletMesh);
       bulletsRef.current.push({
-        mesh: bulletMesh,
-        velocity: velocity.clone(),
-        damage: ship.damage * 0.1,
+        mesh:      bulletMesh,
+        velocity:  velocity.clone(),
+        damage:    ship.damage * 0.1,
         ownerType: ship.type,
       });
     },
     [scene]
   );
 
-  // ── Reset helper ────────────────────────────────────────────
+  // ── Reset ────────────────────────────────────────────────────
   const doReset = useCallback(() => {
-    // Clear ships
     shipsRef.current.forEach((s) => scene.remove(s.mesh));
     shipsRef.current = [];
-    // Clear bullets
     bulletsRef.current.forEach((b) => scene.remove(b.mesh));
     bulletsRef.current = [];
-    // Clear explosions
     explosionsRef.current.forEach((p) => scene.remove(p.mesh));
     explosionsRef.current = [];
 
-    // Reset boss
     if (bossRef.current) {
       bossRef.current.position.set(BOSS_START_X, 0, 0);
       bossRef.current.rotation.y = Math.PI / 2;
@@ -260,7 +162,6 @@ export default function GameScene({ onGiftSpawn }) {
     setBossHp(100);
     setShipCount(0);
 
-    // Spawn starter ships
     spawnShipFn.current?.({ type: "spaceship_1", damage: 1, fireRate: 1.0 });
     spawnShipFn.current?.({ type: "spaceship_2", damage: 3, fireRate: 0.5 });
 
@@ -278,12 +179,14 @@ export default function GameScene({ onGiftSpawn }) {
     prevGameStatus.current = gameStatus;
   }, [gameStatus, doReset]);
 
+  // ── Game Loop ────────────────────────────────────────────────
   useFrame((_, delta) => {
     if (!gameActiveRef.current || statusRef.current !== "playing") return;
 
     const boss = bossRef.current;
     if (!boss) return;
 
+    // Boss tiến về phía phải
     boss.position.x += BOSS_SPEED * 60 * delta;
 
     if (boss.position.x >= BOSS_END_X) {
@@ -294,48 +197,44 @@ export default function GameScene({ onGiftSpawn }) {
       return;
     }
 
+    // Tàu: hover + bắn
     shipsRef.current.forEach((ship) => {
       ship.hoverPhase += delta * 1.5;
       ship.mesh.position.y = ship.baseY + Math.sin(ship.hoverPhase) * 0.07;
 
       ship.fireTimer += delta;
-      const fireInterval = 1 / ship.fireRate;
-      if (ship.fireTimer >= fireInterval) {
+      if (ship.fireTimer >= 1 / ship.fireRate) {
         ship.fireTimer = 0;
         fireBullet(ship);
       }
     });
 
+    // Collision detection
     const bossBox = new THREE.Box3().setFromObject(boss);
     bossBox.expandByScalar(0.12);
-
     const deadBullets = new Set();
 
     bulletsRef.current.forEach((bullet, idx) => {
       bullet.mesh.position.add(bullet.velocity);
 
-      // Out of bounds
       if (bullet.mesh.position.x < -8 || bullet.mesh.position.x > 7) {
         deadBullets.add(idx);
         return;
       }
 
-      // Hit boss
       if (bossBox.containsPoint(bullet.mesh.position)) {
         bossHpRef.current = Math.max(0, bossHpRef.current - bullet.damage);
         setBossHp(Math.round(bossHpRef.current * 10) / 10);
 
-        // Explosion particles
         const exps = createExplosion(
           bullet.mesh.position.clone(),
-          SHIP_BULLET_COLORS[bullet.ownerType] || 0xff6600
+          SHIP_BULLET_COLORS[bullet.ownerType] ?? 0xff6600
         );
         exps.forEach(({ mesh }) => scene.add(mesh));
         explosionsRef.current.push(...exps);
 
         deadBullets.add(idx);
 
-        // Boss flash
         boss.traverse((child) => {
           if (child.isMesh && child.material) {
             const prev = child.material.emissiveIntensity;
@@ -346,7 +245,6 @@ export default function GameScene({ onGiftSpawn }) {
           }
         });
 
-        // Win check
         if (bossHpRef.current <= 0) {
           statusRef.current = "win";
           gameActiveRef.current = false;
@@ -356,18 +254,14 @@ export default function GameScene({ onGiftSpawn }) {
       }
     });
 
-    // Remove dead bullets
     if (deadBullets.size > 0) {
       bulletsRef.current = bulletsRef.current.filter((b, idx) => {
-        if (deadBullets.has(idx)) {
-          scene.remove(b.mesh);
-          return false;
-        }
+        if (deadBullets.has(idx)) { scene.remove(b.mesh); return false; }
         return true;
       });
     }
 
-    // ── Explosion particles ──
+    // Explosion particles
     const deadParticles = [];
     explosionsRef.current.forEach((p, idx) => {
       p.mesh.position.add(p.velocity);
@@ -385,7 +279,7 @@ export default function GameScene({ onGiftSpawn }) {
   return (
     <>
       <Stars radius={80} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-      <BossModel bossRef={bossRef} />
+      <BossModel bossRef={bossRef} scale={4.5} />
     </>
   );
 }
