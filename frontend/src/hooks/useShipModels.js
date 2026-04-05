@@ -12,7 +12,7 @@ export const SHIP_SCALES = {
 };
 
 export const GUN_TIP_OFFSET = {
-  spaceship_1: 0.4,
+  spaceship_1: 0.1,
   spaceship_2: 0.4,
   spaceship_3: 0.5,
 };

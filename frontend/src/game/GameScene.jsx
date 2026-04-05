@@ -8,21 +8,18 @@ import BossModel from "./BossModel";
 import { useShipModels, SHIP_BULLET_COLORS } from "../hooks/useShipModels";
 
 const MAX_SHIPS = 50;
-const BOSS_START_X = -9;
+const BOSS_START_X = -11;
 const BOSS_END_X = 4.2;
-const BOSS_SPEED = 0.001;
-const BULLET_SPEED = 0.08;
+const BOSS_SPEED = 0.0004;
+const BULLET_SPEED = 0.07;
 
 // AudioPool: 8 instances → nhiều tàu bắn cùng lúc vẫn phát đủ số lần
-const ATTACK_POOL_SIZE = 8;
-const attackPool = Array.from(
-  { length: ATTACK_POOL_SIZE },
-  () => {
-    const a = new Audio("/sound/sound_attack.mp3");
-    a.volume = 0.35;
-    return a;
-  }
-);
+const ATTACK_POOL_SIZE = 10;
+const attackPool = Array.from({ length: ATTACK_POOL_SIZE }, () => {
+  const a = new Audio("/sound/sound_attack.mp3");
+  a.volume = 0.35;
+  return a;
+});
 let attackPoolIdx = 0;
 function playAttackSound() {
   const audio = attackPool[attackPoolIdx];
@@ -46,6 +43,9 @@ export default function GameScene({ onGiftSpawn }) {
   const statusRef = useRef("idle");
   const prevGameStatus = useRef("idle");
   const spawnShipFn = useRef(null);
+  // Flash đỏ boss: lưu materials gốc 1 lần, debounce restore
+  const bossOrigMatsRef = useRef(null); // null = đang không flash
+  const bossFlashTimeoutRef = useRef(null);
 
   // ── Spawn Ship ───────────────────────────────────────────────
   const spawnShip = useCallback(
@@ -256,25 +256,30 @@ export default function GameScene({ onGiftSpawn }) {
 
         deadBullets.add(idx);
 
-        // Flash đỏ TOÀN THÂN boss — swap sang red material rồi restore
-        const flashMat = new THREE.MeshBasicMaterial({
-          color: 0xff1111,
-          transparent: true,
-          opacity: 0.2,
-        });
-        const restore = [];
-        boss.traverse((child) => {
-          if (child.isMesh) {
-            restore.push({ mesh: child, mat: child.material });
-            child.material = flashMat;
-          }
-        });
-        setTimeout(() => {
-          restore.forEach(({ mesh, mat }) => {
+        // Flash đỏ toàn thân boss — debounce để tránh race condition
+        if (!bossOrigMatsRef.current) {
+          const saved = [];
+          boss.traverse((child) => {
+            if (child.isMesh) {
+              saved.push({ mesh: child, mat: child.material });
+              child.material = new THREE.MeshBasicMaterial({
+                color: 0xff1111,
+                transparent: true,
+                opacity: 0.2,
+              });
+            }
+          });
+          bossOrigMatsRef.current = saved;
+        }
+        if (bossFlashTimeoutRef.current)
+          clearTimeout(bossFlashTimeoutRef.current);
+        bossFlashTimeoutRef.current = setTimeout(() => {
+          bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
             if (mesh) mesh.material = mat;
           });
-          flashMat.dispose();
-        }, 100);
+          bossOrigMatsRef.current = null;
+          bossFlashTimeoutRef.current = null;
+        }, 150);
 
         if (bossHpRef.current <= 0) {
           statusRef.current = "win";
