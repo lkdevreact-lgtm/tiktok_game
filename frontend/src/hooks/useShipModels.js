@@ -1,27 +1,28 @@
 import { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-
-// Preload tất cả ship models
 useGLTF.preload("/models/spaceship_1.glb");
 useGLTF.preload("/models/spaceship_2.glb");
 useGLTF.preload("/models/spaceship_3.glb");
 
-/** Scale của từng loại tàu */
 export const SHIP_SCALES = {
   spaceship_1: 0.25,
-  spaceship_2: 0.25,
-  spaceship_3: 0.25,
+  spaceship_2: 0.35,
+  spaceship_3: 0.05,
 };
 
-/** Offset gun_tip (mũi tàu) theo trục X local */
 export const GUN_TIP_OFFSET = {
   spaceship_1: 0.4,
   spaceship_2: 0.4,
   spaceship_3: 0.5,
 };
 
-/** Màu đạn theo loại tàu */
+export const SHIP_ROTATIONS = {
+  spaceship_1: { x: 0, y: 45, z: 0 },
+  spaceship_2: { x: 0, y: 35, z: 0 },
+  spaceship_3: { x: 0, y: 40, z: 0 },
+};
+
 export const SHIP_BULLET_COLORS = {
   spaceship_1: 0x00f5ff,
   spaceship_2: 0xbf00ff,
@@ -62,7 +63,6 @@ export function useShipModels() {
     const glbScene = glbRef.current[type];
 
     if (!glbScene) {
-      // Fallback nếu GLB chưa load (rất hiếm vì đã preload)
       const geo = new THREE.BoxGeometry(0.3, 0.1, 0.1);
       const mat = new THREE.MeshStandardMaterial({ color: 0x00f5ff });
       return new THREE.Mesh(geo, mat);
@@ -70,6 +70,10 @@ export function useShipModels() {
 
     const mesh = glbScene.clone(true);
     mesh.scale.setScalar(SHIP_SCALES[type] ?? 0.25);
+
+    // Áp dụng rotation theo từng loại tàu (mỗi GLB có hướng xuất khác nhau)
+    const rot = SHIP_ROTATIONS[type] ?? { x: 0, y: Math.PI, z: 0 };
+    mesh.rotation.set(rot.x, rot.y, rot.z);
 
     // Giữ nguyên material gốc của GLB
     mesh.traverse((child) => {

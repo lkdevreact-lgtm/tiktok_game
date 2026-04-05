@@ -42,7 +42,7 @@ export default function GameScene({ onGiftSpawn }) {
       const y = (Math.random() - 0.5) * 3.5;
       const z = (Math.random() - 0.5) * 1.5;
       mesh.position.set(6.0, y, z);
-      mesh.rotation.y = 20; // user đã chỉnh
+      // Rotation được apply per-ship trong useShipModels.js (SHIP_ROTATIONS)
 
       scene.add(mesh);
 
