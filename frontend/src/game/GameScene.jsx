@@ -25,7 +25,7 @@ function playAttackSound() {
   const audio = attackPool[attackPoolIdx];
   attackPoolIdx = (attackPoolIdx + 1) % ATTACK_POOL_SIZE;
   audio.currentTime = 0;
-  audio.play().catch(() => {}); // bỏ qua lỗi autoplay policy
+  audio.play().catch(() => {});
 }
 
 export default function GameScene({ onGiftSpawn }) {
@@ -168,7 +168,7 @@ export default function GameScene({ onGiftSpawn }) {
       bulletsRef.current.push({
         mesh: bulletMesh,
         velocity: velocity.clone(),
-        damage: ship.damage * 0.1,
+        damage: ship.damage * 0.01,
         ownerType: ship.type,
       });
     },

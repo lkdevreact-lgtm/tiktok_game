@@ -32,6 +32,7 @@ export async function connectTikTok(username, socketId, io) {
       nickname: data.nickname,
       repeatCount: data.repeatCount || 1,
       imgUrl: data.giftPictureUrl || null,
+      avatarUrl: data.profilePictureUrl || null,
     };
 
     console.log(

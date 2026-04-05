@@ -21,11 +21,18 @@ export default function GameCanvas() {
   // Listen for TikTok gifts via socket
   useEffect(() => {
     const handleGift = (data) => {
-      const { giftId, giftName, uniqueId, nickname, imgUrl } = data;
+      const {
+        giftId, giftName, uniqueId, nickname, imgUrl,
+        avatarUrl: senderAvatar,
+        profilePictureUrl,
+      } = data;
       const config = giftMapping[giftId];
       if (!config || !config.active) return;
 
       addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl });
+
+      const shipAvatar =
+        senderAvatar || profilePictureUrl || "";
 
       const count = data.repeatCount || 1;
       const times = Math.min(count, 5);
@@ -36,7 +43,7 @@ export default function GameCanvas() {
             damage: config.damage || 1,
             fireRate: config.fireRate || 1.0,
             nickname: nickname || uniqueId || "Viewer",
-            avatarUrl: imgUrl || "",
+            avatarUrl: shipAvatar,
           });
         }, i * 150);
       }
