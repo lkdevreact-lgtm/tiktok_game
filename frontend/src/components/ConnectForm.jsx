@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useGame } from "../store/gameStore";
 import socket from "../socket/socketClient";
 
@@ -16,8 +16,6 @@ export default function ConnectForm() {
 
     setLoading(true);
     setError("");
-
-    // Wait for socket to be ready
     if (!socket.connected) {
       await new Promise((res) => { socket.once("connect", res); setTimeout(res, 3000); });
     }
@@ -114,12 +112,6 @@ function Stars() {
           }}
         />
       ))}
-      <style>{`
-        @keyframes twinkle {
-          from { opacity: 0.1; }
-          to   { opacity: 0.8; }
-        }
-      `}</style>
     </div>
   );
 }

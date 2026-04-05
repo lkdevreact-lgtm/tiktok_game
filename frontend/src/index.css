@@ -1,7 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;600&display=swap");
 @import "tailwindcss";
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -16,11 +18,13 @@
   --color-gold: #ffaa00;
   --color-danger: #ff3366;
   --color-success: #00ff88;
-  --font-game: 'Orbitron', monospace;
-  --font-ui: 'Inter', sans-serif;
+  --font-game: "Orbitron", monospace;
+  --font-ui: "Inter", sans-serif;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -29,12 +33,17 @@ html, body, #root {
   color: #e0e8ff;
 }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
 
-/* ── Glass panel ── */
 .glass {
   background: var(--color-panel);
   backdrop-filter: blur(16px);
@@ -42,10 +51,18 @@ html, body, #root {
   border-radius: 12px;
 }
 
-/* ── Neon text ── */
-.neon-cyan  { color: var(--color-cyan);   text-shadow: 0 0 10px var(--color-cyan); }
-.neon-purple { color: var(--color-purple); text-shadow: 0 0 10px var(--color-purple); }
-.neon-gold  { color: var(--color-gold);   text-shadow: 0 0 10px var(--color-gold); }
+.neon-cyan {
+  color: var(--color-cyan);
+  text-shadow: 0 0 10px var(--color-cyan);
+}
+.neon-purple {
+  color: var(--color-purple);
+  text-shadow: 0 0 10px var(--color-purple);
+}
+.neon-gold {
+  color: var(--color-gold);
+  text-shadow: 0 0 10px var(--color-gold);
+}
 
 /* ── Connect Form ── */
 .connect-overlay {
@@ -69,19 +86,31 @@ html, body, #root {
 }
 
 .connect-card::before {
-  content: '';
+  content: "";
   position: absolute;
-  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--color-cyan), var(--color-purple), var(--color-gold));
+  background: linear-gradient(
+    135deg,
+    var(--color-cyan),
+    var(--color-purple),
+    var(--color-gold)
+  );
   z-index: -1;
   opacity: 0.6;
   animation: borderRotate 4s linear infinite;
 }
 
 @keyframes borderRotate {
-  0%   { filter: hue-rotate(0deg); }
-  100% { filter: hue-rotate(360deg); }
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
 }
 
 .connect-card h1 {
@@ -97,7 +126,7 @@ html, body, #root {
 
 .connect-card .subtitle {
   text-align: center;
-  color: rgba(180,200,255,0.6);
+  color: rgba(180, 200, 255, 0.6);
   font-size: 0.85rem;
   margin-top: -16px;
 }
@@ -125,12 +154,16 @@ html, body, #root {
   font-size: 1rem;
   font-family: var(--font-ui);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .input-group input:focus {
   border-color: var(--color-cyan);
-  box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1), 0 0 20px rgba(0, 245, 255, 0.15);
+  box-shadow:
+    0 0 0 3px rgba(0, 245, 255, 0.1),
+    0 0 20px rgba(0, 245, 255, 0.15);
 }
 
 .btn-connect {
@@ -144,7 +177,9 @@ html, body, #root {
   font-weight: 700;
   letter-spacing: 0.1em;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
   text-transform: uppercase;
 }
 
@@ -187,7 +222,9 @@ html, body, #root {
 /* ── HUD Overlay ── */
 .hud {
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   padding: 16px 20px;
   display: flex;
   align-items: center;
@@ -236,7 +273,7 @@ html, body, #root {
 .hud-username {
   font-family: var(--font-game);
   font-size: 0.65rem;
-  color: rgba(180,200,255,0.5);
+  color: rgba(180, 200, 255, 0.5);
   white-space: nowrap;
 }
 
@@ -249,15 +286,21 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   gap: 20px;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(8px);
   z-index: 20;
   animation: fadeIn 0.4s ease;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .result-title {
@@ -268,12 +311,23 @@ html, body, #root {
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
 }
 
-.result-title.lose { color: var(--color-danger); text-shadow: 0 0 40px var(--color-danger); }
-.result-title.win  { color: var(--color-success); text-shadow: 0 0 40px var(--color-success); }
+.result-title.lose {
+  color: var(--color-danger);
+  text-shadow: 0 0 40px var(--color-danger);
+}
+.result-title.win {
+  color: var(--color-success);
+  text-shadow: 0 0 40px var(--color-success);
+}
 
 .btn-reset {
   background: linear-gradient(135deg, var(--color-cyan), #0088aa);
@@ -286,7 +340,9 @@ html, body, #root {
   font-weight: 700;
   letter-spacing: 0.1em;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
   text-transform: uppercase;
 }
 
@@ -329,8 +385,13 @@ html, body, #root {
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .sidebar-scroll {
@@ -369,21 +430,23 @@ html, body, #root {
   height: 36px;
   border-radius: 6px;
   object-fit: contain;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .gift-img-placeholder {
   width: 36px;
   height: 36px;
   border-radius: 6px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
 }
 
-.gift-info { flex: 1; }
+.gift-info {
+  flex: 1;
+}
 
 .gift-name {
   font-size: 0.8rem;
@@ -401,8 +464,8 @@ html, body, #root {
   width: 36px;
   height: 20px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   position: relative;
   transition: background 0.2s;
@@ -415,7 +478,7 @@ html, body, #root {
 }
 
 .gift-toggle::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 2px;
   left: 2px;
@@ -439,7 +502,7 @@ html, body, #root {
 .ctrl-group label {
   font-size: 0.6rem;
   font-family: var(--font-game);
-  color: rgba(180,200,255,0.5);
+  color: rgba(180, 200, 255, 0.5);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   display: block;
@@ -448,7 +511,7 @@ html, body, #root {
 
 .ctrl-group select {
   width: 100%;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 4px 6px;
@@ -476,22 +539,34 @@ html, body, #root {
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  background: rgba(5,15,30,0.88);
+  background: rgba(5, 15, 30, 0.88);
   border: 1px solid var(--color-border);
   border-radius: 30px;
   backdrop-filter: blur(8px);
   font-size: 0.8rem;
-  animation: slideIn 0.3s ease, fadeOut 0.3s 2.7s ease forwards;
+  animation:
+    slideIn 0.3s ease,
+    fadeOut 0.3s 2.7s ease forwards;
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-30px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .gift-notification img {
@@ -507,4 +582,13 @@ html, body, #root {
 
 .gift-notification .notif-gift {
   color: var(--color-gold);
+}
+
+@keyframes twinkle {
+  from {
+    opacity: 0.1;
+  }
+  to {
+    opacity: 0.8;
+  }
 }
