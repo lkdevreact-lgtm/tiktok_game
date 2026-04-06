@@ -36,7 +36,9 @@ export default function GameScene({ onGiftSpawn }) {
   const { cloneShipMesh, getBulletColor } = useShipModels();
   // Giữ ref để dùng trong callback không stale
   const shipModelsRef = useRef(shipModels);
-  useEffect(() => { shipModelsRef.current = shipModels; }, [shipModels]);
+  useEffect(() => {
+    shipModelsRef.current = shipModels;
+  }, [shipModels]);
 
   // ── Refs game state (sync, không trigger re-render) ──────────
   const bossRef = useRef(null);
@@ -59,8 +61,10 @@ export default function GameScene({ onGiftSpawn }) {
     ({ type, damage, fireRate, nickname = "", avatarUrl = "" }) => {
       if (shipsRef.current.length >= MAX_SHIPS) {
         const oldest = shipsRef.current.shift();
+        // Đánh dấu ship cũ là dead trước khi remove khỏi scene
+        if (oldest.aliveRef) oldest.aliveRef.current = false;
         scene.remove(oldest.mesh);
-        setShipLabels((prev) => prev.filter((l) => l.mesh !== oldest.mesh));
+        setShipLabels((prev) => prev.filter((l) => l.id !== oldest.id));
       }
 
       const mesh = cloneShipMesh(type);
@@ -72,9 +76,11 @@ export default function GameScene({ onGiftSpawn }) {
       scene.add(mesh);
 
       const id = `ship-${Date.now()}-${Math.random()}`;
+      const aliveRef = { current: true };
       shipsRef.current.push({
         id,
         mesh,
+        aliveRef,
         type,
         damage,
         fireRate,
@@ -85,10 +91,7 @@ export default function GameScene({ onGiftSpawn }) {
         avatarUrl,
       });
 
-      setShipLabels((prev) => [
-        ...prev,
-        { id, mesh, nickname, avatarUrl },
-      ]);
+      setShipLabels((prev) => [...prev, { id, mesh, aliveRef, nickname, avatarUrl }]);
       setShipCount(shipsRef.current.length);
     },
     [scene, setShipCount, cloneShipMesh],
@@ -119,7 +122,11 @@ export default function GameScene({ onGiftSpawn }) {
     // Spawn 2 ship đầu đang active từ model store
     const initShips = shipModelsRef.current.slice(0, 2);
     initShips.forEach((m) => {
-      spawnShip({ type: m.id, damage: m.damage ?? 1, fireRate: m.fireRate ?? 1.0 });
+      spawnShip({
+        type: m.id,
+        damage: m.damage ?? 1,
+        fireRate: m.fireRate ?? 1.0,
+      });
     });
 
     bossHpRef.current = 100;
@@ -180,12 +187,17 @@ export default function GameScene({ onGiftSpawn }) {
         ownerType: ship.type,
       });
     },
-    [scene],
+    [scene, getBulletColor],
   );
+
 
   // ── Reset ────────────────────────────────────────────────────
   const doReset = useCallback(() => {
-    shipsRef.current.forEach((s) => scene.remove(s.mesh));
+    // Đánh dấu tất cả ships là dead trước khi remove
+    shipsRef.current.forEach((s) => {
+      if (s.aliveRef) s.aliveRef.current = false;
+      scene.remove(s.mesh);
+    });
     shipsRef.current = [];
     bulletsRef.current.forEach((b) => scene.remove(b.mesh));
     bulletsRef.current = [];
@@ -207,7 +219,11 @@ export default function GameScene({ onGiftSpawn }) {
     // Spawn lại 2 ship đầu đang active
     const resetShips = shipModelsRef.current.slice(0, 2);
     resetShips.forEach((m) => {
-      spawnShipFn.current?.({ type: m.id, damage: m.damage ?? 1, fireRate: m.fireRate ?? 1.0 });
+      spawnShipFn.current?.({
+        type: m.id,
+        damage: m.damage ?? 1,
+        fireRate: m.fireRate ?? 1.0,
+      });
     });
 
     gameActiveRef.current = true;
@@ -341,57 +357,54 @@ export default function GameScene({ onGiftSpawn }) {
 
   return (
     <>
-      <Stars radius={80} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+      <Stars
+        radius={80}
+        depth={50}
+        count={5000}
+        factor={4}
+        saturation={0}
+        fade
+        speed={1}
+      />
       <BossModel
         bossRef={bossRef}
         url={activeBossModel?.path ?? "/models/spaceship_boss.glb"}
         scale={activeBossModel?.scale ?? 4.5}
       />
-
-      {/* Avatar + tên user nổi trên mỗi tàu */}
-      {shipLabels.map(({ id, mesh, nickname, avatarUrl }) =>
-        nickname || avatarUrl ? (
-          <Html
-            key={id}
-            position={[0, 0.55, 0]}
-            center
-            occlude={false}
-            style={{ pointerEvents: "none" }}
-            ref={(el) => {
-              // gắn label vào mesh để nó follow tàu
-              if (el && mesh) mesh.add(el.parent || el);
-            }}
-          >
-            <Html
-              portal={{ current: null }}
-              position={mesh.position.toArray()}
-              center
-            >
-              {null}
-            </Html>
-          </Html>
-        ) : null
-      )}
+      <BossLabel bossRef={bossRef} />
 
       {/* Render labels bằng Html đính vào scene position của từng tàu */}
       {shipLabels
         .filter((l) => l.nickname || l.avatarUrl)
-        .map(({ id, mesh, nickname, avatarUrl }) => (
-          <ShipLabel key={id} mesh={mesh} nickname={nickname} avatarUrl={avatarUrl} />
+        .map(({ id, mesh, aliveRef, nickname, avatarUrl }) => (
+          <ShipLabel
+            key={id}
+            mesh={mesh}
+            aliveRef={aliveRef}
+            nickname={nickname}
+            avatarUrl={avatarUrl}
+          />
         ))}
     </>
   );
 }
 
-function ShipLabel({ mesh, nickname, avatarUrl }) {
+function ShipLabel({ mesh, aliveRef, nickname, avatarUrl }) {
   const groupRef = useRef();
+  const [visible, setVisible] = useState(true);
 
   // Theo dõi vị trí mesh trong game loop
   useFrame(() => {
-    if (groupRef.current && mesh) {
-      groupRef.current.position.copy(mesh.position);
+    if (!groupRef.current || !mesh) return;
+    // Ẩn label ngay khi ship bị đánh dấu dead
+    if (aliveRef && !aliveRef.current) {
+      if (visible) setVisible(false);
+      return;
     }
+    groupRef.current.position.copy(mesh.position);
   });
+
+  if (!visible) return null;
 
   return (
     <group ref={groupRef}>
@@ -401,13 +414,15 @@ function ShipLabel({ mesh, nickname, avatarUrl }) {
         occlude={false}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "2px",
-          transform: "translateY(-52px)",
-        }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "2px",
+            transform: "translateY(-52px)",
+          }}
+        >
           {avatarUrl && (
             <img
               src={avatarUrl}
@@ -423,17 +438,106 @@ function ShipLabel({ mesh, nickname, avatarUrl }) {
             />
           )}
           {nickname && (
-            <span style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: "#fff",
-              textShadow: "0 0 6px rgba(0,245,255,0.9), 0 1px 2px rgba(0,0,0,0.8)",
-              whiteSpace: "nowrap",
-              letterSpacing: "0.02em",
-            }}>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#fff",
+                textShadow:
+                  "0 0 6px rgba(0,245,255,0.9), 0 1px 2px rgba(0,0,0,0.8)",
+                whiteSpace: "nowrap",
+                letterSpacing: "0.02em",
+              }}
+            >
               {nickname.length > 12 ? nickname.slice(0, 12) + "…" : nickname}
             </span>
           )}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+function BossLabel({ bossRef }) {
+  const { bossHp } = useGame();
+  const groupRef = useRef();
+
+  // Theo dõi vị trí boss trong game loop
+  useFrame(() => {
+    if (groupRef.current && bossRef.current) {
+      groupRef.current.position.copy(bossRef.current.position);
+    }
+  });
+
+  const hpPercent = Math.max(0, Math.min(100, bossHp));
+  const hpColor =
+    hpPercent > 50 ? "#ff3366" : hpPercent > 25 ? "#ff6600" : "#ff0000";
+
+  return (
+    <group ref={groupRef}>
+      <Html
+        center
+        distanceFactor={10}
+        occlude={false}
+        style={{ pointerEvents: "none", userSelect: "none" }}
+        className="relative"
+      >
+        <div className=" absolute -top-90 -left-80 flex items-center gap-3 justify-center">
+          <img
+            src="/images/evil_boss.png"
+            alt="Boss"
+            className="w-14 h-14 rounded-full border-2 object-cover shadow-[0_0_12px_rgba(255,51,102,0.6)]"
+          />
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: "5px",
+              background: "rgba(10,10,15,0.75)",
+              padding: "8px 12px",
+              borderRadius: "10px",
+              border: "1px solid rgba(255,51,102,0.3)",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: 800,
+                color: "#fff",
+                textShadow: "0 0 6px rgba(255,51,102,0.9)",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
+              }}
+            >
+             Space ship boss{" "}
+              <span style={{ color: hpColor, marginLeft: 8 }}>
+                {hpPercent.toFixed(1)}%
+              </span>
+            </span>
+            <div
+              style={{
+                width: 460,
+                height: 8,
+                borderRadius: 4,
+                background: "rgba(255,255,255,0.1)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${hpPercent}%`,
+                  background: `linear-gradient(90deg, ${hpColor}, #ff0055)`,
+                  transition: "width 0.2s ease-out",
+                  boxShadow: `0 0 8px ${hpColor}`,
+                }}
+              />
+            </div>
+          </div>
         </div>
       </Html>
     </group>

@@ -43,10 +43,11 @@
     "rotationY": 40,
     "bulletColor": "#ffaa00",
     "builtIn": true,
-    "active": false,
+    "active": true,
     "damage": 5,
     "fireRate": 0.3,
-    "gifts": []
+    "gifts": [],
+    "updatedAt": "2026-04-06T08:28:06.284Z"
   },
   {
     "id": "spaceship_boss",
@@ -63,5 +64,25 @@
     "damage": 1,
     "fireRate": 1,
     "gifts": []
+  },
+  {
+    "id": "custom_1775465375358_space_ship_5",
+    "filename": "custom_1775465375358_space_ship_5.glb",
+    "label": "Enzo",
+    "emoji": "🚀",
+    "role": "ship",
+    "path": "/models/custom_1775465375358_space_ship_5.glb",
+    "scale": 0.001,
+    "gunTipOffset": 0.7,
+    "rotationY": 40,
+    "bulletColor": "#f31212",
+    "damage": 1,
+    "fireRate": 1,
+    "gifts": [
+      5655
+    ],
+    "builtIn": false,
+    "active": true,
+    "uploadedAt": "2026-04-06T08:49:35.366Z"
   }
 ]

@@ -73,8 +73,11 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload thất bại");
 
-      if (data.path) { try { useGLTF.clear(data.path); } catch (_) {console.log(_);
-      } }
+      if (data.path) { try { useGLTF.clear(data.path); } catch (_) {console.log(_); } }
+
+      // Delay nhỏ để Vite dev server kịp serve file vừa upload
+      // trước khi useGLTF bắt đầu tải → tránh lỗi "Unexpected token '<'"
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
       onSuccess(data);
 

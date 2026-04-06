@@ -28,10 +28,26 @@ export const SHIP_BULLET_COLORS = {
   spaceship_3: 0xffaa00,
 };
 
+// Theo dõi các URL đã thất bại để không thử lại liên tục
+const failedUrls = new Set();
 
 function useGlbScene(url) {
-  const { scene } = useGLTF(url);
-  return scene;
+  // Nếu URL này đã biết lỗi, trả về null thay vì crash
+  if (failedUrls.has(url)) return null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { scene } = useGLTF(url);
+    return scene;
+  } catch (err) {
+    // useGLTF dùng Suspense — nếu throw Error (không phải Promise) → lỗi thật
+    if (err instanceof Error) {
+      console.warn(`[useShipModels] Failed to load ${url}:`, err.message);
+      failedUrls.add(url);
+      return null;
+    }
+    // Nếu throw Promise → đang load (Suspense) → rethrow bình thường
+    throw err;
+  }
 }
 
 
@@ -42,21 +58,13 @@ export function useShipModels() {
     shipModels[i]?.path ?? "/models/spaceship_1.glb"
   );
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const s0 = useGlbScene(urlSlots[0]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const s1 = useGlbScene(urlSlots[1]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const s2 = useGlbScene(urlSlots[2]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const s3 = useGlbScene(urlSlots[3]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const s4 = useGlbScene(urlSlots[4]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const s5 = useGlbScene(urlSlots[5]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const s6 = useGlbScene(urlSlots[6]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const s7 = useGlbScene(urlSlots[7]);
 
   const scenesArray = [s0, s1, s2, s3, s4, s5, s6, s7];
