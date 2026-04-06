@@ -53,6 +53,10 @@ export default function GameScene({ onGiftSpawn }) {
   // Flash đỏ boss: lưu materials gốc 1 lần, debounce restore
   const bossOrigMatsRef = useRef(null); // null = đang không flash
   const bossFlashTimeoutRef = useRef(null);
+  // Slot-based spawn: chia màn hình thành NUM_Y_SLOTS rãnh, tàu mới vào rãnh tiếp theo
+  const NUM_Y_SLOTS = 10;
+  const Y_RANGE = 8;  // tổng chiều cao an toàn (~±2.2)
+  const spawnSlotRef = useRef(0);
 
   const [shipLabels, setShipLabels] = useState([]);
 
@@ -69,8 +73,12 @@ export default function GameScene({ onGiftSpawn }) {
 
       const mesh = cloneShipMesh(type);
 
-      const y = (Math.random() - 0.5) * 6.4;   // ~±3.2, nằm trong frustum dọc
-      const z = (Math.random() - 0.5) * 3.6;   // ~±1.8, không bị cắt ở góc
+      // Slot-based Y: chia đều từ trên xuống dưới, xoay vòng qua các rãnh
+      const slotIdx = spawnSlotRef.current % NUM_Y_SLOTS;
+      spawnSlotRef.current += 1;
+      const slotY = -Y_RANGE / 2 + (slotIdx + 0.5) * (Y_RANGE / NUM_Y_SLOTS);
+      const y = slotY + (Math.random() - 0.5) * 0.3; // jitter nhỏ cho tự nhiên
+      const z = (Math.random() - 0.5) * 2.0;   // ~±1.0, tránh bị cắt ngang
       mesh.position.set(8.0, y, z);
 
       scene.add(mesh);
