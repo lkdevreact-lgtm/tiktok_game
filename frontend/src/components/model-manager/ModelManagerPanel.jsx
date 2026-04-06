@@ -1,11 +1,11 @@
 import { useEffect } from "react";
-import { useModels } from "../../store/modelStore";
-import { useGifts } from "../../store/giftStore";
 import { btnBase } from "../ui/styles";
 import RoleBadge from "../ui/RoleBadge";
 import SectionHeader from "../ui/SectionHeader";
 import ModelCard from "./ModelCard";
 import UploadForm from "./UploadForm";
+import { useModels } from "../../hooks/useModels";
+import { useGifts } from "../../hooks/useGifts";
 
 export default function ModelManagerPanel({ isOpen, onClose }) {
   const {
@@ -132,7 +132,6 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
                   <ModelCard
                     key={m.id}
                     model={m}
-                    activeGifts={activeGifts}
                     onUpdate={(id, changes) => updateModel(id, changes)}
                     onDelete={!m.builtIn ? (id) => removeModel(id) : undefined}
                     onToggleShip={toggleShipActive}
@@ -156,7 +155,6 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
                     key={m.id}
                     model={m}
                     isActiveBoss={m.id === activeBossId}
-                    activeGifts={[]}
                     onUpdate={(id, changes) => updateModel(id, changes)}
                     onDelete={!m.builtIn ? (id) => removeModel(id) : undefined}
                     onSetActiveBoss={setActiveBoss}

@@ -6,15 +6,12 @@
 import { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { useModels } from "../store/modelStore";
+import { useModels } from "./useModels";
 
-// Preload built-in models ngay khi module import
 useGLTF.preload("/models/spaceship_1.glb");
 useGLTF.preload("/models/spaceship_2.glb");
 useGLTF.preload("/models/spaceship_3.glb");
 
-// Xóa cache lỗi cho tất cả custom models từ localStorage
-// để tránh lỗi "Unexpected token '<'" khi Suspense cache giữ 404 cũ
 try {
   const cached = JSON.parse(localStorage.getItem("modelsCache") || "[]");
   cached.forEach((m) => {
@@ -22,7 +19,8 @@ try {
       useGLTF.clear(m.path);
     }
   });
-} catch (_) {}
+} catch (_) {console.log(_);
+}
 
 export const SHIP_BULLET_COLORS = {
   spaceship_1: 0x00f5ff,
@@ -30,23 +28,15 @@ export const SHIP_BULLET_COLORS = {
   spaceship_3: 0xffaa00,
 };
 
-/**
- * Inner hook — load 1 GLB và trả về THREE.Scene
- * Tách ra để gọi theo URL động (hook rules: gọi ở top level)
- */
+
 function useGlbScene(url) {
   const { scene } = useGLTF(url);
   return scene;
 }
 
-/**
- * Custom hook — load tất cả ship models và trả về hàm cloneShipMesh(type)
- */
+
 export function useShipModels() {
   const { allShipModels: shipModels } = useModels();
-
-  // Load tối đa 8 model (React hooks không cho dynamic count)
-  // Slots 0–7: built-in (0-2) + custom (3-7)
   const MAX_MODELS = 8;
   const urlSlots = Array.from({ length: MAX_MODELS }, (_, i) =>
     shipModels[i]?.path ?? "/models/spaceship_1.glb"
@@ -71,7 +61,6 @@ export function useShipModels() {
 
   const scenesArray = [s0, s1, s2, s3, s4, s5, s6, s7];
 
-  // Map id → { scene, meta }
   const glbRef = useRef({});
   useEffect(() => {
     const map = {};
@@ -93,7 +82,6 @@ export function useShipModels() {
     const entry = glbRef.current[type];
 
     if (!entry?.scene) {
-      // Fallback: cube placeholder
       const geo = new THREE.BoxGeometry(0.3, 0.1, 0.1);
       const mat = new THREE.MeshStandardMaterial({ color: 0x00f5ff });
       return new THREE.Mesh(geo, mat);
@@ -103,7 +91,6 @@ export function useShipModels() {
     const mesh = glbScene.clone(true);
     mesh.scale.setScalar(meta.scale ?? 0.25);
 
-    // Rotation
     const ry = ((meta.rotationY ?? 0) * Math.PI) / 180;
     mesh.rotation.set(0, ry, 0);
 

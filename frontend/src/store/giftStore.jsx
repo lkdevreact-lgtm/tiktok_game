@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { createContext, useState, useCallback, useEffect } from "react";
 import { API_URL } from "../utils/constant";
 
 
 const GiftContext = createContext(null);
+export { GiftContext };
 
 export function GiftProvider({ children }) {
   const [gifts,   setGifts]   = useState([]);
@@ -58,10 +59,4 @@ export function GiftProvider({ children }) {
       {children}
     </GiftContext.Provider>
   );
-}
-
-export function useGifts() {
-  const ctx = useContext(GiftContext);
-  if (!ctx) throw new Error("useGifts must be used within GiftProvider");
-  return ctx;
 }

@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, useRef } from "react";
+import { createContext, useState, useCallback, useRef } from "react";
 
 const GameContext = createContext(null);
+export { GameContext };
 
 export function GameProvider({ children }) {
   const [connected,     setConnected]    = useState(false);
@@ -40,10 +41,4 @@ export function GameProvider({ children }) {
       {children}
     </GameContext.Provider>
   );
-}
-
-export function useGame() {
-  const ctx = useContext(GameContext);
-  if (!ctx) throw new Error("useGame must be used within GameProvider");
-  return ctx;
 }

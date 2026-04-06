@@ -42,7 +42,6 @@ function fireRateLabel(v) {
 export default function ModelCard({
   model,
   isActiveBoss = false,
-  activeGifts = [],
   onUpdate,
   onDelete,
   onToggleShip,
@@ -216,7 +215,6 @@ export default function ModelCard({
           local={local}
           setLocal={setLocal}
           onSave={handleSave}
-          activeGifts={activeGifts}
           isBoss={isBoss}
         />
       )}

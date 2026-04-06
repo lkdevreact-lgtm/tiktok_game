@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { createContext, useState, useCallback, useEffect } from "react";
 import { API_URL } from "../utils/constant";
 
 
@@ -9,6 +9,7 @@ const ls = {
 };
 
 const ModelContext = createContext(null);
+export { ModelContext };
 
 export function ModelProvider({ children }) {
   const [models,  setModels]  = useState(() => ls.get("modelsCache", []));
@@ -93,26 +94,24 @@ export function ModelProvider({ children }) {
 
   // ── Toggle ship active → persist vào JSON qua PUT ────────────
   const toggleShipActive = useCallback(async (id) => {
-    let newActive;
-    _setAndCache((prev) => prev.map((m) => {
-      if (m.id === id) {
-        newActive = !m.active;
-        return { ...m, active: newActive };
-      }
-      return m;
-    }));
+    // Đọc giá trị active hiện tại từ models trước khi update
+    setModels((prev) => {
+      const target = prev.find((m) => m.id === id);
+      if (!target) return prev;
 
-    // Đợi newActive được set rồi gọi API
-    // (dùng functional form nên newActive đã có từ map trên)
-    setTimeout(async () => {
-      try {
-        await fetch(`${API_URL}/api/models/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ active: newActive }),
-        });
-      } catch { /* ignore */ }
-    }, 0);
+      const newActive = !target.active;
+      const next = prev.map((m) => (m.id === id ? { ...m, active: newActive } : m));
+      ls.set("modelsCache", next);
+
+      // Persist server bên trong setState để đảm bảo newActive đúng
+      fetch(`${API_URL}/api/models/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: newActive }),
+      }).catch(() => {});
+
+      return next;
+    });
   }, []);
 
   // ── Active boss ──────────────────────────────────────────────
@@ -151,10 +150,4 @@ export function ModelProvider({ children }) {
       {children}
     </ModelContext.Provider>
   );
-}
-
-export function useModels() {
-  const ctx = useContext(ModelContext);
-  if (!ctx) throw new Error("useModels must be used within ModelProvider");
-  return ctx;
 }

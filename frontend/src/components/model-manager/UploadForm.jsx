@@ -4,7 +4,7 @@
  */
 import { useState, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
-import { inputStyle, labelStyle, btnBase, FIRE_RATE_OPTIONS, DAMAGE_OPTIONS } from "../ui/styles";
+import { inputStyle, labelStyle, FIRE_RATE_OPTIONS, DAMAGE_OPTIONS } from "../ui/styles";
 import { API_URL } from "../../utils/constant";
 
 
@@ -73,7 +73,8 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload thất bại");
 
-      if (data.path) { try { useGLTF.clear(data.path); } catch (_) {} }
+      if (data.path) { try { useGLTF.clear(data.path); } catch (_) {console.log(_);
+      } }
 
       onSuccess(data);
 

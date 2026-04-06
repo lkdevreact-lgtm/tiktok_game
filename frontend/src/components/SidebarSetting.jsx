@@ -1,11 +1,7 @@
-/**
- * SidebarSetting.jsx — Gift Config Panel
- * Chỉ hiển thị: ảnh gift + tên + diamonds + toggle Active
- * Dùng giftStore (shared) → toggle ngay phản ánh sang ModelManagerPanel
- */
+
 import { useEffect, useRef } from "react";
-import { useGifts } from "../store/giftStore";
 import ToggleSwitch from "./ui/ToggleSwitch";
+import { useGifts } from "../hooks/useGifts";
 
 export default function SidebarSetting({ isOpen, onClose }) {
   const { gifts, toggleGiftActive } = useGifts();

@@ -2,11 +2,11 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Stars, Html } from "@react-three/drei";
 import * as THREE from "three";
-import { useGame } from "../store/gameStore";
-import { useModels } from "../store/modelStore";
+import { useGame } from "../hooks/useGame";
 import { createBullet, createExplosion } from "./models";
 import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
+import { useModels } from "../hooks/useModels";
 
 const MAX_SHIPS = 50;
 const BOSS_START_X = -11;

@@ -1,7 +1,7 @@
+import { useGifts } from "../../hooks/useGifts";
 import {
   inputStyle,
   labelStyle,
-  btnBase,
   FIRE_RATE_OPTIONS,
   DAMAGE_OPTIONS,
 } from "../ui/styles";
@@ -120,9 +120,10 @@ export default function EditForm({
   local,
   setLocal,
   onSave,
-  activeGifts = [],
   isBoss = false,
 }) {
+  // Lấy activeGifts từ giftStore — reactive khi Gift Config toggle
+  const { activeGifts } = useGifts();
   return (
     <div
       style={{

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useGame } from "../store/gameStore";
+import { useGame } from "../hooks/useGame";
 import socket from "../socket/socketClient";
 import { API_URL } from "../utils/constant";
 

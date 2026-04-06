@@ -1,16 +1,14 @@
 import { useRef, useEffect, useCallback } from "react";
 import { Canvas } from "@react-three/fiber";
-import { useGame } from "../store/gameStore";
-import { useModels } from "../store/modelStore";
+import { useGame } from "../hooks/useGame";
 import GameScene from "../game/GameScene";
 import Navbar from "./Navbar";
 import socket from "../socket/socketClient";
+import { useModels } from "../hooks/useModels";
 
 export default function GameCanvas() {
   const {
-    bossHp,
     gameStatus,
-    setGameStatus,
     setBossHp,
     notifications,
     addNotification,
