@@ -9,13 +9,7 @@ import {
 function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
   if (activeGifts.length === 0) {
     return (
-      <div
-        style={{
-          fontSize: "0.65rem",
-          color: "rgba(180,200,255,0.3)",
-          fontStyle: "italic",
-        }}
-      >
+      <div className="text-xs text-[#B4C8FF4D] italic">
         Chưa có quà active. Bật quà trong Gift Config.
       </div>
     );
@@ -30,83 +24,41 @@ function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
   };
 
   return (
-    <div
-      style={{
-        maxHeight: 140,
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        paddingRight: 4,
-      }}
-    >
+    <div className="max-h-[140px] overflow-y-auto flex flex-col gap-1 pr-1">
       {activeGifts.map((gift) => {
         const checked = selected.includes(Number(gift.giftId));
         return (
           <label
             key={gift.giftId}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              cursor: "pointer",
-              padding: "4px 6px",
-              borderRadius: 6,
-              background: checked
-                ? "rgba(0,245,255,0.08)"
-                : "rgba(255,255,255,0.02)",
-              border: `1px solid ${checked ? "rgba(0,245,255,0.25)" : "rgba(255,255,255,0.06)"}`,
-              transition: "all 0.15s",
-            }}
+            className={`flex items-center gap-2 cursor-pointer px-[6px] py-[4px] rounded-[6px] transition-all duration-150 ${
+              checked
+                ? "bg-[#00F5FF14] border border-[#00F5FF40]"
+                : "bg-[#FFFFFF05] border border-[#FFFFFF0F]"
+            }`}
           >
             <input
               type="checkbox"
               checked={checked}
               onChange={() => toggle(gift.giftId)}
-              style={{
-                accentColor: "var(--color-cyan)",
-                width: 13,
-                height: 13,
-                flexShrink: 0,
-              }}
+              className="text-cyan-1 w-3.5 h-3.5 shrink-0"
             />
             {gift.image ? (
               <img
                 src={gift.image}
                 alt={gift.giftName}
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 4,
-                  objectFit: "contain",
-                  flexShrink: 0,
-                }}
+                className="w-5 h-5 rounded-sm object-contain shrink-0"
               />
             ) : (
-              <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>
-                🎁
-              </span>
+              <span className="text-base leading-0.5 shrink-0">🎁</span>
             )}
             <span
-              style={{
-                fontSize: "0.7rem",
-                color: checked ? "#e0e8ff" : "rgba(180,200,255,0.5)",
-                flex: 1,
-                minWidth: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+              className={`text-[0.7rem] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${
+                checked ? "text-[#e0e8ff]" : "text-[#B4C8FF80]"
+              }`}
             >
               {gift.giftName}
             </span>
-            <span
-              style={{
-                fontSize: "0.6rem",
-                color: "var(--color-gold)",
-                flexShrink: 0,
-              }}
-            >
+            <span className="text-[0.6rem] text-gold shrink-0">
               💎{gift.diamonds}
             </span>
           </label>
@@ -116,27 +68,11 @@ function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
   );
 }
 
-export default function EditForm({
-  local,
-  setLocal,
-  onSave,
-  isBoss = false,
-}) {
-  // Lấy activeGifts từ giftStore — reactive khi Gift Config toggle
+export default function EditForm({ local, setLocal, onSave, isBoss = false }) {
   const { activeGifts } = useGifts();
   return (
-    <div
-      style={{
-        padding: "12px",
-        background: "rgba(0,0,0,0.3)",
-        borderRadius: 8,
-        border: "1px solid rgba(0,245,255,0.12)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-      }}
-    >
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+    <div className="p-3 bg-[#0000004D] rounded-lg border border-[#00F5FF1F] flex flex-col gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5">
         <div style={{ gridColumn: "1 / -1" }}>
           <label style={labelStyle}>Display Name</label>
           <input
@@ -191,23 +127,14 @@ export default function EditForm({
 
         <div>
           <label style={labelStyle}>Bullet Color</label>
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <div className="flex gap-1.5 items-center">
             <input
               type="color"
               value={local.bulletColor}
               onChange={(e) =>
                 setLocal((p) => ({ ...p, bulletColor: e.target.value }))
               }
-              style={{
-                width: 34,
-                height: 28,
-                border: "none",
-                borderRadius: 5,
-                cursor: "pointer",
-                background: "transparent",
-                padding: 0,
-                flexShrink: 0,
-              }}
+              className="w-[34px] h-[28px] border-0 rounded-[5px] cursor-pointer bg-transparent p-0 shrink-0"
             />
             <input
               style={{ ...inputStyle, flex: 1 }}
@@ -259,13 +186,7 @@ export default function EditForm({
           <label style={{ ...labelStyle, marginBottom: 6 }}>
             Quà kích hoạt ship này
             {local.gifts?.length > 0 && (
-              <span
-                style={{
-                  marginLeft: 6,
-                  color: "var(--color-cyan)",
-                  fontFamily: "inherit",
-                }}
-              >
+              <span className="ml-1.5 text-cyan-1">
                 ({local.gifts.length} đã chọn)
               </span>
             )}
@@ -280,20 +201,9 @@ export default function EditForm({
 
       <button
         onClick={onSave}
-        style={{
-          width: "100%",
-          padding: "8px",
-          borderRadius: 8,
-          border: "none",
-          background: "linear-gradient(135deg, var(--color-cyan), #0088aa)",
-          color: "#000",
-          fontWeight: 700,
-          fontSize: "0.74rem",
-          cursor: "pointer",
-          fontFamily: "var(--font-game)",
-        }}
+        className="w-full p-2 rounded-lg border-0 bg-[linear-gradient(135deg,var(--color-cyan),#0088aa)] text-black font-bold text-[0.74rem] cursor-pointer"
       >
-        💾 Save Changes
+        Save Changes
       </button>
     </div>
   );
