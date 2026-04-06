@@ -18,10 +18,11 @@
     "role": "ship",
     "path": "/models/spaceship_2.glb",
     "scale": 0.35,
-    "gunTipOffset": 0.4,
-    "rotationY": 35,
+    "gunTipOffset": 0.1,
+    "rotationY": -100,
     "bulletColor": "#bf00ff",
-    "builtIn": true
+    "builtIn": true,
+    "updatedAt": "2026-04-06T01:19:27.892Z"
   },
   {
     "id": "spaceship_3",

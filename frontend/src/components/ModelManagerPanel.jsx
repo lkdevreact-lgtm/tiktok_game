@@ -106,7 +106,14 @@ function EditForm({ local, setLocal, onSave }) {
         border: "1px solid rgba(0,245,255,0.12)",
       }}
     >
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 10,
+          marginBottom: 10,
+        }}
+      >
         <div style={{ gridColumn: "1 / -1" }}>
           <label style={labelStyle}>Display Name</label>
           <input
@@ -118,7 +125,10 @@ function EditForm({ local, setLocal, onSave }) {
         <div>
           <label style={labelStyle}>Scale</label>
           <input
-            type="number" step="0.01" min="0.001" max="20"
+            type="number"
+            step="0.01"
+            min="0.001"
+            max="20"
             style={inputStyle}
             value={local.scale}
             onChange={(e) => setLocal((p) => ({ ...p, scale: e.target.value }))}
@@ -127,19 +137,29 @@ function EditForm({ local, setLocal, onSave }) {
         <div>
           <label style={labelStyle}>Gun Tip Offset</label>
           <input
-            type="number" step="0.05" min="-5" max="10"
+            type="number"
+            step="0.05"
+            min="-5"
+            max="10"
             style={inputStyle}
             value={local.gunTipOffset}
-            onChange={(e) => setLocal((p) => ({ ...p, gunTipOffset: e.target.value }))}
+            onChange={(e) =>
+              setLocal((p) => ({ ...p, gunTipOffset: e.target.value }))
+            }
           />
         </div>
         <div>
           <label style={labelStyle}>Rotation Y (°)</label>
           <input
-            type="number" step="5" min="-360" max="360"
+            type="number"
+            step="5"
+            min="-360"
+            max="360"
             style={inputStyle}
             value={local.rotationY}
-            onChange={(e) => setLocal((p) => ({ ...p, rotationY: e.target.value }))}
+            onChange={(e) =>
+              setLocal((p) => ({ ...p, rotationY: e.target.value }))
+            }
           />
         </div>
         <div>
@@ -148,13 +168,26 @@ function EditForm({ local, setLocal, onSave }) {
             <input
               type="color"
               value={local.bulletColor}
-              onChange={(e) => setLocal((p) => ({ ...p, bulletColor: e.target.value }))}
-              style={{ width: 34, height: 28, border: "none", borderRadius: 5, cursor: "pointer", background: "transparent", padding: 0, flexShrink: 0 }}
+              onChange={(e) =>
+                setLocal((p) => ({ ...p, bulletColor: e.target.value }))
+              }
+              style={{
+                width: 34,
+                height: 28,
+                border: "none",
+                borderRadius: 5,
+                cursor: "pointer",
+                background: "transparent",
+                padding: 0,
+                flexShrink: 0,
+              }}
             />
             <input
               style={{ ...inputStyle, flex: 1 }}
               value={local.bulletColor}
-              onChange={(e) => setLocal((p) => ({ ...p, bulletColor: e.target.value }))}
+              onChange={(e) =>
+                setLocal((p) => ({ ...p, bulletColor: e.target.value }))
+              }
             />
           </div>
         </div>
@@ -184,12 +217,12 @@ function EditForm({ local, setLocal, onSave }) {
 // ── Single Model Card ─────────────────────────────────────────
 function ModelCard({
   model,
-  isActiveBoss = false,           // boss: đây có phải active boss không
+  isActiveBoss = false, // boss: đây có phải active boss không
   onUpdate,
   onReset,
   onDelete,
-  onToggleShip,                   // ship: toggle active/inactive
-  onSetActiveBoss,                // boss: chọn làm active
+  onToggleShip, // ship: toggle active/inactive
+  onSetActiveBoss, // boss: chọn làm active
 }) {
   const [expanded, setExpanded] = useState(false);
   const [local, setLocal] = useState({
@@ -209,11 +242,17 @@ function ModelCard({
       rotationY: model.rotationY,
       bulletColor: model.bulletColor || "#00f5ff",
     });
-  }, [model.label, model.scale, model.gunTipOffset, model.rotationY, model.bulletColor]);
+  }, [
+    model.label,
+    model.scale,
+    model.gunTipOffset,
+    model.rotationY,
+    model.bulletColor,
+  ]);
 
-  const isBoss   = model.role === "boss";
+  const isBoss = model.role === "boss";
   const isActive = isBoss ? isActiveBoss : model.active;
-  const color    = model.bulletColor || "#00f5ff";
+  const color = model.bulletColor || "#00f5ff";
 
   const handleSave = () => {
     onUpdate?.(model.id, {
@@ -242,21 +281,43 @@ function ModelCard({
     >
       {/* ── Top row ── */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <ModelBadge emoji={model.emoji || "🚀"} color={color} active={isActive} />
+        <ModelBadge
+          emoji={model.emoji || "🚀"}
+          color={color}
+          active={isActive}
+        />
 
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3, flexWrap: "wrap" }}>
-            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: isActive ? "#e0e8ff" : "rgba(180,200,255,0.5)" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              marginBottom: 3,
+              flexWrap: "wrap",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                color: isActive ? "#e0e8ff" : "rgba(180,200,255,0.5)",
+              }}
+            >
               {model.label}
             </span>
             <RoleBadge role={model.role} />
             {onReset && (
               <span
                 style={{
-                  fontSize: "0.5rem", textTransform: "uppercase",
-                  color: "#a78bfa", background: "rgba(167,139,250,0.12)",
-                  border: "1px solid rgba(167,139,250,0.3)", borderRadius: 4, padding: "1px 5px",
+                  fontSize: "0.5rem",
+                  textTransform: "uppercase",
+                  color: "#a78bfa",
+                  background: "rgba(167,139,250,0.12)",
+                  border: "1px solid rgba(167,139,250,0.3)",
+                  borderRadius: 4,
+                  padding: "1px 5px",
                 }}
               >
                 MODIFIED
@@ -265,9 +326,13 @@ function ModelCard({
             {isBoss && isActiveBoss && (
               <span
                 style={{
-                  fontSize: "0.5rem", textTransform: "uppercase",
-                  color: "#ff4466", background: "rgba(255,0,66,0.12)",
-                  border: "1px solid rgba(255,0,66,0.3)", borderRadius: 4, padding: "1px 5px",
+                  fontSize: "0.5rem",
+                  textTransform: "uppercase",
+                  color: "#ff4466",
+                  background: "rgba(255,0,66,0.12)",
+                  border: "1px solid rgba(255,0,66,0.3)",
+                  borderRadius: 4,
+                  padding: "1px 5px",
                 }}
               >
                 ACTIVE
@@ -281,21 +346,37 @@ function ModelCard({
               `Gun: ${model.gunTipOffset}`,
               `Rot: ${model.rotationY}°`,
             ].map((t) => (
-              <span key={t} style={{ fontSize: "0.6rem", color: "rgba(180,200,255,0.4)" }}>{t}</span>
+              <span
+                key={t}
+                style={{ fontSize: "0.6rem", color: "rgba(180,200,255,0.4)" }}
+              >
+                {t}
+              </span>
             ))}
-            <span style={{ fontSize: "0.6rem", color, fontWeight: 700 }}>● {color}</span>
+            <span style={{ fontSize: "0.6rem", color, fontWeight: 700 }}>
+              ● {color}
+            </span>
           </div>
         </div>
 
         {/* ── Action buttons ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            flexShrink: 0,
+          }}
+        >
           {/* Edit */}
           <button
             onClick={() => setExpanded((v) => !v)}
             title="Sửa thông số"
             style={{
               ...btnBase,
-              background: expanded ? "rgba(0,245,255,0.18)" : "rgba(0,245,255,0.08)",
+              background: expanded
+                ? "rgba(0,245,255,0.18)"
+                : "rgba(0,245,255,0.08)",
               border: "1px solid rgba(0,245,255,0.3)",
               color: "var(--color-cyan)",
             }}
@@ -307,10 +388,16 @@ function ModelCard({
           {!isBoss && onToggleShip && (
             <button
               onClick={() => onToggleShip(model.id)}
-              title={isActive ? "Tắt (ẩn trong gift config)" : "Bật (hiện trong gift config)"}
+              title={
+                isActive
+                  ? "Tắt (ẩn trong gift config)"
+                  : "Bật (hiện trong gift config)"
+              }
               style={{
                 ...btnBase,
-                background: isActive ? "rgba(0,245,255,0.12)" : "rgba(255,255,255,0.06)",
+                background: isActive
+                  ? "rgba(0,245,255,0.12)"
+                  : "rgba(255,255,255,0.06)",
                 border: `1px solid ${isActive ? "rgba(0,245,255,0.4)" : "rgba(255,255,255,0.15)"}`,
                 color: isActive ? "var(--color-cyan)" : "rgba(180,200,255,0.4)",
               }}
@@ -353,7 +440,10 @@ function ModelCard({
           {/* Reset built-in */}
           {onReset && (
             <button
-              onClick={() => { onReset(model.id); setExpanded(false); }}
+              onClick={() => {
+                onReset(model.id);
+                setExpanded(false);
+              }}
               title="Reset về mặc định"
               style={{
                 ...btnBase,
@@ -411,7 +501,10 @@ function UploadForm({ onSuccess }) {
   const handleFile = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.name.toLowerCase().endsWith(".glb")) { setError("Chỉ hỗ trợ file .glb"); return; }
+    if (!f.name.toLowerCase().endsWith(".glb")) {
+      setError("Chỉ hỗ trợ file .glb");
+      return;
+    }
     setFile(f);
     setError("");
     const base = f.name.replace(/\.glb$/i, "");
@@ -420,34 +513,50 @@ function UploadForm({ onSuccess }) {
 
   const handleUpload = async () => {
     if (!file) return;
-    if (!params.label.trim()) { setError("Vui lòng nhập tên hiển thị"); return; }
+    if (!params.label.trim()) {
+      setError("Vui lòng nhập tên hiển thị");
+      return;
+    }
     setUploading(true);
     setError("");
     try {
       const fd = new FormData();
-      fd.append("file",         file);
-      fd.append("label",        params.label.trim());
-      fd.append("emoji",        params.emoji || "🚀");
-      fd.append("role",         params.role);
-      fd.append("scale",        params.scale);
+      fd.append("file", file);
+      fd.append("label", params.label.trim());
+      fd.append("emoji", params.emoji || "🚀");
+      fd.append("role", params.role);
+      fd.append("scale", params.scale);
       fd.append("gunTipOffset", params.gunTipOffset);
-      fd.append("rotationY",    params.rotationY);
-      fd.append("bulletColor",  params.bulletColor);
+      fd.append("rotationY", params.rotationY);
+      fd.append("bulletColor", params.bulletColor);
 
-      const res = await fetch(`${BACKEND_URL}/api/models/upload`, { method: "POST", body: fd });
+      const res = await fetch(`${BACKEND_URL}/api/models/upload`, {
+        method: "POST",
+        body: fd,
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload thất bại");
 
       // Xóa Suspense cache của useGLTF để tránh lỗi "Unexpected token '<'"
       // (cache có thể giữ lỗi 404 từ khi file chưa tồn tại)
       if (data.path) {
-        try { useGLTF.clear(data.path); } catch (_) {}
+        try {
+          useGLTF.clear(data.path);
+        } catch (_) {}
       }
 
       onSuccess(data); // backend trả về full model object đã lưu vào JSON
 
       setFile(null);
-      setParams({ label: "", emoji: "🚀", role: "ship", scale: 0.25, gunTipOffset: 0.4, rotationY: 0, bulletColor: "#00f5ff" });
+      setParams({
+        label: "",
+        emoji: "🚀",
+        role: "ship",
+        scale: 0.25,
+        gunTipOffset: 0.4,
+        rotationY: 0,
+        bulletColor: "#00f5ff",
+      });
       if (fileRef.current) fileRef.current.value = "";
     } catch (err) {
       setError(err.message);
@@ -493,21 +602,42 @@ function UploadForm({ onSuccess }) {
           transition: "all 0.2s",
         }}
       >
-        <div style={{ fontSize: 20, marginBottom: 4 }}>{file ? "📦" : "📁"}</div>
-        <div style={{ fontSize: "0.73rem", color: file ? "var(--color-cyan)" : "rgba(180,200,255,0.4)" }}>
+        <div style={{ fontSize: 20, marginBottom: 4 }}>
+          {file ? "📦" : "📁"}
+        </div>
+        <div
+          style={{
+            fontSize: "0.73rem",
+            color: file ? "var(--color-cyan)" : "rgba(180,200,255,0.4)",
+          }}
+        >
           {file ? file.name : "Click để chọn file .glb"}
         </div>
         {file && (
-          <div style={{ fontSize: "0.6rem", color: "rgba(180,200,255,0.35)", marginTop: 2 }}>
+          <div
+            style={{
+              fontSize: "0.6rem",
+              color: "rgba(180,200,255,0.35)",
+              marginTop: 2,
+            }}
+          >
             {(file.size / 1024 / 1024).toFixed(1)} MB
           </div>
         )}
-        <input ref={fileRef} type="file" accept=".glb" onChange={handleFile} style={{ display: "none" }} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".glb"
+          onChange={handleFile}
+          style={{ display: "none" }}
+        />
       </div>
 
       {/* Params */}
       {file && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
+        >
           {/* Role selector */}
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Role *</label>
@@ -524,8 +654,10 @@ function UploadForm({ onSuccess }) {
                     padding: "8px",
                     borderRadius: 8,
                     border: `1px solid ${params.role === value ? color + "88" : "rgba(255,255,255,0.12)"}`,
-                    background: params.role === value ? color + "18" : "rgba(0,0,0,0.2)",
-                    color: params.role === value ? color : "rgba(180,200,255,0.4)",
+                    background:
+                      params.role === value ? color + "18" : "rgba(0,0,0,0.2)",
+                    color:
+                      params.role === value ? color : "rgba(180,200,255,0.4)",
                     cursor: "pointer",
                     fontSize: "0.72rem",
                     fontWeight: params.role === value ? 700 : 400,
@@ -544,7 +676,9 @@ function UploadForm({ onSuccess }) {
               style={inputStyle}
               placeholder="My Custom Ship"
               value={params.label}
-              onChange={(e) => setParams((p) => ({ ...p, label: e.target.value }))}
+              onChange={(e) =>
+                setParams((p) => ({ ...p, label: e.target.value }))
+              }
             />
           </div>
 
@@ -554,39 +688,96 @@ function UploadForm({ onSuccess }) {
               style={inputStyle}
               maxLength={2}
               value={params.emoji}
-              onChange={(e) => setParams((p) => ({ ...p, emoji: e.target.value }))}
+              onChange={(e) =>
+                setParams((p) => ({ ...p, emoji: e.target.value }))
+              }
             />
           </div>
           <div>
             <label style={labelStyle}>Scale</label>
-            <input type="number" step="0.01" min="0.001" max="20" style={inputStyle}
-              value={params.scale} onChange={(e) => setParams((p) => ({ ...p, scale: e.target.value }))} />
+            <input
+              type="number"
+              step="0.01"
+              min="0.001"
+              max="20"
+              style={inputStyle}
+              value={params.scale}
+              onChange={(e) =>
+                setParams((p) => ({ ...p, scale: e.target.value }))
+              }
+            />
           </div>
           <div>
             <label style={labelStyle}>Gun Tip Offset</label>
-            <input type="number" step="0.05" min="-5" max="10" style={inputStyle}
-              value={params.gunTipOffset} onChange={(e) => setParams((p) => ({ ...p, gunTipOffset: e.target.value }))} />
+            <input
+              type="number"
+              step="0.05"
+              min="-5"
+              max="10"
+              style={inputStyle}
+              value={params.gunTipOffset}
+              onChange={(e) =>
+                setParams((p) => ({ ...p, gunTipOffset: e.target.value }))
+              }
+            />
           </div>
           <div>
             <label style={labelStyle}>Rotation Y (°)</label>
-            <input type="number" step="5" min="-360" max="360" style={inputStyle}
-              value={params.rotationY} onChange={(e) => setParams((p) => ({ ...p, rotationY: e.target.value }))} />
+            <input
+              type="number"
+              step="5"
+              min="-360"
+              max="360"
+              style={inputStyle}
+              value={params.rotationY}
+              onChange={(e) =>
+                setParams((p) => ({ ...p, rotationY: e.target.value }))
+              }
+            />
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Bullet Color</label>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <input type="color" value={params.bulletColor}
-                onChange={(e) => setParams((p) => ({ ...p, bulletColor: e.target.value }))}
-                style={{ width: 38, height: 32, border: "none", borderRadius: 5, cursor: "pointer", background: "transparent", padding: 0, flexShrink: 0 }} />
-              <input style={{ ...inputStyle, flex: 1 }} value={params.bulletColor}
-                onChange={(e) => setParams((p) => ({ ...p, bulletColor: e.target.value }))} />
+              <input
+                type="color"
+                value={params.bulletColor}
+                onChange={(e) =>
+                  setParams((p) => ({ ...p, bulletColor: e.target.value }))
+                }
+                style={{
+                  width: 38,
+                  height: 32,
+                  border: "none",
+                  borderRadius: 5,
+                  cursor: "pointer",
+                  background: "transparent",
+                  padding: 0,
+                  flexShrink: 0,
+                }}
+              />
+              <input
+                style={{ ...inputStyle, flex: 1 }}
+                value={params.bulletColor}
+                onChange={(e) =>
+                  setParams((p) => ({ ...p, bulletColor: e.target.value }))
+                }
+              />
             </div>
           </div>
         </div>
       )}
 
       {error && (
-        <div style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(255,51,102,0.1)", border: "1px solid rgba(255,51,102,0.3)", color: "#ff5577", fontSize: "0.73rem" }}>
+        <div
+          style={{
+            padding: "8px 12px",
+            borderRadius: 8,
+            background: "rgba(255,51,102,0.1)",
+            border: "1px solid rgba(255,51,102,0.3)",
+            color: "#ff5577",
+            fontSize: "0.73rem",
+          }}
+        >
           ⚠ {error}
         </div>
       )}
@@ -598,7 +789,9 @@ function UploadForm({ onSuccess }) {
           padding: "10px",
           borderRadius: 8,
           border: "none",
-          background: file ? "linear-gradient(135deg, var(--color-cyan), #0088aa)" : "rgba(255,255,255,0.06)",
+          background: file
+            ? "linear-gradient(135deg, var(--color-cyan), #0088aa)"
+            : "rgba(255,255,255,0.06)",
           color: file ? "#000" : "rgba(255,255,255,0.2)",
           fontWeight: 700,
           fontSize: "0.76rem",
@@ -631,9 +824,7 @@ function SectionHeader({ icon, label, color, count }) {
     >
       <span>{icon}</span>
       <span>{label}</span>
-      {count != null && (
-        <span style={{ opacity: 0.5 }}>({count})</span>
-      )}
+      {count != null && <span style={{ opacity: 0.5 }}>({count})</span>}
     </div>
   );
 }
@@ -654,12 +845,14 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
 
   useEffect(() => {
     if (!isOpen) return;
-    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    const handleKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, onClose]);
 
-  const ships  = allShipModels;
+  const ships = allShipModels;
   const bosses = allBossModels;
 
   return (
@@ -667,36 +860,13 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.55)",
-          backdropFilter: "blur(4px)",
-          zIndex: 90,
-          opacity: isOpen ? 1 : 0,
-          pointerEvents: isOpen ? "auto" : "none",
-          transition: "opacity 0.25s ease",
-        }}
+        className={`fixed inset-0 bg-[#0000008C] backdrop-blur-xs z-10 ${isOpen ? "opacity-100" : "opacity-0"} transition-opacity duration-300 ease-in-out`}
       />
 
       {/* Panel */}
       <aside
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: 390,
-          display: "flex",
-          flexDirection: "column",
-          background: "rgba(4,10,28,0.97)",
-          borderLeft: "1px solid rgba(100,120,255,0.2)",
-          backdropFilter: "blur(24px)",
-          zIndex: 100,
-          transform: isOpen ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          boxShadow: isOpen ? "-8px 0 40px rgba(0,0,0,0.6)" : "none",
-        }}
+        className={`fixed top-0 right-0 bottom-0 w-[390px] flex flex-col bg-[#040A1CF7] border-l-[#6478FF33] backdrop-blur-xl z-[100] transform transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+ ${isOpen ? "translate-x-0 shadow-[-8px_0_40px_rgba(0,0,0,0.6)]" : "translate-x-full shadow-none"}`}
       >
         {/* Header */}
         <div
@@ -710,18 +880,40 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: "1rem" }}>🚀</span>
-            <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#a78bfa", fontFamily: "var(--font-game)" }}>
+            <span
+              style={{
+                fontSize: "0.68rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+                color: "#a78bfa",
+                fontFamily: "var(--font-game)",
+              }}
+            >
               Model Manager
             </span>
           </div>
-          <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: "0.6rem", color: "rgba(180,200,255,0.4)" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              alignItems: "center",
+              fontSize: "0.6rem",
+              color: "rgba(180,200,255,0.4)",
+            }}
+          >
             <RoleBadge role="ship" />
             <span>{ships.length}</span>
             <RoleBadge role="boss" />
             <span>{bosses.length}</span>
             <button
               onClick={onClose}
-              style={{ ...btnBase, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(200,220,255,0.7)", marginLeft: 4 }}
+              style={{
+                ...btnBase,
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                color: "rgba(200,220,255,0.7)",
+                marginLeft: 4,
+              }}
             >
               ✕
             </button>
@@ -729,10 +921,25 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 18 }}>
-
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+          }}
+        >
           {loading && (
-            <div style={{ textAlign: "center", color: "rgba(180,200,255,0.4)", fontSize: "0.75rem", padding: "20px 0" }}>
+            <div
+              style={{
+                textAlign: "center",
+                color: "rgba(180,200,255,0.4)",
+                fontSize: "0.75rem",
+                padding: "20px 0",
+              }}
+            >
               ⏳ Đang tải models từ server...
             </div>
           )}
@@ -740,7 +947,12 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
           {/* ── Ships ── */}
           {ships.length > 0 && (
             <section>
-              <SectionHeader icon="✦" label="Ships" color="rgba(0,245,255,0.65)" count={ships.length} />
+              <SectionHeader
+                icon="✦"
+                label="Ships"
+                color="rgba(0,245,255,0.65)"
+                count={ships.length}
+              />
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {ships.map((m) => (
                   <ModelCard
@@ -758,7 +970,12 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
           {/* ── Bosses ── */}
           {bosses.length > 0 && (
             <section>
-              <SectionHeader icon="☠" label="Boss" color="rgba(255,80,100,0.7)" count={bosses.length} />
+              <SectionHeader
+                icon="☠"
+                label="Boss"
+                color="rgba(255,80,100,0.7)"
+                count={bosses.length}
+              />
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {bosses.map((m) => (
                   <ModelCard

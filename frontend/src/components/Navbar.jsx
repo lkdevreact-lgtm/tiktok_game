@@ -15,34 +15,17 @@ export default function Navbar() {
     gameStatus === "playing"
       ? "🟢 LIVE"
       : gameStatus === "win"
-      ? "🏆 WIN"
-      : gameStatus === "lose"
-      ? "💀 OVER"
-      : "⏸ IDLE";
+        ? "🏆 WIN"
+        : gameStatus === "lose"
+          ? "💀 OVER"
+          : "⏸ IDLE";
 
   return (
     <>
       <nav
         id="game-navbar"
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 52,
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          padding: "0 18px",
-          zIndex: 50,
-          background: "rgba(2,8,20,0.88)",
-          borderBottom: "1px solid rgba(0,245,255,0.14)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          fontFamily: "var(--font-game)",
-        }}
+        className="fixed top-0 left-0 right-0 h-[52px] flex items-center gap-4 px-5 z-50 bg-[#020814E0] border-b border-b-[#00F5FF24] backdrop-blur-lg"
       >
-        {/* Brand */}
         <div
           style={{
             fontSize: "0.72rem",
@@ -57,10 +40,20 @@ export default function Navbar() {
         </div>
 
         {/* Separator */}
-        <div style={{ width: 1, height: 22, background: "rgba(0,245,255,0.15)" }} />
+        <div
+          style={{ width: 1, height: 22, background: "rgba(0,245,255,0.15)" }}
+        />
 
         {/* Boss HP bar */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, maxWidth: 280 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flex: 1,
+            maxWidth: 280,
+          }}
+        >
           <span
             style={{
               fontSize: "0.6rem",
@@ -136,8 +129,8 @@ export default function Navbar() {
                 gameStatus === "playing"
                   ? "var(--color-success)"
                   : gameStatus === "win"
-                  ? "#ffd700"
-                  : "rgba(180,200,255,0.45)",
+                    ? "#ffd700"
+                    : "rgba(180,200,255,0.45)",
               whiteSpace: "nowrap",
             }}
           >
@@ -146,7 +139,9 @@ export default function Navbar() {
         </div>
 
         {/* Separator */}
-        <div style={{ width: 1, height: 22, background: "rgba(0,245,255,0.15)" }} />
+        <div
+          style={{ width: 1, height: 22, background: "rgba(0,245,255,0.15)" }}
+        />
 
         {/* Models button */}
         <button
@@ -217,8 +212,14 @@ export default function Navbar() {
         </button>
       </nav>
 
-      <SidebarSetting isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <ModelManagerPanel isOpen={modelsOpen} onClose={() => setModelsOpen(false)} />
+      <SidebarSetting
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
+      <ModelManagerPanel
+        isOpen={modelsOpen}
+        onClose={() => setModelsOpen(false)}
+      />
     </>
   );
 }
