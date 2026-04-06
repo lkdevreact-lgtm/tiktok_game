@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { GameProvider, useGame } from "./store/gameStore";
 import { ModelProvider } from "./store/modelStore";
+import { GiftProvider } from "./store/giftStore";
 import ConnectForm from "./components/ConnectForm";
 import GameCanvas from "./components/GameCanvas";
 import socket from "./socket/socketClient";
@@ -32,9 +33,11 @@ function AppInner() {
 export default function App() {
   return (
     <ModelProvider>
-      <GameProvider>
-        <AppInner />
-      </GameProvider>
+      <GiftProvider>
+        <GameProvider>
+          <AppInner />
+        </GameProvider>
+      </GiftProvider>
     </ModelProvider>
   );
 }

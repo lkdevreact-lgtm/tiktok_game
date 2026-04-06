@@ -6,15 +6,14 @@
  * - Upload GLB mới
  * - Xóa custom models
  */
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useModels } from "../../store/modelStore";
+import { useGifts } from "../../store/giftStore";
 import { btnBase } from "../ui/styles";
 import RoleBadge from "../ui/RoleBadge";
 import SectionHeader from "../ui/SectionHeader";
 import ModelCard from "./ModelCard";
 import UploadForm from "./UploadForm";
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8888";
 
 export default function ModelManagerPanel({ isOpen, onClose }) {
   const {
@@ -29,32 +28,8 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
     loading,
   } = useModels();
 
-  // activeGifts: danh sách quà đang active (để pass vào EditForm & UploadForm)
-  const [activeGifts, setActiveGifts] = useState([]);
-
-  useEffect(() => {
-    fetch(`${BACKEND_URL}/api/gifts`)
-      .then((r) => r.json())
-      .then((data) => {
-        const active = data.filter((g) => g.diamonds && g.active !== false);
-        active.sort((a, b) => (a.diamonds || 0) - (b.diamonds || 0));
-        setActiveGifts(active);
-      })
-      .catch(() => {});
-  }, []);
-
-  // Re-fetch khi panel mở (để đồng bộ khi user đổi active ở Gift Config)
-  useEffect(() => {
-    if (!isOpen) return;
-    fetch(`${BACKEND_URL}/api/gifts`)
-      .then((r) => r.json())
-      .then((data) => {
-        const active = data.filter((g) => g.diamonds && g.active !== false);
-        active.sort((a, b) => (a.diamonds || 0) - (b.diamonds || 0));
-        setActiveGifts(active);
-      })
-      .catch(() => {});
-  }, [isOpen]);
+  // Dùng shared giftStore — tự động đồng bộ khi SidebarSetting toggle
+  const { activeGifts } = useGifts();
 
   // Close on Escape
   useEffect(() => {

@@ -1,30 +1,15 @@
 /**
  * SidebarSetting.jsx — Gift Config Panel
  * Chỉ hiển thị: ảnh gift + tên + diamonds + toggle Active
- * Toggle active persist vào gifts.json qua PUT /api/gifts/:giftId
+ * Dùng giftStore (shared) → toggle ngay phản ánh sang ModelManagerPanel
  */
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useGifts } from "../store/giftStore";
 import ToggleSwitch from "./ui/ToggleSwitch";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8888";
-
 export default function SidebarSetting({ isOpen, onClose }) {
-  const [gifts, setGifts] = useState([]);
+  const { gifts, toggleGiftActive } = useGifts();
   const panelRef = useRef(null);
-
-  // Load toàn bộ gifts (kể cả inactive) để hiển thị đầy đủ
-  useEffect(() => {
-    fetch(`${BACKEND_URL}/api/gifts`)
-      .then((r) => r.json())
-      .then((data) => {
-        // Chỉ hiện những gift có diamonds (quà thật)
-        const valid = data.filter((g) => g.diamonds);
-        valid.sort((a, b) => (a.diamonds || 0) - (b.diamonds || 0));
-        // Default active = true nếu chưa có trường active
-        setGifts(valid.map((g) => ({ ...g, active: g.active !== false })));
-      })
-      .catch(() => {});
-  }, []);
 
   // Close on Escape
   useEffect(() => {
@@ -33,28 +18,6 @@ export default function SidebarSetting({ isOpen, onClose }) {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, onClose]);
-
-  // Toggle active: cập nhật local state + persist server
-  const handleToggle = async (giftId) => {
-    const idx = gifts.findIndex((g) => g.giftId === giftId);
-    if (idx === -1) return;
-
-    const newActive = !gifts[idx].active;
-
-    // Optimistic update
-    setGifts((prev) =>
-      prev.map((g) => g.giftId === giftId ? { ...g, active: newActive } : g)
-    );
-
-    // Persist to server
-    try {
-      await fetch(`${BACKEND_URL}/api/gifts/${giftId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: newActive }),
-      });
-    } catch { /* ignore offline */ }
-  };
 
   return (
     <>
@@ -87,14 +50,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
         }}
       >
         {/* Header */}
-        <div
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "16px 18px",
-            borderBottom: "1px solid rgba(0,245,255,0.15)",
-            fontFamily: "var(--font-game)",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", borderBottom: "1px solid rgba(0,245,255,0.15)", fontFamily: "var(--font-game)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--color-success)", boxShadow: "0 0 8px var(--color-success)", flexShrink: 0, display: "inline-block" }} />
             <span style={{ fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--color-cyan)" }}>
@@ -103,12 +59,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 8, color: "rgba(200,220,255,0.7)",
-              cursor: "pointer", padding: "4px 10px", fontSize: "0.8rem",
-              transition: "background 0.15s",
-            }}
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(200,220,255,0.7)", cursor: "pointer", padding: "4px 10px", fontSize: "0.8rem", transition: "background 0.15s" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
           >
@@ -138,11 +89,8 @@ export default function SidebarSetting({ isOpen, onClose }) {
             <div
               key={gift.giftId}
               style={{
-                borderRadius: 10,
-                padding: "8px 12px",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
+                borderRadius: 10, padding: "8px 12px",
+                display: "flex", alignItems: "center", gap: 10,
                 background: gift.active ? "rgba(0,245,255,0.05)" : "rgba(255,255,255,0.015)",
                 border: `1px solid ${gift.active ? "rgba(0,245,255,0.2)" : "rgba(255,255,255,0.06)"}`,
                 transition: "border-color 0.2s, background 0.2s",
@@ -151,11 +99,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
             >
               {/* Gift image */}
               {gift.image ? (
-                <img
-                  src={gift.image}
-                  alt={gift.giftName}
-                  style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain", background: "rgba(255,255,255,0.05)", flexShrink: 0 }}
-                />
+                <img src={gift.image} alt={gift.giftName} style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain", background: "rgba(255,255,255,0.05)", flexShrink: 0 }} />
               ) : (
                 <div style={{ width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, background: "rgba(255,255,255,0.05)", flexShrink: 0 }}>
                   🎁
@@ -175,7 +119,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
               {/* Toggle */}
               <ToggleSwitch
                 value={gift.active}
-                onChange={() => handleToggle(gift.giftId)}
+                onChange={() => toggleGiftActive(gift.giftId)}
                 title={gift.active ? "Tắt khỏi danh sách chọn" : "Bật lại trong danh sách chọn"}
               />
             </div>
