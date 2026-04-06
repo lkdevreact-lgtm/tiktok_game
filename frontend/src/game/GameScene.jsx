@@ -21,7 +21,7 @@ function playAttackSound() {
   const audio = attackPool[attackPoolIdx];
   attackPoolIdx = (attackPoolIdx + 1) % ATTACK_POOL_SIZE;
   audio.currentTime = 0;
-  audio.play().catch(() => {});
+  audio.play().catch(() => { });
 }
 
 export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
@@ -87,7 +87,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       const slotY = -Y_RANGE / 2 + (slotIdx + 0.5) * (Y_RANGE / NUM_Y_SLOTS);
       const y = slotY + (Math.random() - 0.5) * 0.3; // jitter nhỏ cho tự nhiên
       const z = (Math.random() - 0.5) * 2.0; // ~±1.0, tránh bị cắt ngang
-      mesh.position.set(8.0, y, z);
+      mesh.position.set(7.0, y, z);
 
       scene.add(mesh);
 
@@ -141,7 +141,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
 
       // Phát sound hồi máu
       healAudio.current.currentTime = 0;
-      healAudio.current.play().catch(() => {});
+      healAudio.current.play().catch(() => { });
 
       // Flash xanh lá
       const boss = bossRef.current;
@@ -411,7 +411,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
 
     // Collision detection
     const bossBox = new THREE.Box3().setFromObject(boss);
-    bossBox.expandByScalar(-0.8);
+    bossBox.expandByScalar(0.12);
     const deadBullets = new Set();
 
     bulletsRef.current.forEach((bullet, idx) => {

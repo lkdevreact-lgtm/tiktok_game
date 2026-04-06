@@ -9,6 +9,7 @@ export const IMAGES = {
   COIN: "/images/coin.png",
   SHIP_USER: "/images/default_spaceship.jpg",
   SHIP_BOSS: "/images/evil_boss.png",
+  GAME_BUTTON: "/images/gameUI.png",
 };
 
 export const SETTINGS_GAME = {
