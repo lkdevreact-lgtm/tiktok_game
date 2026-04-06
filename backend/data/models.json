@@ -14,7 +14,7 @@
     "damage": 1,
     "fireRate": 1,
     "gifts": [],
-    "updatedAt": "2026-04-06T09:58:39.095Z"
+    "updatedAt": "2026-04-06T10:24:53.111Z"
   },
   {
     "id": "spaceship_2",
@@ -39,16 +39,18 @@
     "emoji": "🟡",
     "role": "ship",
     "path": "/models/spaceship_3.glb",
-    "scale": 0.05,
+    "scale": 0.04,
     "gunTipOffset": 0.5,
-    "rotationY": 40,
+    "rotationY": 150,
     "bulletColor": "#ffaa00",
     "builtIn": true,
-    "active": true,
+    "active": false,
     "damage": 5,
     "fireRate": 0.3,
-    "gifts": [],
-    "updatedAt": "2026-04-06T08:28:06.284Z"
+    "gifts": [
+      5655
+    ],
+    "updatedAt": "2026-04-06T10:16:03.519Z"
   },
   {
     "id": "spaceship_boss",
@@ -64,7 +66,8 @@
     "active": true,
     "damage": 1,
     "fireRate": 1,
-    "gifts": []
+    "gifts": [],
+    "updatedAt": "2026-04-06T10:14:09.063Z"
   },
   {
     "id": "custom_1775465375358_space_ship_5",
@@ -79,11 +82,10 @@
     "bulletColor": "#f31212",
     "damage": 1,
     "fireRate": 1,
-    "gifts": [
-      5655
-    ],
+    "gifts": [],
     "builtIn": false,
     "active": true,
-    "uploadedAt": "2026-04-06T08:49:35.366Z"
+    "uploadedAt": "2026-04-06T08:49:35.366Z",
+    "updatedAt": "2026-04-06T10:03:25.122Z"
   }
 ]
