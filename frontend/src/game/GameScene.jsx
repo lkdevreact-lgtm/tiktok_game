@@ -67,8 +67,7 @@ export default function GameScene({ onGiftSpawn }) {
 
       const y = (Math.random() - 0.5) * 3.5;
       const z = (Math.random() - 0.5) * 1.5;
-      mesh.position.set(6.0, y, z);
-      // Rotation được apply per-ship trong useShipModels.js (SHIP_ROTATIONS)
+      mesh.position.set(8.0, y, z);
 
       scene.add(mesh);
 
@@ -258,13 +257,13 @@ export default function GameScene({ onGiftSpawn }) {
 
     // Collision detection
     const bossBox = new THREE.Box3().setFromObject(boss);
-    bossBox.expandByScalar(0.12);
+    bossBox.expandByScalar(-0.8);
     const deadBullets = new Set();
 
     bulletsRef.current.forEach((bullet, idx) => {
       bullet.mesh.position.add(bullet.velocity);
 
-      if (bullet.mesh.position.x < -8 || bullet.mesh.position.x > 7) {
+      if (bullet.mesh.position.x < -8 || bullet.mesh.position.x > 14) {
         deadBullets.add(idx);
         return;
       }
@@ -282,7 +281,6 @@ export default function GameScene({ onGiftSpawn }) {
 
         deadBullets.add(idx);
 
-        // Flash đỏ toàn thân boss — debounce để tránh race condition
         if (!bossOrigMatsRef.current) {
           const saved = [];
           boss.traverse((child) => {

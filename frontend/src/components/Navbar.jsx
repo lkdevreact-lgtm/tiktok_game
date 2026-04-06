@@ -26,17 +26,11 @@ export default function Navbar() {
         id="game-navbar"
         className="fixed top-0 left-0 right-0 h-[52px] flex items-center gap-4 px-5 z-50 bg-[#020814E0] border-b border-b-[#00F5FF24] backdrop-blur-lg"
       >
-        <div
-          style={{
-            fontSize: "0.72rem",
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: "var(--color-cyan)",
-            whiteSpace: "nowrap",
-            textShadow: "0 0 10px rgba(0,245,255,0.6)",
-          }}
-        >
-          ⚡ TikTok Raid
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 shadow-[0_0_10px_#00F5FF99] bg-cyan-1 rounded-full animate-pulse" />
+          <p className="text-xs tracking-[0.18em] uppercase text-cyan-1 whitespace-nowrap text-shadow-[0_0_10px_#00F5FF99]">
+            TikTok live
+          </p>
         </div>
 
         {/* Separator */}
@@ -111,7 +105,7 @@ export default function Navbar() {
           }}
         >
           <span style={{ color: "var(--color-cyan)", whiteSpace: "nowrap" }}>
-            🚀 {shipCount} ships
+             Total Ships: {shipCount}
           </span>
           <span
             style={{
