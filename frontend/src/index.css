@@ -18,6 +18,7 @@
   --color-cyan-1: #00f5ff;
   --color-purple: #bf00ff;
   --color-gold: #ffaa00;
+  --color-primary: #02f2ea;
 }
 
 html,
@@ -197,4 +198,23 @@ body,
 
 .gift-toggle-thumb.on::after {
   transform: translateX(16px);
+}
+
+@keyframes mmFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes mmSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

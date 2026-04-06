@@ -1,22 +1,22 @@
-import { useState, useEffect, useRef } from "react";
-import { btnBase, FIRE_RATE_OPTIONS } from "../ui/styles";
+import { useState, useRef } from "react";
 import RoleBadge from "../ui/RoleBadge";
 import ToggleSwitch from "../ui/ToggleSwitch";
 import EditForm from "./EditForm";
 import { FaEdit, FaCamera, FaCube } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
-import { API_URL } from "../../utils/constant";
+import { API_URL, IMAGES } from "../../utils/constant";
+import { FIRE_RATE_OPTIONS } from "../ui/styles";
 
-const DEFAULT_SHIP_IMG = "/images/default_spaceship.jpg";
-const DEFAULT_BOSS_IMG = "/images/evil_boss.png";
+
+
+const actionBtn = "w-7 h-7 flex items-center justify-center rounded-md border cursor-pointer transition-all duration-150 text-[0]";
 
 function ModelAvatar({ iconUrl, isBoss, modelId, onIconUploaded, active }) {
   const inputRef = useRef();
   const [uploading, setUploading] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  const [hovered,   setHovered]   = useState(false);
 
-  const defaultImg = isBoss ? DEFAULT_BOSS_IMG : DEFAULT_SHIP_IMG;
-  const src = iconUrl || defaultImg;
+  const src = iconUrl || (isBoss ? IMAGES.SHIP_BOSS : IMAGES.SHIP_USER);
 
   const handleUpload = async (e) => {
     const f = e.target.files?.[0];
@@ -38,32 +38,29 @@ function ModelAvatar({ iconUrl, isBoss, modelId, onIconUploaded, active }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       title="Click để đổi ảnh icon"
-      style={{
-        width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-        overflow: "hidden", cursor: "pointer", position: "relative",
-        border: `1.5px solid ${active ? "rgba(0,245,255,0.4)" : "rgba(255,255,255,0.12)"}`,
-        opacity: active ? 1 : 0.5,
-      }}
+      className={`
+        w-9 h-9 rounded-lg shrink-0 overflow-hidden cursor-pointer relative
+        border transition-all duration-150
+        ${active
+          ? "border-[rgba(0,245,255,0.4)] opacity-100"
+          : "border-white/10 opacity-50"
+        }
+      `}
     >
-      <img src={src} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      <img src={src} alt="avatar" className="w-full h-full object-cover" />
       {hovered && (
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "rgba(0,0,0,0.6)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
           {uploading
-            ? <span style={{ fontSize: 9, color: "#fff" }}>...</span>
+            ? <span className="text-[9px] text-white">...</span>
             : <FaCamera size={12} color="#fff" />
           }
         </div>
       )}
-      <input ref={inputRef} type="file" accept="image/*" onChange={handleUpload} style={{ display: "none" }} />
+      <input ref={inputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
     </div>
   );
 }
 
-/** Nút upload file GLB mới để thay thế model 3D */
 function ReplaceGLBButton({ modelId, onReplaced }) {
   const inputRef = useRef();
   const [uploading, setUploading] = useState(false);
@@ -89,17 +86,15 @@ function ReplaceGLBButton({ modelId, onReplaced }) {
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
         title="Thay file 3D (.glb)"
-        style={{
-          ...btnBase,
-          background: uploading ? "rgba(167,139,250,0.18)" : "rgba(167,139,250,0.08)",
-          border: "1px solid rgba(167,139,250,0.3)",
-          color: "#a78bfa",
-        }}
-        className="flex items-center justify-center"
+        className={`
+          ${actionBtn}
+          border-[rgba(167,139,250,0.3)] text-[#a78bfa]
+          ${uploading ? "bg-[rgba(167,139,250,0.18)]" : "bg-[rgba(167,139,250,0.08)] hover:bg-[rgba(167,139,250,0.18)]"}
+        `}
       >
-        {uploading ? <span style={{ fontSize: 10 }}>⏳</span> : <FaCube size={13} />}
+        {uploading ? <span className="text-[10px] text-[#a78bfa]">⏳</span> : <FaCube size={13} color="#a78bfa" />}
       </button>
-      <input ref={inputRef} type="file" accept=".glb" onChange={handleUpload} style={{ display: "none" }} />
+      <input ref={inputRef} type="file" accept=".glb" onChange={handleUpload} className="hidden" />
     </>
   );
 }
@@ -109,52 +104,25 @@ function fireRateLabel(v) {
   return found ? found.label.split(" ")[0] : `${v}`;
 }
 
-export default function ModelCard({
-  model,
-  isActiveBoss = false,
-  onUpdate,
-  onDelete,
-  onToggleShip,
-  onSetActiveBoss,
-}) {
+export default function ModelCard({ model, isActiveBoss = false, onUpdate, onDelete, onToggleShip, onSetActiveBoss }) {
   const [expanded, setExpanded] = useState(false);
-  const [local, setLocal] = useState({
-    label: model.label,
-    scale: model.scale,
+  const [local,    setLocal]    = useState({
+    label:       model.label,
+    scale:       model.scale,
     gunTipOffset: model.gunTipOffset,
-    rotationY: model.rotationY,
+    rotationY:   model.rotationY,
     bulletColor: model.bulletColor || "#00f5ff",
-    damage: model.damage ?? 1,
-    fireRate: model.fireRate ?? 1.0,
-    gifts: model.gifts || [],
-    healGifts: model.healGifts || [],
+    damage:      model.damage ?? 1,
+    fireRate:    model.fireRate ?? 1.0,
+    gifts:       model.gifts || [],
+    healGifts:   model.healGifts || [],
     shieldGifts: model.shieldGifts || [],
-    iconUrl: model.iconUrl || null,
+    iconUrl:     model.iconUrl || null,
   });
 
-  useEffect(() => {
-    setLocal({
-      label: model.label,
-      scale: model.scale,
-      gunTipOffset: model.gunTipOffset,
-      rotationY: model.rotationY,
-      bulletColor: model.bulletColor || "#00f5ff",
-      damage: model.damage ?? 1,
-      fireRate: model.fireRate ?? 1.0,
-      gifts: model.gifts || [],
-      healGifts: model.healGifts || [],
-      shieldGifts: model.shieldGifts || [],
-      iconUrl: model.iconUrl || null,
-    });
-  }, [
-    model.label, model.scale, model.gunTipOffset, model.rotationY,
-    model.bulletColor, model.damage, model.fireRate,
-    model.gifts, model.healGifts, model.shieldGifts, model.iconUrl,
-  ]);
-
-  const isBoss  = model.role === "boss";
+  const isBoss   = model.role === "boss";
   const isActive = isBoss ? isActiveBoss : model.active;
-  const color   = model.bulletColor || "#00f5ff";
+  const color    = model.bulletColor || "#00f5ff";
 
   const handleSave = () => {
     onUpdate?.(model.id, {
@@ -180,10 +148,9 @@ export default function ModelCard({
         : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)" }
       }
     >
-      {/* ── Top row ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      {/* Top row */}
+      <div className="flex items-center gap-2">
 
-        {/* Avatar ảnh (inline, nhỏ) */}
         <ModelAvatar
           iconUrl={local.iconUrl}
           isBoss={isBoss}
@@ -196,108 +163,81 @@ export default function ModelCard({
         />
 
         {/* Info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex-1 min-w-0">
           {/* Name row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2, flexWrap: "wrap" }}>
-            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: isActive ? "#e0e8ff" : "rgba(180,200,255,0.45)" }}>
+          <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+            <span className={`text-[0.82rem] font-semibold ${isActive ? "text-[#e0e8ff]" : "text-white/45"}`}>
               {model.label}
             </span>
             <RoleBadge role={model.role} />
             {isBoss && isActiveBoss && (
-              <span style={{
-                fontSize: "0.48rem", textTransform: "uppercase",
-                color: "#ff4466", background: "rgba(255,0,66,0.12)",
-                border: "1px solid rgba(255,0,66,0.3)",
-                borderRadius: 4, padding: "1px 5px",
-              }}>ACTIVE</span>
+              <span className="text-[0.48rem] uppercase text-[#ff4466] bg-[rgba(255,0,66,0.12)] border border-[rgba(255,0,66,0.3)] rounded px-[5px] py-px">
+                ACTIVE
+              </span>
             )}
           </div>
 
           {/* Stats row */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div className="flex gap-1.5 flex-wrap">
             {[
               `Scale: ${model.scale}`,
               `Dmg: ${model.damage ?? 1}`,
               `Rate: ${fireRateLabel(model.fireRate ?? 1)}`,
               `Rot: ${model.rotationY}°`,
             ].map((t) => (
-              <span key={t} style={{ fontSize: "0.57rem", color: "rgba(180,200,255,0.38)" }}>{t}</span>
+              <span key={t} className="text-[0.57rem] text-white/38">{t}</span>
             ))}
-            <span style={{ fontSize: "0.57rem", color, fontWeight: 700 }}>● {color}</span>
+            <span className="text-[0.57rem] font-bold" style={{ color }}>● {color}</span>
           </div>
 
-          {/* Gifts count (ship only) */}
+          {/* Ship: gift count */}
           {!isBoss && (
-            <div style={{ marginTop: 1, fontSize: "0.55rem", color: model.gifts?.length ? "var(--color-gold)" : "rgba(180,200,255,0.2)" }}>
+            <div className={`mt-px text-[0.55rem] ${model.gifts?.length ? "text-[var(--color-gold)]" : "text-white/20"}`}>
               🎁 {model.gifts?.length ? `${model.gifts.length} quà gắn` : "Chưa gắn quà"}
             </div>
           )}
         </div>
 
-        {/* ── Action buttons ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
-          {/* Edit params */}
+        {/* Action buttons */}
+        <div className="flex flex-col gap-1.5 shrink-0">
+          {/* Edit */}
           <button
             onClick={() => setExpanded((v) => !v)}
             title="Sửa thông số"
-            style={{
-              ...btnBase,
-              background: expanded ? "rgba(0,245,255,0.18)" : "rgba(0,245,255,0.08)",
-              border: "1px solid rgba(0,245,255,0.3)",
-              color: "var(--color-cyan)",
-            }}
-            className="flex items-center justify-center"
+            className={`${actionBtn} border-[rgba(0,245,255,0.3)] text-[var(--color-cyan)] ${expanded ? "bg-[rgba(0,245,255,0.18)]" : "bg-[rgba(0,245,255,0.08)] hover:bg-[rgba(0,245,255,0.18)]"}`}
           >
-            {expanded ? <IoClose size={17} /> : <FaEdit size={13} />}
+            {expanded ? <IoClose size={17} color="var(--color-cyan)" /> : <FaEdit size={13} color="var(--color-cyan)" />}
           </button>
 
-          {/* Replace GLB file */}
+          {/* Replace GLB */}
           <ReplaceGLBButton
             modelId={model.id}
-            onReplaced={(updated) => {
-              onUpdate?.(model.id, { path: updated.path, filename: updated.filename, builtIn: false });
-            }}
+            onReplaced={(updated) => onUpdate?.(model.id, { path: updated.path, filename: updated.filename, builtIn: false })}
           />
 
-          {/* Toggle active (ship) */}
+          {/* Toggle ship active */}
           {!isBoss && onToggleShip && (
-            <ToggleSwitch
-              value={isActive}
-              onChange={() => onToggleShip(model.id)}
-              title={isActive ? "Tắt ship" : "Bật ship"}
-            />
+            <ToggleSwitch value={isActive} onChange={() => onToggleShip(model.id)} title={isActive ? "Tắt ship" : "Bật ship"} />
           )}
 
-          {/* Toggle active boss */}
+          {/* Toggle boss active */}
           {isBoss && onSetActiveBoss && (
-            <ToggleSwitch
-              value={isActiveBoss}
-              onChange={() => !isActiveBoss && onSetActiveBoss(model.id)}
-              title={isActiveBoss ? "Đang là Active Boss" : "Dùng làm Boss trong game"}
-            />
+            <ToggleSwitch value={isActiveBoss} onChange={() => !isActiveBoss && onSetActiveBoss(model.id)} title={isActiveBoss ? "Đang là Active Boss" : "Dùng làm Boss trong game"} />
           )}
 
-          {/* Delete – tất cả models đều có thể xóa */}
+          {/* Delete */}
           {onDelete && (
             <button
-              onClick={() => {
-                if (window.confirm(`Xóa "${model.label}"?`)) onDelete(model.id);
-              }}
+              onClick={() => { if (window.confirm(`Xóa "${model.label}"?`)) onDelete(model.id); }}
               title="Xóa model"
-              style={{
-                ...btnBase,
-                background: "rgba(255,51,102,0.08)",
-                border: "1px solid rgba(255,51,102,0.3)",
-                color: "#ff5577",
-              }}
+              className={`${actionBtn} bg-[rgba(255,51,102,0.08)] border-[rgba(255,51,102,0.3)] hover:bg-[rgba(255,51,102,0.18)]`}
             >
-              🗑
+              <span className="text-[#ff5577] text-sm">🗑</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* ── Edit form ── */}
       {expanded && (
         <EditForm local={local} setLocal={setLocal} onSave={handleSave} isBoss={isBoss} />
       )}

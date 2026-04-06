@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import ToggleSwitch from "./ui/ToggleSwitch";
 import { useGifts } from "../hooks/useGifts";
@@ -7,7 +6,6 @@ export default function SidebarSetting({ isOpen, onClose }) {
   const { gifts, toggleGiftActive } = useGifts();
   const panelRef = useRef(null);
 
-  // Close on Escape
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e) => { if (e.key === "Escape") onClose(); };
@@ -20,63 +18,62 @@ export default function SidebarSetting({ isOpen, onClose }) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: "fixed", inset: 0,
-          background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
-          zIndex: 90,
-          opacity: isOpen ? 1 : 0,
-          pointerEvents: isOpen ? "auto" : "none",
-          transition: "opacity 0.25s ease",
-        }}
+        className={`
+          fixed inset-0 z-[90] bg-black/55 backdrop-blur-[4px]
+          transition-opacity duration-[250ms] ease-in-out
+          ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
+        `}
       />
 
       {/* Sliding Panel */}
       <aside
         ref={panelRef}
-        style={{
-          position: "fixed", top: 0, right: 0, bottom: 0, width: 300,
-          display: "flex", flexDirection: "column",
-          background: "rgba(4,10,28,0.97)",
-          borderLeft: "1px solid rgba(0,245,255,0.18)",
-          backdropFilter: "blur(24px)",
-          zIndex: 100,
-          transform: isOpen ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          boxShadow: isOpen ? "-8px 0 40px rgba(0,0,0,0.6)" : "none",
-        }}
+        className={`
+          fixed top-0 right-0 bottom-0 w-[300px] z-[100]
+          flex flex-col
+          bg-[rgba(4,10,28,0.97)] border-l border-[rgba(0,245,255,0.18)] backdrop-blur-[24px]
+          transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+          ${isOpen
+            ? "translate-x-0 shadow-[-8px_0_40px_rgba(0,0,0,0.6)]"
+            : "translate-x-full shadow-none"
+          }
+        `}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", borderBottom: "1px solid rgba(0,245,255,0.15)", fontFamily: "var(--font-game)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--color-success)", boxShadow: "0 0 8px var(--color-success)", flexShrink: 0, display: "inline-block" }} />
-            <span style={{ fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--color-cyan)" }}>
+        <div className="flex items-center justify-between px-[18px] py-4 border-b border-[rgba(0,245,255,0.15)] font-[var(--font-game)]">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[var(--color-success)] shadow-[0_0_8px_var(--color-success)] shrink-0 inline-block" />
+            <span className="text-[0.7rem] uppercase tracking-[0.15em] text-[var(--color-cyan)]">
               Gift Config
             </span>
           </div>
           <button
             onClick={onClose}
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(200,220,255,0.7)", cursor: "pointer", padding: "4px 10px", fontSize: "0.8rem", transition: "background 0.15s" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+            className="
+              px-2.5 py-1 rounded-lg text-[0.8rem]
+              bg-white/[0.06] border border-white/[0.12] text-white/70
+              cursor-pointer transition-colors duration-150
+              hover:bg-white/[0.12]
+            "
           >
             ✕
           </button>
         </div>
 
         {/* Subtitle */}
-        <div style={{ padding: "8px 18px 4px", fontSize: "0.6rem", color: "rgba(180,200,255,0.35)", fontFamily: "var(--font-game)", letterSpacing: "0.05em" }}>
+        <div className="px-[18px] pt-2 pb-1 text-[0.6rem] text-white/35 font-[var(--font-game)] tracking-[0.05em]">
           Bật/tắt quà để hiển thị trong danh sách chọn của Model Manager
         </div>
 
         {/* Active count */}
-        <div style={{ padding: "0 18px 8px", fontSize: "0.63rem", color: "rgba(0,245,255,0.6)" }}>
+        <div className="px-[18px] pb-2 text-[0.63rem] text-[rgba(0,245,255,0.6)]">
           ✅ {gifts.filter((g) => g.active).length}/{gifts.length} quà đang active
         </div>
 
         {/* Scroll area */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 flex flex-col gap-1.5">
           {gifts.length === 0 && (
-            <div style={{ fontSize: "0.75rem", textAlign: "center", padding: 20, color: "rgba(180,200,255,0.3)" }}>
+            <div className="text-[0.75rem] text-center p-5 text-white/30">
               Loading gifts...
             </div>
           )}
@@ -84,30 +81,34 @@ export default function SidebarSetting({ isOpen, onClose }) {
           {gifts.map((gift) => (
             <div
               key={gift.giftId}
-              style={{
-                borderRadius: 10, padding: "8px 12px",
-                display: "flex", alignItems: "center", gap: 10,
-                background: gift.active ? "rgba(0,245,255,0.05)" : "rgba(255,255,255,0.015)",
-                border: `1px solid ${gift.active ? "rgba(0,245,255,0.2)" : "rgba(255,255,255,0.06)"}`,
-                transition: "border-color 0.2s, background 0.2s",
-                opacity: gift.active ? 1 : 0.55,
-              }}
+              className={`
+                rounded-[10px] px-3 py-2 flex items-center gap-2.5
+                border transition-[border-color,background] duration-200
+                ${gift.active
+                  ? "bg-[rgba(0,245,255,0.05)] border-[rgba(0,245,255,0.2)] opacity-100"
+                  : "bg-white/[0.015] border-white/[0.06] opacity-55"
+                }
+              `}
             >
               {/* Gift image */}
               {gift.image ? (
-                <img src={gift.image} alt={gift.giftName} style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain", background: "rgba(255,255,255,0.05)", flexShrink: 0 }} />
+                <img
+                  src={gift.image}
+                  alt={gift.giftName}
+                  className="w-9 h-9 rounded-lg object-contain bg-white/[0.05] shrink-0"
+                />
               ) : (
-                <div style={{ width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, background: "rgba(255,255,255,0.05)", flexShrink: 0 }}>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xl bg-white/[0.05] shrink-0">
                   🎁
                 </div>
               )}
 
               {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: gift.active ? "#e0e8ff" : "rgba(180,200,255,0.45)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div className="flex-1 min-w-0">
+                <div className={`text-[0.78rem] font-semibold overflow-hidden text-ellipsis whitespace-nowrap ${gift.active ? "text-[#e0e8ff]" : "text-white/45"}`}>
                   {gift.giftName}
                 </div>
-                <div style={{ fontSize: "0.65rem", color: "var(--color-gold)", marginTop: 1 }}>
+                <div className="text-[0.65rem] text-[var(--color-gold)] mt-px">
                   💎 {gift.diamonds}
                 </div>
               </div>

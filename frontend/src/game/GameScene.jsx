@@ -7,14 +7,9 @@ import { createBullet, createExplosion } from "./models";
 import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
+import { SETTINGS_GAME } from "../utils/constant";
 
-const MAX_SHIPS = 60;
-const BOSS_START_X = -11;
-const BOSS_END_X = 5.2;
-const BOSS_SPEED = 0.005;
-const BULLET_SPEED = 0.07;
 
-// AudioPool: 8 instances → nhiều tàu bắn cùng lúc vẫn phát đủ số lần
 const ATTACK_POOL_SIZE = 10;
 const attackPool = Array.from({ length: ATTACK_POOL_SIZE }, () => {
   const a = new Audio("/sound/sound_attack.mp3");
@@ -31,7 +26,8 @@ function playAttackSound() {
 
 export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   const { scene } = useThree();
-  const { setBossHp, setGameStatus, setShipCount, setBossShield, gameStatus } = useGame();
+  const { setBossHp, setGameStatus, setShipCount, setBossShield, gameStatus } =
+    useGame();
   const { activeBossModel, shipModels } = useModels();
   const { cloneShipMesh, getBulletColor } = useShipModels();
   // Giữ ref để dùng trong callback không stale
@@ -56,18 +52,18 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   // Trạng thái flash hiện tại: "none" | "red" | "green"
   const bossFlashStateRef = useRef("none");
   const bossFlashTimeoutRef = useRef(null);
-  const bossGreenFlashRef   = useRef(null);
+  const bossGreenFlashRef = useRef(null);
   // Shield state
   const bossShieldActiveRef = useRef(false);
-  const bossShieldTimerRef  = useRef(null);
-  const bossShieldEndRef    = useRef(0);  // timestamp kết thúc shield (ms)
-  const healCooldownRef     = useRef(false); // chống spam heal
+  const bossShieldTimerRef = useRef(null);
+  const bossShieldEndRef = useRef(0); // timestamp kết thúc shield (ms)
+  const healCooldownRef = useRef(false); // chống spam heal
   // Heal sound
   const healAudio = useRef(new Audio("/sound/heal_sound.mp3"));
   healAudio.current.volume = 0.5;
   // Slot-based spawn: chia màn hình thành NUM_Y_SLOTS rãnh, tàu mới vào rãnh tiếp theo
   const NUM_Y_SLOTS = 10;
-  const Y_RANGE = 8;  // tổng chiều cao an toàn (~±2.2)
+  const Y_RANGE = 8; // tổng chiều cao an toàn (~±2.2)
   const spawnSlotRef = useRef(0);
 
   const [shipLabels, setShipLabels] = useState([]);
@@ -75,7 +71,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   // ── Spawn Ship ───────────────────────────────────────────────
   const spawnShip = useCallback(
     ({ type, damage, fireRate, nickname = "", avatarUrl = "" }) => {
-      if (shipsRef.current.length >= MAX_SHIPS) {
+      if (shipsRef.current.length >= SETTINGS_GAME.MAX_SHIPS) {
         const oldest = shipsRef.current.shift();
         // Đánh dấu ship cũ là dead trước khi remove khỏi scene
         if (oldest.aliveRef) oldest.aliveRef.current = false;
@@ -90,7 +86,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       spawnSlotRef.current += 1;
       const slotY = -Y_RANGE / 2 + (slotIdx + 0.5) * (Y_RANGE / NUM_Y_SLOTS);
       const y = slotY + (Math.random() - 0.5) * 0.3; // jitter nhỏ cho tự nhiên
-      const z = (Math.random() - 0.5) * 2.0;   // ~±1.0, tránh bị cắt ngang
+      const z = (Math.random() - 0.5) * 2.0; // ~±1.0, tránh bị cắt ngang
       mesh.position.set(8.0, y, z);
 
       scene.add(mesh);
@@ -111,7 +107,10 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         avatarUrl,
       });
 
-      setShipLabels((prev) => [...prev, { id, mesh, aliveRef, nickname, avatarUrl }]);
+      setShipLabels((prev) => [
+        ...prev,
+        { id, mesh, aliveRef, nickname, avatarUrl },
+      ]);
       setShipCount(shipsRef.current.length);
     },
     [scene, setShipCount, cloneShipMesh],
@@ -132,7 +131,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       // Debounce: chống spam, chỉ cho hồi mỗi 500ms
       if (healCooldownRef.current) return;
       healCooldownRef.current = true;
-      setTimeout(() => { healCooldownRef.current = false; }, 500);
+      setTimeout(() => {
+        healCooldownRef.current = false;
+      }, 500);
 
       const HEAL_AMOUNT = 3; // +3% HP mỗi lần
       bossHpRef.current = Math.min(100, bossHpRef.current + HEAL_AMOUNT);
@@ -150,31 +151,39 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       if (!bossOrigMatsRef.current) {
         const saved = [];
         boss.traverse((child) => {
-          if (child.isMesh) saved.push({ mesh: child, mat: child.material.clone() });
+          if (child.isMesh)
+            saved.push({ mesh: child, mat: child.material.clone() });
         });
         bossOrigMatsRef.current = saved;
       }
 
       // Clear timeout flash đỏ + flash xanh cũ
-      if (bossFlashTimeoutRef.current) clearTimeout(bossFlashTimeoutRef.current);
+      if (bossFlashTimeoutRef.current)
+        clearTimeout(bossFlashTimeoutRef.current);
       if (bossGreenFlashRef.current) clearTimeout(bossGreenFlashRef.current);
 
       // Áp flash xanh
       bossFlashStateRef.current = "green";
       boss.traverse((child) => {
         if (child.isMesh) {
-          child.material = new THREE.MeshBasicMaterial({ color: 0x00ff66, transparent: true, opacity: 0.5 });
+          child.material = new THREE.MeshBasicMaterial({
+            color: 0x00ff66,
+            transparent: true,
+            opacity: 0.5,
+          });
         }
       });
 
       bossGreenFlashRef.current = setTimeout(() => {
         // Restore về originals
-        bossOrigMatsRef.current?.forEach(({ mesh, mat }) => { if (mesh) mesh.material = mat.clone(); });
+        bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
+          if (mesh) mesh.material = mat.clone();
+        });
         bossFlashStateRef.current = "none";
         bossGreenFlashRef.current = null;
       }, 400);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onBossHeal]);
 
   // ── Boss Shield (cộng dồn thời gian) ───────────────────────
@@ -183,32 +192,32 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   useEffect(() => {
     if (!onBossShield) return;
     onBossShield(() => {
-      const ADD_MS    = 5000;  // +5 giây mỗi lần
-      const MAX_MS    = 30000; // tối đa 30 giây
-      const now       = Date.now();
+      const ADD_MS = 5000; // +5 giây mỗi lần
+      const MAX_MS = 30000; // tối đa 30 giây
+      const now = Date.now();
 
       // Tính thời gian còn lại hiện tại, cộng thêm 5s và giới hạn 30s
       const remaining = bossShieldActiveRef.current
         ? Math.max(0, bossShieldEndRef.current - now)
         : 0;
       const newDuration = Math.min(remaining + ADD_MS, MAX_MS);
-      const newEnd      = now + newDuration;
+      const newEnd = now + newDuration;
 
       bossShieldActiveRef.current = true;
-      bossShieldEndRef.current    = newEnd;
+      bossShieldEndRef.current = newEnd;
       setBossShield(true);
       setShieldEndTime(newEnd);
 
       if (bossShieldTimerRef.current) clearTimeout(bossShieldTimerRef.current);
       bossShieldTimerRef.current = setTimeout(() => {
         bossShieldActiveRef.current = false;
-        bossShieldEndRef.current    = 0;
+        bossShieldEndRef.current = 0;
         setBossShield(false);
         setShieldEndTime(0);
-        bossShieldTimerRef.current  = null;
+        bossShieldTimerRef.current = null;
       }, newDuration);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onBossShield]);
 
   // ── Init scene (lights + starter ships) ─────────────────────
@@ -256,14 +265,15 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   const bossInitializedRef = useRef(false);
   useEffect(() => {
     if (bossRef.current && !bossInitializedRef.current) {
-      bossRef.current.position.set(BOSS_START_X, 0, 0);
+      bossRef.current.position.set(SETTINGS_GAME.BOSS_START_X, 0, 0);
       bossRef.current.rotation.y = Math.PI / 2;
       bossInitializedRef.current = true;
 
       // Lưu materials GỐC ngay khi boss mount (trước khi bất kỳ flash nào xảy ra)
       const saved = [];
       bossRef.current.traverse((child) => {
-        if (child.isMesh) saved.push({ mesh: child, mat: child.material.clone() });
+        if (child.isMesh)
+          saved.push({ mesh: child, mat: child.material.clone() });
       });
       bossOrigMatsRef.current = saved;
     }
@@ -285,7 +295,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       const velocity = new THREE.Vector3()
         .subVectors(bossPos, startPos)
         .normalize()
-        .multiplyScalar(BULLET_SPEED);
+        .multiplyScalar(SETTINGS_GAME.BULLET_SPEED);
 
       const color = getBulletColor(ship.type);
       const bulletMesh = createBullet(color);
@@ -302,7 +312,6 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     },
     [scene, getBulletColor],
   );
-
 
   // ── Reset ────────────────────────────────────────────────────
   const doReset = useCallback(() => {
@@ -321,12 +330,18 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     setShipLabels([]);
 
     // ── Dọn flash state ──────────────────────────────────────
-    if (bossFlashTimeoutRef.current) { clearTimeout(bossFlashTimeoutRef.current); bossFlashTimeoutRef.current = null; }
-    if (bossGreenFlashRef.current)   { clearTimeout(bossGreenFlashRef.current);   bossGreenFlashRef.current   = null; }
+    if (bossFlashTimeoutRef.current) {
+      clearTimeout(bossFlashTimeoutRef.current);
+      bossFlashTimeoutRef.current = null;
+    }
+    if (bossGreenFlashRef.current) {
+      clearTimeout(bossGreenFlashRef.current);
+      bossGreenFlashRef.current = null;
+    }
     bossFlashStateRef.current = "none";
 
     if (bossRef.current) {
-      bossRef.current.position.set(BOSS_START_X, 0, 0);
+      bossRef.current.position.set(SETTINGS_GAME.BOSS_START_X, 0, 0);
       bossRef.current.rotation.y = Math.PI / 2;
 
       // Restore materials về gốc trước khi bắt đầu lại
@@ -353,7 +368,6 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     statusRef.current = "playing";
   }, [scene, setBossHp, setShipCount]);
 
-
   useEffect(() => {
     if (
       gameStatus === "playing" &&
@@ -372,9 +386,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     if (!boss) return;
 
     // Boss tiến về phía phải
-    boss.position.x += BOSS_SPEED * 60 * delta;
+    boss.position.x += SETTINGS_GAME.BOSS_SPEED * 60 * delta;
 
-    if (boss.position.x >= BOSS_END_X) {
+    if (boss.position.x >= SETTINGS_GAME.BOSS_END_X) {
       statusRef.current = "lose";
       gameActiveRef.current = false;
       setGameStatus("lose");
@@ -417,7 +431,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
 
         const exps = createExplosion(
           bullet.mesh.position.clone(),
-          bossShieldActiveRef.current ? "#00f5ff" : getBulletColor(bullet.ownerType),
+          bossShieldActiveRef.current
+            ? "#00f5ff"
+            : getBulletColor(bullet.ownerType),
         );
         exps.forEach(({ mesh }) => scene.add(mesh));
         explosionsRef.current.push(...exps);
@@ -430,14 +446,17 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
           if (!bossOrigMatsRef.current) {
             const saved = [];
             boss.traverse((child) => {
-              if (child.isMesh) saved.push({ mesh: child, mat: child.material.clone() });
+              if (child.isMesh)
+                saved.push({ mesh: child, mat: child.material.clone() });
             });
             bossOrigMatsRef.current = saved;
           }
 
           // Clear timeout flash xanh để không bị conflict
-          if (bossGreenFlashRef.current) clearTimeout(bossGreenFlashRef.current);
-          if (bossFlashTimeoutRef.current) clearTimeout(bossFlashTimeoutRef.current);
+          if (bossGreenFlashRef.current)
+            clearTimeout(bossGreenFlashRef.current);
+          if (bossFlashTimeoutRef.current)
+            clearTimeout(bossFlashTimeoutRef.current);
 
           // Áp flash đỏ
           bossFlashStateRef.current = "red";
@@ -558,39 +577,24 @@ function ShipLabel({ mesh, aliveRef, nickname, avatarUrl }) {
         zIndexRange={[10, 10]}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "2px",
-            transform: "translateY(-52px)",
-          }}
-        >
+        <div className="flex flex-col items-center gap-0.5 -translate-y-[52px]">
           {avatarUrl && (
             <img
               src={avatarUrl}
               alt={nickname}
+              className="w-7 h-7 rounded-full object-cover"
               style={{
-                width: 28,
-                height: 28,
-                borderRadius: "50%",
                 border: "1.5px solid rgba(0,245,255,0.8)",
-                objectFit: "cover",
                 boxShadow: "0 0 6px rgba(0,245,255,0.5)",
               }}
             />
           )}
           {nickname && (
             <span
+              className="text-[10px] font-bold text-white whitespace-nowrap tracking-[0.02em]"
               style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: "#fff",
                 textShadow:
                   "0 0 6px rgba(0,245,255,0.9), 0 1px 2px rgba(0,0,0,0.8)",
-                whiteSpace: "nowrap",
-                letterSpacing: "0.02em",
               }}
             >
               {nickname.length > 12 ? nickname.slice(0, 12) + "…" : nickname}
@@ -634,50 +638,22 @@ function BossLabel({ bossRef }) {
             className="w-14 h-14 rounded-full border-2 object-cover shadow-[0_0_12px_rgba(255,51,102,0.6)]"
           />
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              gap: "5px",
-              background: "rgba(10,10,15,0.75)",
-              padding: "8px 12px",
-              borderRadius: "10px",
-              border: "1px solid rgba(255,51,102,0.3)",
-              backdropFilter: "blur(4px)",
-            }}
-          >
+          <div className="flex flex-col items-start gap-[5px] px-3 py-2 rounded-[10px] border border-[rgba(255,51,102,0.3)] bg-[rgba(10,10,15,0.75)] backdrop-blur-[4px]">
             <span
-              style={{
-                fontSize: "13px",
-                fontWeight: 800,
-                color: "#fff",
-                textShadow: "0 0 6px rgba(255,51,102,0.9)",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                whiteSpace: "nowrap",
-              }}
+              className="text-[13px] font-extrabold text-white uppercase tracking-[0.05em] whitespace-nowrap"
+              style={{ textShadow: "0 0 6px rgba(255,51,102,0.9)" }}
             >
-             Space ship boss{" "}
-              <span style={{ color: hpColor, marginLeft: 8 }}>
+              Space ship boss{" "}
+              <span className="ml-2" style={{ color: hpColor }}>
                 {hpPercent.toFixed(1)}%
               </span>
             </span>
-            <div
-              style={{
-                width: 460,
-                height: 8,
-                borderRadius: 4,
-                background: "rgba(255,255,255,0.1)",
-                overflow: "hidden",
-              }}
-            >
+            <div className="w-[460px] h-2 rounded bg-white/10 overflow-hidden">
               <div
+                className="h-full transition-[width] duration-200 ease-out"
                 style={{
-                  height: "100%",
                   width: `${hpPercent}%`,
                   background: `linear-gradient(90deg, ${hpColor}, #ff0055)`,
-                  transition: "width 0.2s ease-out",
                   boxShadow: `0 0 8px ${hpColor}`,
                 }}
               />
@@ -691,9 +667,9 @@ function BossLabel({ bossRef }) {
 
 function BossShieldRing({ bossRef, shieldEndTime }) {
   const { bossShield } = useGame();
-  const groupRef  = useRef();
-  const [msLeft,  setMsLeft]  = useState(0);
-  const [maxMs,   setMaxMs]   = useState(5000);
+  const groupRef = useRef();
+  const [msLeft, setMsLeft] = useState(0);
+  const maxMsRef = useRef(5000); // useRef thay vì useState vì không cần re-render
 
   useFrame(() => {
     if (groupRef.current && bossRef.current) {
@@ -701,28 +677,30 @@ function BossShieldRing({ bossRef, shieldEndTime }) {
     }
   });
 
-  // Cập nhật countdown dựa trên shieldEndTime
+  // Countdown dựa trên shieldEndTime – chỉ gọi setState trong callback của interval
   useEffect(() => {
-    if (!bossShield || !shieldEndTime) { setMsLeft(0); return; }
-    // Khi endTime mới (gift mới) → cập nhật max
-    const remaining = shieldEndTime - Date.now();
-    setMaxMs(Math.max(remaining, 5000));
-    setMsLeft(Math.max(0, remaining));
+    if (!bossShield || !shieldEndTime) return;
+
+    // Cập nhật max thông qua ref (không re-render)
+    const remaining = Math.max(0, shieldEndTime - Date.now());
+    maxMsRef.current = Math.max(remaining, 5000);
 
     const iv = setInterval(() => {
       const left = shieldEndTime - Date.now();
-      setMsLeft(Math.max(0, left));
+      setMsLeft(Math.max(0, left)); // ← setState chỉ trong callback
       if (left <= 0) clearInterval(iv);
-    }, 100); // update 10fps để smooth
+    }, 100);
     return () => clearInterval(iv);
   }, [bossShield, shieldEndTime]);
 
   if (!bossShield) return null;
 
   const secsLeft = Math.ceil(msLeft / 1000);
-  const pct      = maxMs > 0 ? msLeft / maxMs : 0;
-  const r        = 110;
-  const circ     = 2 * Math.PI * r;
+  // pct: tỉ lệ thời gian còn lại so với tổng duration ban đầu khi shield bắt đầu
+  // Dùng msLeft và shieldEndTime để tính ngược (không cần ref trong render)
+  const pct = Math.min(1, Math.max(0, msLeft / 30000)); // normalize trên 30s max
+  const r = 110;
+  const circ = 2 * Math.PI * r;
 
   return (
     <group ref={groupRef}>
@@ -733,56 +711,68 @@ function BossShieldRing({ bossRef, shieldEndTime }) {
         zIndexRange={[10, 10]}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
-        <div style={{
-          width: 240,
-          height: 240,
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
+        <div className="w-[240px] h-[240px] relative flex items-center justify-center">
           {/* Spinning outer ring */}
-          <div style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "50%",
-            border: "3px solid rgba(0,245,255,0.8)",
-            boxShadow: "0 0 28px rgba(0,245,255,0.7), inset 0 0 28px rgba(0,245,255,0.15)",
-            animation: "shieldSpin 2s linear infinite",
-          }} />
+          <div
+            className="absolute inset-0 rounded-full border-[3px] border-[rgba(0,245,255,0.8)]"
+            style={{
+              boxShadow:
+                "0 0 28px rgba(0,245,255,0.7), inset 0 0 28px rgba(0,245,255,0.15)",
+              animation: "shieldSpin 2s linear infinite",
+            }}
+          />
           {/* Inner dashed ring */}
-          <div style={{
-            position: "absolute",
-            inset: 12,
-            borderRadius: "50%",
-            border: "1.5px dashed rgba(0,245,255,0.4)",
-            animation: "shieldSpin 3s linear infinite reverse",
-          }} />
-          {/* SVG arc – progress theo thời gian thực */}
-          <svg
-            width="240" height="240"
-            style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}
-          >
-            <circle cx="120" cy="120" r={r} fill="none" stroke="rgba(0,245,255,0.12)" strokeWidth="6" />
+          <div
+            className="absolute rounded-full border-[1.5px] border-dashed border-[rgba(0,245,255,0.4)]"
+            style={{
+              inset: 12,
+              animation: "shieldSpin 3s linear infinite reverse",
+            }}
+          />
+          {/* SVG arc */}
+          <svg width="240" height="240" className="absolute inset-0 -rotate-90">
             <circle
-              cx="120" cy="120" r={r}
+              cx="120"
+              cy="120"
+              r={r}
+              fill="none"
+              stroke="rgba(0,245,255,0.12)"
+              strokeWidth="6"
+            />
+            <circle
+              cx="120"
+              cy="120"
+              r={r}
               fill="none"
               stroke={pct > 0.3 ? "#00f5ff" : "#ff6600"}
               strokeWidth="7"
               strokeLinecap="round"
               strokeDasharray={circ}
               strokeDashoffset={circ * (1 - pct)}
-              style={{ transition: "stroke-dashoffset 0.15s linear, stroke 0.5s", filter: "drop-shadow(0 0 6px #00f5ff)" }}
+              style={{
+                transition: "stroke-dashoffset 0.15s linear, stroke 0.5s",
+                filter: "drop-shadow(0 0 6px #00f5ff)",
+              }}
             />
           </svg>
           {/* Center */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, zIndex: 1 }}>
-            <span style={{ fontSize: 36, lineHeight: 1, filter: "drop-shadow(0 0 10px rgba(0,245,255,0.9))" }}>🛡️</span>
-            <span style={{
-              fontSize: 20, fontWeight: 900, color: pct > 0.3 ? "#00f5ff" : "#ff8800",
-              textShadow: "0 0 12px rgba(0,245,255,1), 0 0 24px rgba(0,245,255,0.6)",
-              letterSpacing: "0.05em",
-            }}>{secsLeft}s</span>
+          <div className="flex flex-col items-center gap-1 z-[1]">
+            <span
+              className="text-4xl leading-none"
+              style={{ filter: "drop-shadow(0 0 10px rgba(0,245,255,0.9))" }}
+            >
+              🛡️
+            </span>
+            <span
+              className="text-[20px] font-black tracking-[0.05em]"
+              style={{
+                color: pct > 0.3 ? "#00f5ff" : "#ff8800",
+                textShadow:
+                  "0 0 12px rgba(0,245,255,1), 0 0 24px rgba(0,245,255,0.6)",
+              }}
+            >
+              {secsLeft}s
+            </span>
           </div>
         </div>
         <style>{`
