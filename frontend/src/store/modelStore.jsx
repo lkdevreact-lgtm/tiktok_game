@@ -3,19 +3,17 @@
  * Nguồn sự thật duy nhất: backend/data/models.json
  *
  * - Load tất cả models từ GET /api/models khi khởi động
- * - Thêm (upload) → POST /api/models/upload → append JSON
- * - Sửa → PUT /api/models/:id → update JSON
- * - Xóa → DELETE /api/models/:id → xóa JSON (+ file GLB nếu custom)
- * - localStorage chỉ cache để tránh flash khi reload
+ * - Thêm (upload) → POST /api/models/upload
+ * - Sửa → PUT /api/models/:id (kể cả active, damage, fireRate, gifts)
+ * - Xóa → DELETE /api/models/:id
+ * - active state persist vào JSON qua PUT API (không dùng localStorage)
  *
- * UI preferences (active state, active boss) lưu localStorage vì chúng
- * là runtime state không cần persist vào source.
+ * activeBossId vẫn giữ trong localStorage (runtime preference)
  */
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8888";
 
-// Cache localStorage helpers
 const ls = {
   get: (key, fb) => { try { return JSON.parse(localStorage.getItem(key)) ?? fb; } catch { return fb; } },
   set: (key, v) => localStorage.setItem(key, JSON.stringify(v)),
@@ -24,13 +22,13 @@ const ls = {
 const ModelContext = createContext(null);
 
 export function ModelProvider({ children }) {
-  // Tất cả models từ JSON (hiển thị cache trước khi fetch xong)
-  const [models, setModels]   = useState(() => ls.get("modelsCache", []));
+  const [models,  setModels]  = useState(() => ls.get("modelsCache", []));
   const [loading, setLoading] = useState(true);
 
-  // UI preferences — localStorage
-  const [shipActive,      setShipActive]      = useState(() => ls.get("shipActive", {}));
-  const [activeBossId,    setActiveBossIdState] = useState(() => ls.get("activeBossId", null) ?? "spaceship_boss");
+  // activeBossId vẫn localStorage (runtime preference, không cần persist json)
+  const [activeBossId, setActiveBossIdState] = useState(
+    () => ls.get("activeBossId", null) ?? "spaceship_boss"
+  );
 
   // ── Load từ API khi mount ─────────────────────────────────────
   useEffect(() => {
@@ -46,19 +44,6 @@ export function ModelProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // ── Computed views ────────────────────────────────────────────
-  const modelsWithActive = models.map((m) => ({
-    ...m,
-    active: m.role === "boss"
-      ? m.id === activeBossId
-      : shipActive[m.id] !== false, // ships default active
-  }));
-
-  const allShipModels   = modelsWithActive.filter((m) => m.role === "ship");
-  const allBossModels   = modelsWithActive.filter((m) => m.role === "boss");
-  const shipModels      = allShipModels.filter((m) => m.active);        // cho gift config dropdown
-  const activeBossModel = allBossModels.find((m) => m.active) ?? allBossModels[0];
-
   // ── Helper cập nhật local state + cache ─────────────────────
   const _setAndCache = (updater) => {
     setModels((prev) => {
@@ -68,14 +53,30 @@ export function ModelProvider({ children }) {
     });
   };
 
-  // ── Add model (sau khi upload thành công) ────────────────────
+  // ── Computed views ────────────────────────────────────────────
+  const allShipModels   = models.filter((m) => m.role === "ship");
+  const allBossModels   = models.filter((m) => m.role === "boss").map((m) => ({
+    ...m,
+    active: m.id === activeBossId,
+  }));
+  const shipModels      = allShipModels.filter((m) => m.active);          // ship đang active
+  const activeBossModel = allBossModels.find((m) => m.active) ?? allBossModels[0];
+
+  // Gift → model mapping: { [giftId]: model }
+  const giftModelMap = {};
+  allShipModels.filter((m) => m.active).forEach((m) => {
+    (m.gifts || []).forEach((giftId) => {
+      giftModelMap[String(giftId)] = m;
+    });
+  });
+
+  // ── Add model ────────────────────────────────────────────────
   const addModel = useCallback((model) => {
     _setAndCache((prev) => [...prev, model]);
   }, []);
 
   // ── Update model → PUT API + local ──────────────────────────
   const updateModel = useCallback(async (id, changes) => {
-    // Optimistic update
     _setAndCache((prev) => prev.map((m) => (m.id === id ? { ...m, ...changes } : m)));
 
     try {
@@ -101,13 +102,28 @@ export function ModelProvider({ children }) {
     }
   }, [activeBossId]);
 
-  // ── Ship active toggle ───────────────────────────────────────
-  const toggleShipActive = useCallback((id) => {
-    setShipActive((prev) => {
-      const next = { ...prev, [id]: prev[id] === false ? true : false };
-      ls.set("shipActive", next);
-      return next;
-    });
+  // ── Toggle ship active → persist vào JSON qua PUT ────────────
+  const toggleShipActive = useCallback(async (id) => {
+    let newActive;
+    _setAndCache((prev) => prev.map((m) => {
+      if (m.id === id) {
+        newActive = !m.active;
+        return { ...m, active: newActive };
+      }
+      return m;
+    }));
+
+    // Đợi newActive được set rồi gọi API
+    // (dùng functional form nên newActive đã có từ map trên)
+    setTimeout(async () => {
+      try {
+        await fetch(`${BACKEND_URL}/api/models/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ active: newActive }),
+        });
+      } catch { /* ignore */ }
+    }, 0);
   }, []);
 
   // ── Active boss ──────────────────────────────────────────────
@@ -116,7 +132,7 @@ export function ModelProvider({ children }) {
     ls.set("activeBossId", id);
   }, []);
 
-  // ── Refresh từ server (dùng sau upload) ─────────────────────
+  // ── Refresh từ server ────────────────────────────────────────
   const refreshModels = useCallback(() => {
     fetch(`${BACKEND_URL}/api/models`)
       .then((r) => r.json())
@@ -128,12 +144,13 @@ export function ModelProvider({ children }) {
     <ModelContext.Provider
       value={{
         loading,
-        models: modelsWithActive,
+        models,
         allShipModels,
         allBossModels,
         shipModels,
         activeBossModel,
         activeBossId,
+        giftModelMap,
         addModel,
         updateModel,
         removeModel,

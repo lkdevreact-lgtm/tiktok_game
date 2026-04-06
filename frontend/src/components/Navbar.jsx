@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useGame } from "../store/gameStore";
 import SidebarSetting from "./SidebarSetting";
-import ModelManagerPanel from "./ModelManagerPanel";
+import ModelManagerPanel from "./model-manager/ModelManagerPanel";
 
 export default function Navbar() {
   const { bossHp, shipCount, username, gameStatus } = useGame();

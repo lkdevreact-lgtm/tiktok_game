@@ -32,8 +32,11 @@ function playAttackSound() {
 export default function GameScene({ onGiftSpawn }) {
   const { scene } = useThree();
   const { setBossHp, setGameStatus, setShipCount, gameStatus } = useGame();
-  const { activeBossModel } = useModels();
+  const { activeBossModel, shipModels } = useModels();
   const { cloneShipMesh, getBulletColor } = useShipModels();
+  // Giữ ref để dùng trong callback không stale
+  const shipModelsRef = useRef(shipModels);
+  useEffect(() => { shipModelsRef.current = shipModels; }, [shipModels]);
 
   // ── Refs game state (sync, không trigger re-render) ──────────
   const bossRef = useRef(null);
@@ -113,8 +116,12 @@ export default function GameScene({ onGiftSpawn }) {
     pointRed.position.set(-6, 0, 2);
 
     scene.add(ambient, dirLight, bossLight, pointCyan, pointRed);
-    spawnShip({ type: "spaceship_1", damage: 1, fireRate: 1.0 });
-    spawnShip({ type: "spaceship_2", damage: 3, fireRate: 0.5 });
+
+    // Spawn 2 ship đầu đang active từ model store
+    const initShips = shipModelsRef.current.slice(0, 2);
+    initShips.forEach((m) => {
+      spawnShip({ type: m.id, damage: m.damage ?? 1, fireRate: m.fireRate ?? 1.0 });
+    });
 
     bossHpRef.current = 100;
     gameActiveRef.current = true;
@@ -198,8 +205,11 @@ export default function GameScene({ onGiftSpawn }) {
     setBossHp(100);
     setShipCount(0);
 
-    spawnShipFn.current?.({ type: "spaceship_1", damage: 1, fireRate: 1.0 });
-    spawnShipFn.current?.({ type: "spaceship_2", damage: 3, fireRate: 0.5 });
+    // Spawn lại 2 ship đầu đang active
+    const resetShips = shipModelsRef.current.slice(0, 2);
+    resetShips.forEach((m) => {
+      spawnShipFn.current?.({ type: m.id, damage: m.damage ?? 1, fireRate: m.fireRate ?? 1.0 });
+    });
 
     gameActiveRef.current = true;
     statusRef.current = "playing";
