@@ -1,14 +1,21 @@
-/**
- * EditForm.jsx
- * Form chỉnh sửa thông số model (label, scale, gunTip, rotationY, bulletColor, damage, fireRate, gifts)
- */
-import { inputStyle, labelStyle, btnBase, FIRE_RATE_OPTIONS, DAMAGE_OPTIONS } from "../ui/styles";
+import {
+  inputStyle,
+  labelStyle,
+  btnBase,
+  FIRE_RATE_OPTIONS,
+  DAMAGE_OPTIONS,
+} from "../ui/styles";
 
-// ── Gift checkbox list ─────────────────────────────────────────
 function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
   if (activeGifts.length === 0) {
     return (
-      <div style={{ fontSize: "0.65rem", color: "rgba(180,200,255,0.3)", fontStyle: "italic" }}>
+      <div
+        style={{
+          fontSize: "0.65rem",
+          color: "rgba(180,200,255,0.3)",
+          fontStyle: "italic",
+        }}
+      >
         Chưa có quà active. Bật quà trong Gift Config.
       </div>
     );
@@ -45,7 +52,9 @@ function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
               cursor: "pointer",
               padding: "4px 6px",
               borderRadius: 6,
-              background: checked ? "rgba(0,245,255,0.08)" : "rgba(255,255,255,0.02)",
+              background: checked
+                ? "rgba(0,245,255,0.08)"
+                : "rgba(255,255,255,0.02)",
               border: `1px solid ${checked ? "rgba(0,245,255,0.25)" : "rgba(255,255,255,0.06)"}`,
               transition: "all 0.15s",
             }}
@@ -54,21 +63,50 @@ function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
               type="checkbox"
               checked={checked}
               onChange={() => toggle(gift.giftId)}
-              style={{ accentColor: "var(--color-cyan)", width: 13, height: 13, flexShrink: 0 }}
+              style={{
+                accentColor: "var(--color-cyan)",
+                width: 13,
+                height: 13,
+                flexShrink: 0,
+              }}
             />
             {gift.image ? (
               <img
                 src={gift.image}
                 alt={gift.giftName}
-                style={{ width: 20, height: 20, borderRadius: 4, objectFit: "contain", flexShrink: 0 }}
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 4,
+                  objectFit: "contain",
+                  flexShrink: 0,
+                }}
               />
             ) : (
-              <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>🎁</span>
+              <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>
+                🎁
+              </span>
             )}
-            <span style={{ fontSize: "0.7rem", color: checked ? "#e0e8ff" : "rgba(180,200,255,0.5)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <span
+              style={{
+                fontSize: "0.7rem",
+                color: checked ? "#e0e8ff" : "rgba(180,200,255,0.5)",
+                flex: 1,
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {gift.giftName}
             </span>
-            <span style={{ fontSize: "0.6rem", color: "var(--color-gold)", flexShrink: 0 }}>
+            <span
+              style={{
+                fontSize: "0.6rem",
+                color: "var(--color-gold)",
+                flexShrink: 0,
+              }}
+            >
               💎{gift.diamonds}
             </span>
           </label>
@@ -78,8 +116,13 @@ function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
   );
 }
 
-// ── Main EditForm ──────────────────────────────────────────────
-export default function EditForm({ local, setLocal, onSave, activeGifts = [], isBoss = false }) {
+export default function EditForm({
+  local,
+  setLocal,
+  onSave,
+  activeGifts = [],
+  isBoss = false,
+}) {
   return (
     <div
       style={{
@@ -92,9 +135,7 @@ export default function EditForm({ local, setLocal, onSave, activeGifts = [], is
         gap: 10,
       }}
     >
-      {/* Grid fields */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        {/* Display Name */}
         <div style={{ gridColumn: "1 / -1" }}>
           <label style={labelStyle}>Display Name</label>
           <input
@@ -104,93 +145,126 @@ export default function EditForm({ local, setLocal, onSave, activeGifts = [], is
           />
         </div>
 
-        {/* Scale */}
         <div>
           <label style={labelStyle}>Scale</label>
           <input
-            type="number" step="0.01" min="0.001" max="20"
+            type="number"
+            step="0.01"
+            min="0.001"
+            max="20"
             style={inputStyle}
             value={local.scale}
             onChange={(e) => setLocal((p) => ({ ...p, scale: e.target.value }))}
           />
         </div>
 
-        {/* Gun Tip Offset */}
         <div>
           <label style={labelStyle}>Gun Tip Offset</label>
           <input
-            type="number" step="0.05" min="-5" max="10"
+            type="number"
+            step="0.05"
+            min="-5"
+            max="10"
             style={inputStyle}
             value={local.gunTipOffset}
-            onChange={(e) => setLocal((p) => ({ ...p, gunTipOffset: e.target.value }))}
+            onChange={(e) =>
+              setLocal((p) => ({ ...p, gunTipOffset: e.target.value }))
+            }
           />
         </div>
 
-        {/* Rotation Y */}
         <div>
           <label style={labelStyle}>Rotation Y (°)</label>
           <input
-            type="number" step="5" min="-360" max="360"
+            type="number"
+            step="5"
+            min="-360"
+            max="360"
             style={inputStyle}
             value={local.rotationY}
-            onChange={(e) => setLocal((p) => ({ ...p, rotationY: e.target.value }))}
+            onChange={(e) =>
+              setLocal((p) => ({ ...p, rotationY: e.target.value }))
+            }
           />
         </div>
 
-        {/* Bullet Color */}
         <div>
           <label style={labelStyle}>Bullet Color</label>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <input
               type="color"
               value={local.bulletColor}
-              onChange={(e) => setLocal((p) => ({ ...p, bulletColor: e.target.value }))}
-              style={{ width: 34, height: 28, border: "none", borderRadius: 5, cursor: "pointer", background: "transparent", padding: 0, flexShrink: 0 }}
+              onChange={(e) =>
+                setLocal((p) => ({ ...p, bulletColor: e.target.value }))
+              }
+              style={{
+                width: 34,
+                height: 28,
+                border: "none",
+                borderRadius: 5,
+                cursor: "pointer",
+                background: "transparent",
+                padding: 0,
+                flexShrink: 0,
+              }}
             />
             <input
               style={{ ...inputStyle, flex: 1 }}
               value={local.bulletColor}
-              onChange={(e) => setLocal((p) => ({ ...p, bulletColor: e.target.value }))}
+              onChange={(e) =>
+                setLocal((p) => ({ ...p, bulletColor: e.target.value }))
+              }
             />
           </div>
         </div>
 
-        {/* Damage */}
         <div>
           <label style={labelStyle}>Damage</label>
           <select
             style={{ ...inputStyle, appearance: "none" }}
             value={local.damage}
-            onChange={(e) => setLocal((p) => ({ ...p, damage: Number(e.target.value) }))}
+            onChange={(e) =>
+              setLocal((p) => ({ ...p, damage: Number(e.target.value) }))
+            }
           >
             {DAMAGE_OPTIONS.map((d) => (
-              <option key={d} value={d}>{d}</option>
+              <option key={d} value={d}>
+                {d}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Fire Rate */}
         <div>
           <label style={labelStyle}>Fire Rate</label>
           <select
             style={{ ...inputStyle, appearance: "none" }}
             value={local.fireRate}
-            onChange={(e) => setLocal((p) => ({ ...p, fireRate: Number(e.target.value) }))}
+            onChange={(e) =>
+              setLocal((p) => ({ ...p, fireRate: Number(e.target.value) }))
+            }
           >
             {FIRE_RATE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Gifts (chỉ hiện cho ship) */}
       {!isBoss && (
         <div>
           <label style={{ ...labelStyle, marginBottom: 6 }}>
             Quà kích hoạt ship này
             {local.gifts?.length > 0 && (
-              <span style={{ marginLeft: 6, color: "var(--color-cyan)", fontFamily: "inherit" }}>
+              <span
+                style={{
+                  marginLeft: 6,
+                  color: "var(--color-cyan)",
+                  fontFamily: "inherit",
+                }}
+              >
                 ({local.gifts.length} đã chọn)
               </span>
             )}
@@ -203,7 +277,6 @@ export default function EditForm({ local, setLocal, onSave, activeGifts = [], is
         </div>
       )}
 
-      {/* Save button */}
       <button
         onClick={onSave}
         style={{

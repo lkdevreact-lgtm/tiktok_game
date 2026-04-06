@@ -1,14 +1,6 @@
-/**
- * giftStore.jsx
- * Shared state cho gifts — dùng chung giữa:
- * - SidebarSetting (Gift Config): toggle active
- * - ModelManagerPanel (Upload/Edit form): hiển thị danh sách quà active để chọn
- *
- * Toggle active → cập nhật local state ngay (optimistic) + PUT /api/gifts/:giftId
- */
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { API_URL } from "../utils/constant";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8888";
 
 const GiftContext = createContext(null);
 
@@ -18,7 +10,7 @@ export function GiftProvider({ children }) {
 
   // Load toàn bộ gifts từ server
   const fetchGifts = useCallback(() => {
-    return fetch(`${BACKEND_URL}/api/gifts`)
+    return fetch(`${API_URL}/api/gifts`)
       .then((r) => r.json())
       .then((data) => {
         if (!Array.isArray(data)) return;
@@ -53,7 +45,7 @@ export function GiftProvider({ children }) {
     );
 
     try {
-      await fetch(`${BACKEND_URL}/api/gifts/${giftId}`, {
+      await fetch(`${API_URL}/api/gifts/${giftId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: newActive }),

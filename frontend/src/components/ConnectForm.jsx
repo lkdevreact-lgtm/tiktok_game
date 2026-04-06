@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useGame } from "../store/gameStore";
 import socket from "../socket/socketClient";
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+import { API_URL } from "../utils/constant";
 
 export default function ConnectForm() {
   const { setConnected, setUsername, setGameStatus } = useGame();
@@ -27,7 +26,7 @@ export default function ConnectForm() {
     }
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/connect`, {
+      const res = await fetch(`${API_URL}/api/connect`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: name, socketId: socket.id }),

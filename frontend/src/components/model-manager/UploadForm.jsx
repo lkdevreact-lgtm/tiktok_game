@@ -5,8 +5,8 @@
 import { useState, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import { inputStyle, labelStyle, btnBase, FIRE_RATE_OPTIONS, DAMAGE_OPTIONS } from "../ui/styles";
+import { API_URL } from "../../utils/constant";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8888";
 
 export default function UploadForm({ onSuccess, activeGifts = [] }) {
   const [file, setFile] = useState(null);
@@ -69,7 +69,7 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
       fd.append("fireRate",     params.fireRate);
       fd.append("gifts",        JSON.stringify(params.gifts));
 
-      const res  = await fetch(`${BACKEND_URL}/api/models/upload`, { method: "POST", body: fd });
+      const res  = await fetch(`${API_URL}/api/models/upload`, { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload thất bại");
 

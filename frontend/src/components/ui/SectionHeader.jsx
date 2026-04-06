@@ -1,19 +1,6 @@
-/** SectionHeader — tiêu đề section trong panel */
 export default function SectionHeader({ icon, label, color, count }) {
   return (
-    <div
-      style={{
-        fontSize: "0.6rem",
-        textTransform: "uppercase",
-        letterSpacing: "0.12em",
-        color,
-        marginBottom: 8,
-        fontFamily: "var(--font-game)",
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-      }}
-    >
+    <div className={`text-xs uppercase tracking-widest ${color} mb-2 flex items-center gap-[6px]`}>
       <span>{icon}</span>
       <span>{label}</span>
       {count != null && <span style={{ opacity: 0.5 }}>({count})</span>}

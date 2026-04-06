@@ -1,18 +1,7 @@
-/**
- * modelStore.jsx
- * Nguồn sự thật duy nhất: backend/data/models.json
- *
- * - Load tất cả models từ GET /api/models khi khởi động
- * - Thêm (upload) → POST /api/models/upload
- * - Sửa → PUT /api/models/:id (kể cả active, damage, fireRate, gifts)
- * - Xóa → DELETE /api/models/:id
- * - active state persist vào JSON qua PUT API (không dùng localStorage)
- *
- * activeBossId vẫn giữ trong localStorage (runtime preference)
- */
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8888";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { API_URL } from "../utils/constant";
+
 
 const ls = {
   get: (key, fb) => { try { return JSON.parse(localStorage.getItem(key)) ?? fb; } catch { return fb; } },
@@ -32,7 +21,7 @@ export function ModelProvider({ children }) {
 
   // ── Load từ API khi mount ─────────────────────────────────────
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/models`)
+    fetch(`${API_URL}/api/models`)
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -80,7 +69,7 @@ export function ModelProvider({ children }) {
     _setAndCache((prev) => prev.map((m) => (m.id === id ? { ...m, ...changes } : m)));
 
     try {
-      await fetch(`${BACKEND_URL}/api/models/${id}`, {
+      await fetch(`${API_URL}/api/models/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(changes),
@@ -93,7 +82,7 @@ export function ModelProvider({ children }) {
     _setAndCache((prev) => prev.filter((m) => m.id !== id));
 
     try {
-      await fetch(`${BACKEND_URL}/api/models/${id}`, { method: "DELETE" });
+      await fetch(`${API_URL}/api/models/${id}`, { method: "DELETE" });
     } catch { /* ignore */ }
 
     if (id === activeBossId) {
@@ -117,7 +106,7 @@ export function ModelProvider({ children }) {
     // (dùng functional form nên newActive đã có từ map trên)
     setTimeout(async () => {
       try {
-        await fetch(`${BACKEND_URL}/api/models/${id}`, {
+        await fetch(`${API_URL}/api/models/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ active: newActive }),
@@ -134,7 +123,7 @@ export function ModelProvider({ children }) {
 
   // ── Refresh từ server ────────────────────────────────────────
   const refreshModels = useCallback(() => {
-    fetch(`${BACKEND_URL}/api/models`)
+    fetch(`${API_URL}/api/models`)
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) { setModels(data); ls.set("modelsCache", data); } })
       .catch(() => {});
