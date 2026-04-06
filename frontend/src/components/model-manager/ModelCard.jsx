@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { btnBase, FIRE_RATE_OPTIONS } from "../ui/styles";
 import RoleBadge from "../ui/RoleBadge";
+import ToggleSwitch from "../ui/ToggleSwitch";
 import EditForm from "./EditForm";
+import { FaEdit } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
+
 
 function ModelBadge({ emoji, color, active }) {
   return (
@@ -185,11 +189,10 @@ export default function ModelCard({
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 4,
+            gap: 10,
             flexShrink: 0,
           }}
         >
-          {/* Edit */}
           <button
             onClick={() => setExpanded((v) => !v)}
             title="Sửa thông số"
@@ -201,57 +204,31 @@ export default function ModelCard({
               border: "1px solid rgba(0,245,255,0.3)",
               color: "var(--color-cyan)",
             }}
+            className="flex items-center justify-center"
           >
-            {expanded ? "↑" : "✏️"}
+            {expanded ? <IoClose size={18}/> : <FaEdit size={15} />}
           </button>
 
           {/* Toggle active (ship) */}
           {!isBoss && onToggleShip && (
-            <button
-              onClick={() => onToggleShip(model.id)}
+            <ToggleSwitch
+              value={isActive}
+              onChange={() => onToggleShip(model.id)}
               title={isActive ? "Tắt ship" : "Bật ship"}
-              style={{
-                ...btnBase,
-                background: isActive
-                  ? "rgba(0,245,255,0.12)"
-                  : "rgba(255,255,255,0.06)",
-                border: `1px solid ${isActive ? "rgba(0,245,255,0.4)" : "rgba(255,255,255,0.15)"}`,
-                color: isActive ? "var(--color-cyan)" : "rgba(180,200,255,0.4)",
-              }}
-            >
-              {isActive ? "✅" : "⭕"}
-            </button>
+            />
           )}
 
-          {/* Set active boss */}
-          {isBoss && onSetActiveBoss && !isActiveBoss && (
-            <button
-              onClick={() => onSetActiveBoss(model.id)}
-              title="Dùng làm Boss trong game"
-              style={{
-                ...btnBase,
-                background: "rgba(255,68,102,0.1)",
-                border: "1px solid rgba(255,68,102,0.35)",
-                color: "#ff7799",
-              }}
-            >
-              ⭕
-            </button>
-          )}
-          {isBoss && isActiveBoss && (
-            <button
-              disabled
-              title="Đang là Active Boss"
-              style={{
-                ...btnBase,
-                background: "rgba(255,68,102,0.18)",
-                border: "1px solid rgba(255,68,102,0.5)",
-                color: "#ff4466",
-                cursor: "default",
-              }}
-            >
-              ✅
-            </button>
+          {/* Toggle active boss */}
+          {isBoss && onSetActiveBoss && (
+            <ToggleSwitch
+              value={isActiveBoss}
+              onChange={() => !isActiveBoss && onSetActiveBoss(model.id)}
+              title={
+                isActiveBoss
+                  ? "Đang là Active Boss"
+                  : "Dùng làm Boss trong game"
+              }
+            />
           )}
 
           {/* Delete custom */}

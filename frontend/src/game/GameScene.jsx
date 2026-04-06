@@ -488,11 +488,11 @@ function BossLabel({ bossRef }) {
         center
         distanceFactor={10}
         occlude={false}
-        zIndexRange={[10, 10]}
+        zIndexRange={[9, 9]}
         style={{ pointerEvents: "none", userSelect: "none" }}
         className="relative"
       >
-        <div className=" absolute -top-90 -left-80 flex items-center gap-3 justify-center">
+        <div className=" absolute -top-80 -left-80 -translate-1/2 flex items-center gap-3 justify-center">
           <img
             src="/images/evil_boss.png"
             alt="Boss"
