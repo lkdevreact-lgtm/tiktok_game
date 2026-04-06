@@ -10,11 +10,12 @@ import { API_URL } from "../../utils/constant";
 
 export default function UploadForm({ onSuccess, activeGifts = [] }) {
   const [file, setFile] = useState(null);
+  const [iconFile, setIconFile] = useState(null);      // ảnh icon
+  const [iconPreview, setIconPreview] = useState(null); // preview URL
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [params, setParams] = useState({
     label:        "",
-    emoji:        "🚀",
     role:         "ship",
     scale:        0.25,
     gunTipOffset: 0.4,
@@ -25,6 +26,7 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
     gifts:        [],
   });
   const fileRef = useRef();
+  const iconRef = useRef();
 
   const handleFile = (e) => {
     const f = e.target.files?.[0];
@@ -37,6 +39,21 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
     setError("");
     const base = f.name.replace(/\.glb$/i, "");
     setParams((p) => ({ ...p, label: p.label || base }));
+  };
+
+  const handleIconFile = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setIconFile(f);
+    const url = URL.createObjectURL(f);
+    setIconPreview(url);
+  };
+
+  const clearIcon = () => {
+    setIconFile(null);
+    if (iconPreview) URL.revokeObjectURL(iconPreview);
+    setIconPreview(null);
+    if (iconRef.current) iconRef.current.value = "";
   };
 
   const toggleGift = (giftId) => {
@@ -58,8 +75,8 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
     try {
       const fd = new FormData();
       fd.append("file",         file);
+      if (iconFile) fd.append("iconImage", iconFile); // ảnh icon (tùy chọn)
       fd.append("label",        params.label.trim());
-      fd.append("emoji",        params.emoji || "🚀");
       fd.append("role",         params.role);
       fd.append("scale",        params.scale);
       fd.append("gunTipOffset", params.gunTipOffset);
@@ -76,13 +93,13 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
       if (data.path) { try { useGLTF.clear(data.path); } catch (_) {console.log(_); } }
 
       // Delay nhỏ để Vite dev server kịp serve file vừa upload
-      // trước khi useGLTF bắt đầu tải → tránh lỗi "Unexpected token '<'"
       await new Promise((resolve) => setTimeout(resolve, 400));
 
       onSuccess(data);
 
       setFile(null);
-      setParams({ label: "", emoji: "🚀", role: "ship", scale: 0.25, gunTipOffset: 0.4, rotationY: 0, bulletColor: "#00f5ff", damage: 1, fireRate: 1.0, gifts: [] });
+      clearIcon();
+      setParams({ label: "", role: "ship", scale: 0.25, gunTipOffset: 0.4, rotationY: 0, bulletColor: "#00f5ff", damage: 1, fireRate: 1.0, gifts: [] });
       if (fileRef.current) fileRef.current.value = "";
     } catch (err) {
       setError(err.message);
@@ -149,56 +166,96 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
           </div>
 
           {/* Grid fields */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>Tên hiển thị *</label>
-              <input style={inputStyle} placeholder="My Custom Ship" value={params.label}
-                onChange={(e) => setParams((p) => ({ ...p, label: e.target.value }))} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* Icon image upload */}
+            <div>
+              <label style={labelStyle}>Icon ảnh (tùy chọn)</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div
+                  onClick={() => iconRef.current?.click()}
+                  style={{
+                    width: 52, height: 52, borderRadius: 10, flexShrink: 0,
+                    border: `2px dashed ${iconPreview ? "rgba(0,245,255,0.5)" : "rgba(0,245,255,0.2)"}`,
+                    background: iconPreview ? "rgba(0,245,255,0.06)" : "rgba(0,0,0,0.2)",
+                    cursor: "pointer", overflow: "hidden",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {iconPreview
+                    ? <img src={iconPreview} alt="icon" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <span style={{ fontSize: 20, opacity: 0.4 }}>🖼️</span>
+                  }
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "0.68rem", color: "rgba(180,200,255,0.5)", marginBottom: 4 }}>
+                    {iconPreview ? iconFile?.name : "Click ảnh bên trái để chọn icon"}
+                  </div>
+                  {iconPreview && (
+                    <button
+                      onClick={clearIcon}
+                      style={{
+                        fontSize: "0.6rem", padding: "2px 8px", borderRadius: 5,
+                        border: "1px solid rgba(255,51,102,0.3)",
+                        background: "rgba(255,51,102,0.08)",
+                        color: "#ff5577", cursor: "pointer",
+                      }}
+                    >
+                      ✕ Xóa icon
+                    </button>
+                  )}
+                </div>
+                <input ref={iconRef} type="file" accept="image/*" onChange={handleIconFile} style={{ display: "none" }} />
+              </div>
             </div>
 
-            <div>
-              <label style={labelStyle}>Emoji Icon</label>
-              <input style={inputStyle} maxLength={2} value={params.emoji}
-                onChange={(e) => setParams((p) => ({ ...p, emoji: e.target.value }))} />
-            </div>
-            <div>
-              <label style={labelStyle}>Scale</label>
-              <input type="number" step="0.01" min="0.001" max="20" style={inputStyle} value={params.scale}
-                onChange={(e) => setParams((p) => ({ ...p, scale: e.target.value }))} />
-            </div>
-            <div>
-              <label style={labelStyle}>Gun Tip Offset</label>
-              <input type="number" step="0.05" min="-5" max="10" style={inputStyle} value={params.gunTipOffset}
-                onChange={(e) => setParams((p) => ({ ...p, gunTipOffset: e.target.value }))} />
-            </div>
-            <div>
-              <label style={labelStyle}>Rotation Y (°)</label>
-              <input type="number" step="5" min="-360" max="360" style={inputStyle} value={params.rotationY}
-                onChange={(e) => setParams((p) => ({ ...p, rotationY: e.target.value }))} />
-            </div>
-            <div>
-              <label style={labelStyle}>Damage</label>
-              <select style={{ ...inputStyle, appearance: "none" }} value={params.damage}
-                onChange={(e) => setParams((p) => ({ ...p, damage: Number(e.target.value) }))}>
-                {DAMAGE_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>Fire Rate</label>
-              <select style={{ ...inputStyle, appearance: "none" }} value={params.fireRate}
-                onChange={(e) => setParams((p) => ({ ...p, fireRate: Number(e.target.value) }))}>
-                {FIRE_RATE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
+            {/* Text fields grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={labelStyle}>Tên hiển thị *</label>
+                <input style={inputStyle} placeholder="My Custom Ship" value={params.label}
+                  onChange={(e) => setParams((p) => ({ ...p, label: e.target.value }))} />
+              </div>
 
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>Bullet Color</label>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input type="color" value={params.bulletColor}
-                  onChange={(e) => setParams((p) => ({ ...p, bulletColor: e.target.value }))}
-                  style={{ width: 38, height: 32, border: "none", borderRadius: 5, cursor: "pointer", background: "transparent", padding: 0, flexShrink: 0 }} />
-                <input style={{ ...inputStyle, flex: 1 }} value={params.bulletColor}
-                  onChange={(e) => setParams((p) => ({ ...p, bulletColor: e.target.value }))} />
+              <div>
+                <label style={labelStyle}>Scale</label>
+                <input type="number" step="0.01" min="0.001" max="20" style={inputStyle} value={params.scale}
+                  onChange={(e) => setParams((p) => ({ ...p, scale: e.target.value }))} />
+              </div>
+              <div>
+                <label style={labelStyle}>Gun Tip Offset</label>
+                <input type="number" step="0.05" min="-5" max="10" style={inputStyle} value={params.gunTipOffset}
+                  onChange={(e) => setParams((p) => ({ ...p, gunTipOffset: e.target.value }))} />
+              </div>
+              <div>
+                <label style={labelStyle}>Rotation Y (°)</label>
+                <input type="number" step="5" min="-360" max="360" style={inputStyle} value={params.rotationY}
+                  onChange={(e) => setParams((p) => ({ ...p, rotationY: e.target.value }))} />
+              </div>
+              <div>
+                <label style={labelStyle}>Damage</label>
+                <select style={{ ...inputStyle, appearance: "none" }} value={params.damage}
+                  onChange={(e) => setParams((p) => ({ ...p, damage: Number(e.target.value) }))}>
+                  {DAMAGE_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Fire Rate</label>
+                <select style={{ ...inputStyle, appearance: "none" }} value={params.fireRate}
+                  onChange={(e) => setParams((p) => ({ ...p, fireRate: Number(e.target.value) }))}>
+                  {FIRE_RATE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={labelStyle}>Bullet Color</label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input type="color" value={params.bulletColor}
+                    onChange={(e) => setParams((p) => ({ ...p, bulletColor: e.target.value }))}
+                    style={{ width: 38, height: 32, border: "none", borderRadius: 5, cursor: "pointer", background: "transparent", padding: 0, flexShrink: 0 }} />
+                  <input style={{ ...inputStyle, flex: 1 }} value={params.bulletColor}
+                    onChange={(e) => setParams((p) => ({ ...p, bulletColor: e.target.value }))} />
+                </div>
               </div>
             </div>
           </div>

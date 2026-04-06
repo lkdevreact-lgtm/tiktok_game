@@ -133,7 +133,7 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
                     key={m.id}
                     model={m}
                     onUpdate={(id, changes) => updateModel(id, changes)}
-                    onDelete={!m.builtIn ? (id) => removeModel(id) : undefined}
+                    onDelete={(id) => removeModel(id)}
                     onToggleShip={toggleShipActive}
                   />
                 ))}
@@ -156,7 +156,7 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
                     model={m}
                     isActiveBoss={m.id === activeBossId}
                     onUpdate={(id, changes) => updateModel(id, changes)}
-                    onDelete={!m.builtIn ? (id) => removeModel(id) : undefined}
+                    onDelete={(id) => removeModel(id)}
                     onSetActiveBoss={setActiveBoss}
                   />
                 ))}

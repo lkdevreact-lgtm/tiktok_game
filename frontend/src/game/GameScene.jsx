@@ -50,15 +50,17 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   const statusRef = useRef("idle");
   const prevGameStatus = useRef("idle");
   const spawnShipFn = useRef(null);
-  // Flash đỏ boss: lưu materials gốc 1 lần, debounce restore
-  const bossOrigMatsRef = useRef(null);
+  // === Material flash system ===
+  // Lưu materials GỐC 1 lần duy nhất (không bị ghi đè bởi flash)
+  const bossOrigMatsRef = useRef(null); // { mesh, mat }[] - chỉ lưu 1 lần khi boss mount
+  // Trạng thái flash hiện tại: "none" | "red" | "green"
+  const bossFlashStateRef = useRef("none");
   const bossFlashTimeoutRef = useRef(null);
+  const bossGreenFlashRef   = useRef(null);
   // Shield state
   const bossShieldActiveRef = useRef(false);
   const bossShieldTimerRef  = useRef(null);
-  // Heal flash (green) + debounce
-  const bossGreenFlashRef   = useRef(null);
-  const bossGreenMatsRef    = useRef(null);
+  const bossShieldEndRef    = useRef(0);  // timestamp kết thúc shield (ms)
   const healCooldownRef     = useRef(false); // chống spam heal
   // Heal sound
   const healAudio = useRef(new Audio("/sound/heal_sound.mp3"));
@@ -143,40 +145,68 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       // Flash xanh lá
       const boss = bossRef.current;
       if (!boss) return;
-      if (!bossGreenMatsRef.current) {
+
+      // Đảm bảo origMats đã được lưu trước khi flash
+      if (!bossOrigMatsRef.current) {
         const saved = [];
         boss.traverse((child) => {
-          if (child.isMesh) {
-            saved.push({ mesh: child, mat: child.material });
-            child.material = new THREE.MeshBasicMaterial({ color: 0x00ff66, transparent: true, opacity: 0.5 });
-          }
+          if (child.isMesh) saved.push({ mesh: child, mat: child.material.clone() });
         });
-        bossGreenMatsRef.current = saved;
+        bossOrigMatsRef.current = saved;
       }
+
+      // Clear timeout flash đỏ + flash xanh cũ
+      if (bossFlashTimeoutRef.current) clearTimeout(bossFlashTimeoutRef.current);
       if (bossGreenFlashRef.current) clearTimeout(bossGreenFlashRef.current);
+
+      // Áp flash xanh
+      bossFlashStateRef.current = "green";
+      boss.traverse((child) => {
+        if (child.isMesh) {
+          child.material = new THREE.MeshBasicMaterial({ color: 0x00ff66, transparent: true, opacity: 0.5 });
+        }
+      });
+
       bossGreenFlashRef.current = setTimeout(() => {
-        bossGreenMatsRef.current?.forEach(({ mesh, mat }) => { if (mesh) mesh.material = mat; });
-        bossGreenMatsRef.current = null;
+        // Restore về originals
+        bossOrigMatsRef.current?.forEach(({ mesh, mat }) => { if (mesh) mesh.material = mat.clone(); });
+        bossFlashStateRef.current = "none";
         bossGreenFlashRef.current = null;
       }, 400);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onBossHeal]);
 
-  // ── Boss Shield ──────────────────────────────────────────────
+  // ── Boss Shield (cộng dồn thời gian) ───────────────────────
+  const [shieldEndTime, setShieldEndTime] = useState(0); // timestamp ms
+
   useEffect(() => {
     if (!onBossShield) return;
     onBossShield(() => {
-      const SHIELD_DURATION = 5000; // 5 giây
+      const ADD_MS    = 5000;  // +5 giây mỗi lần
+      const MAX_MS    = 30000; // tối đa 30 giây
+      const now       = Date.now();
+
+      // Tính thời gian còn lại hiện tại, cộng thêm 5s và giới hạn 30s
+      const remaining = bossShieldActiveRef.current
+        ? Math.max(0, bossShieldEndRef.current - now)
+        : 0;
+      const newDuration = Math.min(remaining + ADD_MS, MAX_MS);
+      const newEnd      = now + newDuration;
+
       bossShieldActiveRef.current = true;
+      bossShieldEndRef.current    = newEnd;
       setBossShield(true);
+      setShieldEndTime(newEnd);
 
       if (bossShieldTimerRef.current) clearTimeout(bossShieldTimerRef.current);
       bossShieldTimerRef.current = setTimeout(() => {
         bossShieldActiveRef.current = false;
+        bossShieldEndRef.current    = 0;
         setBossShield(false);
-        bossShieldTimerRef.current = null;
-      }, SHIELD_DURATION);
+        setShieldEndTime(0);
+        bossShieldTimerRef.current  = null;
+      }, newDuration);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onBossShield]);
@@ -229,6 +259,13 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       bossRef.current.position.set(BOSS_START_X, 0, 0);
       bossRef.current.rotation.y = Math.PI / 2;
       bossInitializedRef.current = true;
+
+      // Lưu materials GỐC ngay khi boss mount (trước khi bất kỳ flash nào xảy ra)
+      const saved = [];
+      bossRef.current.traverse((child) => {
+        if (child.isMesh) saved.push({ mesh: child, mat: child.material.clone() });
+      });
+      bossOrigMatsRef.current = saved;
     }
   });
 
@@ -283,9 +320,19 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     // Clear ship labels (avatar + tên người donate cũ)
     setShipLabels([]);
 
+    // ── Dọn flash state ──────────────────────────────────────
+    if (bossFlashTimeoutRef.current) { clearTimeout(bossFlashTimeoutRef.current); bossFlashTimeoutRef.current = null; }
+    if (bossGreenFlashRef.current)   { clearTimeout(bossGreenFlashRef.current);   bossGreenFlashRef.current   = null; }
+    bossFlashStateRef.current = "none";
+
     if (bossRef.current) {
       bossRef.current.position.set(BOSS_START_X, 0, 0);
       bossRef.current.rotation.y = Math.PI / 2;
+
+      // Restore materials về gốc trước khi bắt đầu lại
+      bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
+        if (mesh) mesh.material = mat.clone();
+      });
     }
 
     bossHpRef.current = 100;
@@ -305,6 +352,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     gameActiveRef.current = true;
     statusRef.current = "playing";
   }, [scene, setBossHp, setShipCount]);
+
 
   useEffect(() => {
     if (
@@ -378,27 +426,39 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
 
         // Flash đỏ chỉ khi không có khiên
         if (!bossShieldActiveRef.current) {
+          // Lưu materials gốc 1 lần duy nhất (không dùng material hiện tại vì có thể đang flash)
           if (!bossOrigMatsRef.current) {
             const saved = [];
             boss.traverse((child) => {
-              if (child.isMesh) {
-                saved.push({ mesh: child, mat: child.material });
-                child.material = new THREE.MeshBasicMaterial({
-                  color: 0xff1111,
-                  transparent: true,
-                  opacity: 0.2,
-                });
-              }
+              if (child.isMesh) saved.push({ mesh: child, mat: child.material.clone() });
             });
             bossOrigMatsRef.current = saved;
           }
-          if (bossFlashTimeoutRef.current)
-            clearTimeout(bossFlashTimeoutRef.current);
+
+          // Clear timeout flash xanh để không bị conflict
+          if (bossGreenFlashRef.current) clearTimeout(bossGreenFlashRef.current);
+          if (bossFlashTimeoutRef.current) clearTimeout(bossFlashTimeoutRef.current);
+
+          // Áp flash đỏ
+          bossFlashStateRef.current = "red";
+          boss.traverse((child) => {
+            if (child.isMesh) {
+              child.material = new THREE.MeshBasicMaterial({
+                color: 0xff1111,
+                transparent: true,
+                opacity: 0.25,
+              });
+            }
+          });
+
           bossFlashTimeoutRef.current = setTimeout(() => {
-            bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
-              if (mesh) mesh.material = mat;
-            });
-            bossOrigMatsRef.current = null;
+            // Chỉ restore nếu flash state vẫn là đỏ (không bị override bởi flash xanh)
+            if (bossFlashStateRef.current === "red") {
+              bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
+                if (mesh) mesh.material = mat.clone();
+              });
+              bossFlashStateRef.current = "none";
+            }
             bossFlashTimeoutRef.current = null;
           }, 150);
 
@@ -454,7 +514,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         scale={activeBossModel?.scale ?? 4.5}
       />
       <BossLabel bossRef={bossRef} />
-      <BossShieldRing bossRef={bossRef} />
+      <BossShieldRing bossRef={bossRef} shieldEndTime={shieldEndTime} />
 
       {/* Render labels bằng Html đính vào scene position của từng tàu */}
       {shipLabels
@@ -629,10 +689,11 @@ function BossLabel({ bossRef }) {
   );
 }
 
-function BossShieldRing({ bossRef }) {
+function BossShieldRing({ bossRef, shieldEndTime }) {
   const { bossShield } = useGame();
-  const groupRef = useRef();
-  const [timeLeft, setTimeLeft] = useState(5);
+  const groupRef  = useRef();
+  const [msLeft,  setMsLeft]  = useState(0);
+  const [maxMs,   setMaxMs]   = useState(5000);
 
   useFrame(() => {
     if (groupRef.current && bossRef.current) {
@@ -640,19 +701,28 @@ function BossShieldRing({ bossRef }) {
     }
   });
 
+  // Cập nhật countdown dựa trên shieldEndTime
   useEffect(() => {
-    if (!bossShield) { setTimeLeft(5); return; }
-    setTimeLeft(5);
+    if (!bossShield || !shieldEndTime) { setMsLeft(0); return; }
+    // Khi endTime mới (gift mới) → cập nhật max
+    const remaining = shieldEndTime - Date.now();
+    setMaxMs(Math.max(remaining, 5000));
+    setMsLeft(Math.max(0, remaining));
+
     const iv = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) { clearInterval(iv); return 0; }
-        return t - 1;
-      });
-    }, 1000);
+      const left = shieldEndTime - Date.now();
+      setMsLeft(Math.max(0, left));
+      if (left <= 0) clearInterval(iv);
+    }, 100); // update 10fps để smooth
     return () => clearInterval(iv);
-  }, [bossShield]);
+  }, [bossShield, shieldEndTime]);
 
   if (!bossShield) return null;
+
+  const secsLeft = Math.ceil(msLeft / 1000);
+  const pct      = maxMs > 0 ? msLeft / maxMs : 0;
+  const r        = 110;
+  const circ     = 2 * Math.PI * r;
 
   return (
     <group ref={groupRef}>
@@ -664,41 +734,59 @@ function BossShieldRing({ bossRef }) {
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
         <div style={{
-          width: 160,
-          height: 160,
-          borderRadius: "50%",
-          border: "3px solid rgba(0,245,255,0.8)",
-          boxShadow: "0 0 20px rgba(0,245,255,0.6), inset 0 0 20px rgba(0,245,255,0.1)",
-          animation: "spin 2s linear infinite",
+          width: 240,
+          height: 240,
+          position: "relative",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          position: "relative",
         }}>
+          {/* Spinning outer ring */}
           <div style={{
             position: "absolute",
-            inset: 8,
+            inset: 0,
+            borderRadius: "50%",
+            border: "3px solid rgba(0,245,255,0.8)",
+            boxShadow: "0 0 28px rgba(0,245,255,0.7), inset 0 0 28px rgba(0,245,255,0.15)",
+            animation: "shieldSpin 2s linear infinite",
+          }} />
+          {/* Inner dashed ring */}
+          <div style={{
+            position: "absolute",
+            inset: 12,
             borderRadius: "50%",
             border: "1.5px dashed rgba(0,245,255,0.4)",
-            animation: "spin 3s linear infinite reverse",
+            animation: "shieldSpin 3s linear infinite reverse",
           }} />
-          <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 2,
-          }}>
-            <span style={{ fontSize: 22 }}>🛡️</span>
+          {/* SVG arc – progress theo thời gian thực */}
+          <svg
+            width="240" height="240"
+            style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}
+          >
+            <circle cx="120" cy="120" r={r} fill="none" stroke="rgba(0,245,255,0.12)" strokeWidth="6" />
+            <circle
+              cx="120" cy="120" r={r}
+              fill="none"
+              stroke={pct > 0.3 ? "#00f5ff" : "#ff6600"}
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeDasharray={circ}
+              strokeDashoffset={circ * (1 - pct)}
+              style={{ transition: "stroke-dashoffset 0.15s linear, stroke 0.5s", filter: "drop-shadow(0 0 6px #00f5ff)" }}
+            />
+          </svg>
+          {/* Center */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, zIndex: 1 }}>
+            <span style={{ fontSize: 36, lineHeight: 1, filter: "drop-shadow(0 0 10px rgba(0,245,255,0.9))" }}>🛡️</span>
             <span style={{
-              fontSize: 13,
-              fontWeight: 800,
-              color: "#00f5ff",
-              textShadow: "0 0 8px rgba(0,245,255,0.9)",
-            }}>{timeLeft}s</span>
+              fontSize: 20, fontWeight: 900, color: pct > 0.3 ? "#00f5ff" : "#ff8800",
+              textShadow: "0 0 12px rgba(0,245,255,1), 0 0 24px rgba(0,245,255,0.6)",
+              letterSpacing: "0.05em",
+            }}>{secsLeft}s</span>
           </div>
         </div>
         <style>{`
-          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          @keyframes shieldSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         `}</style>
       </Html>
     </group>

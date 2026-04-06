@@ -44,13 +44,13 @@
     "rotationY": 150,
     "bulletColor": "#ffaa00",
     "builtIn": true,
-    "active": false,
+    "active": true,
     "damage": 5,
     "fireRate": 0.3,
     "gifts": [
       5655
     ],
-    "updatedAt": "2026-04-06T10:16:03.519Z"
+    "updatedAt": "2026-04-06T11:55:11.986Z"
   },
   {
     "id": "spaceship_boss",
@@ -88,6 +88,6 @@
     "builtIn": false,
     "active": true,
     "uploadedAt": "2026-04-06T08:49:35.366Z",
-    "updatedAt": "2026-04-06T10:03:25.122Z"
+    "updatedAt": "2026-04-06T11:56:05.607Z"
   }
 ]
