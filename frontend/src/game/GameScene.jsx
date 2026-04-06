@@ -11,7 +11,7 @@ import { useModels } from "../hooks/useModels";
 const MAX_SHIPS = 60;
 const BOSS_START_X = -11;
 const BOSS_END_X = 5.2;
-const BOSS_SPEED = 0.0005;
+const BOSS_SPEED = 0.005;
 const BULLET_SPEED = 0.07;
 
 // AudioPool: 8 instances → nhiều tàu bắn cùng lúc vẫn phát đủ số lần
@@ -29,9 +29,9 @@ function playAttackSound() {
   audio.play().catch(() => {});
 }
 
-export default function GameScene({ onGiftSpawn }) {
+export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   const { scene } = useThree();
-  const { setBossHp, setGameStatus, setShipCount, gameStatus } = useGame();
+  const { setBossHp, setGameStatus, setShipCount, setBossShield, gameStatus } = useGame();
   const { activeBossModel, shipModels } = useModels();
   const { cloneShipMesh, getBulletColor } = useShipModels();
   // Giữ ref để dùng trong callback không stale
@@ -51,8 +51,18 @@ export default function GameScene({ onGiftSpawn }) {
   const prevGameStatus = useRef("idle");
   const spawnShipFn = useRef(null);
   // Flash đỏ boss: lưu materials gốc 1 lần, debounce restore
-  const bossOrigMatsRef = useRef(null); // null = đang không flash
+  const bossOrigMatsRef = useRef(null);
   const bossFlashTimeoutRef = useRef(null);
+  // Shield state
+  const bossShieldActiveRef = useRef(false);
+  const bossShieldTimerRef  = useRef(null);
+  // Heal flash (green) + debounce
+  const bossGreenFlashRef   = useRef(null);
+  const bossGreenMatsRef    = useRef(null);
+  const healCooldownRef     = useRef(false); // chống spam heal
+  // Heal sound
+  const healAudio = useRef(new Audio("/sound/heal_sound.mp3"));
+  healAudio.current.volume = 0.5;
   // Slot-based spawn: chia màn hình thành NUM_Y_SLOTS rãnh, tàu mới vào rãnh tiếp theo
   const NUM_Y_SLOTS = 10;
   const Y_RANGE = 8;  // tổng chiều cao an toàn (~±2.2)
@@ -112,6 +122,64 @@ export default function GameScene({ onGiftSpawn }) {
   useEffect(() => {
     if (onGiftSpawn) onGiftSpawn((args) => spawnShipFn.current?.(args));
   }, [onGiftSpawn]);
+
+  // ── Boss Heal ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!onBossHeal) return;
+    onBossHeal(() => {
+      // Debounce: chống spam, chỉ cho hồi mỗi 500ms
+      if (healCooldownRef.current) return;
+      healCooldownRef.current = true;
+      setTimeout(() => { healCooldownRef.current = false; }, 500);
+
+      const HEAL_AMOUNT = 3; // +3% HP mỗi lần
+      bossHpRef.current = Math.min(100, bossHpRef.current + HEAL_AMOUNT);
+      setBossHp(Math.round(bossHpRef.current * 10) / 10);
+
+      // Phát sound hồi máu
+      healAudio.current.currentTime = 0;
+      healAudio.current.play().catch(() => {});
+
+      // Flash xanh lá
+      const boss = bossRef.current;
+      if (!boss) return;
+      if (!bossGreenMatsRef.current) {
+        const saved = [];
+        boss.traverse((child) => {
+          if (child.isMesh) {
+            saved.push({ mesh: child, mat: child.material });
+            child.material = new THREE.MeshBasicMaterial({ color: 0x00ff66, transparent: true, opacity: 0.5 });
+          }
+        });
+        bossGreenMatsRef.current = saved;
+      }
+      if (bossGreenFlashRef.current) clearTimeout(bossGreenFlashRef.current);
+      bossGreenFlashRef.current = setTimeout(() => {
+        bossGreenMatsRef.current?.forEach(({ mesh, mat }) => { if (mesh) mesh.material = mat; });
+        bossGreenMatsRef.current = null;
+        bossGreenFlashRef.current = null;
+      }, 400);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onBossHeal]);
+
+  // ── Boss Shield ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!onBossShield) return;
+    onBossShield(() => {
+      const SHIELD_DURATION = 5000; // 5 giây
+      bossShieldActiveRef.current = true;
+      setBossShield(true);
+
+      if (bossShieldTimerRef.current) clearTimeout(bossShieldTimerRef.current);
+      bossShieldTimerRef.current = setTimeout(() => {
+        bossShieldActiveRef.current = false;
+        setBossShield(false);
+        bossShieldTimerRef.current = null;
+      }, SHIELD_DURATION);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onBossShield]);
 
   // ── Init scene (lights + starter ships) ─────────────────────
   useEffect(() => {
@@ -293,47 +361,53 @@ export default function GameScene({ onGiftSpawn }) {
       }
 
       if (bossBox.containsPoint(bullet.mesh.position)) {
-        bossHpRef.current = Math.max(0, bossHpRef.current - bullet.damage);
-        setBossHp(Math.round(bossHpRef.current * 10) / 10);
+        // Nếu boss đang có khiên: đạn nổ nhưng không gây sát thương
+        if (!bossShieldActiveRef.current) {
+          bossHpRef.current = Math.max(0, bossHpRef.current - bullet.damage);
+          setBossHp(Math.round(bossHpRef.current * 10) / 10);
+        }
 
         const exps = createExplosion(
           bullet.mesh.position.clone(),
-          getBulletColor(bullet.ownerType),
+          bossShieldActiveRef.current ? "#00f5ff" : getBulletColor(bullet.ownerType),
         );
         exps.forEach(({ mesh }) => scene.add(mesh));
         explosionsRef.current.push(...exps);
 
         deadBullets.add(idx);
 
-        if (!bossOrigMatsRef.current) {
-          const saved = [];
-          boss.traverse((child) => {
-            if (child.isMesh) {
-              saved.push({ mesh: child, mat: child.material });
-              child.material = new THREE.MeshBasicMaterial({
-                color: 0xff1111,
-                transparent: true,
-                opacity: 0.2,
-              });
-            }
-          });
-          bossOrigMatsRef.current = saved;
-        }
-        if (bossFlashTimeoutRef.current)
-          clearTimeout(bossFlashTimeoutRef.current);
-        bossFlashTimeoutRef.current = setTimeout(() => {
-          bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
-            if (mesh) mesh.material = mat;
-          });
-          bossOrigMatsRef.current = null;
-          bossFlashTimeoutRef.current = null;
-        }, 150);
+        // Flash đỏ chỉ khi không có khiên
+        if (!bossShieldActiveRef.current) {
+          if (!bossOrigMatsRef.current) {
+            const saved = [];
+            boss.traverse((child) => {
+              if (child.isMesh) {
+                saved.push({ mesh: child, mat: child.material });
+                child.material = new THREE.MeshBasicMaterial({
+                  color: 0xff1111,
+                  transparent: true,
+                  opacity: 0.2,
+                });
+              }
+            });
+            bossOrigMatsRef.current = saved;
+          }
+          if (bossFlashTimeoutRef.current)
+            clearTimeout(bossFlashTimeoutRef.current);
+          bossFlashTimeoutRef.current = setTimeout(() => {
+            bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
+              if (mesh) mesh.material = mat;
+            });
+            bossOrigMatsRef.current = null;
+            bossFlashTimeoutRef.current = null;
+          }, 150);
 
-        if (bossHpRef.current <= 0) {
-          statusRef.current = "win";
-          gameActiveRef.current = false;
-          setGameStatus("win");
-          prevGameStatus.current = "win";
+          if (bossHpRef.current <= 0) {
+            statusRef.current = "win";
+            gameActiveRef.current = false;
+            setGameStatus("win");
+            prevGameStatus.current = "win";
+          }
         }
       }
     });
@@ -380,6 +454,7 @@ export default function GameScene({ onGiftSpawn }) {
         scale={activeBossModel?.scale ?? 4.5}
       />
       <BossLabel bossRef={bossRef} />
+      <BossShieldRing bossRef={bossRef} />
 
       {/* Render labels bằng Html đính vào scene position của từng tàu */}
       {shipLabels
@@ -492,7 +567,7 @@ function BossLabel({ bossRef }) {
         style={{ pointerEvents: "none", userSelect: "none" }}
         className="relative"
       >
-        <div className=" absolute -top-80 -left-80 -translate-1/2 flex items-center gap-3 justify-center">
+        <div className=" absolute -top-64 -left-80 -translate-1/2 flex items-center gap-3 justify-center">
           <img
             src="/images/evil_boss.png"
             alt="Boss"
@@ -549,6 +624,82 @@ function BossLabel({ bossRef }) {
             </div>
           </div>
         </div>
+      </Html>
+    </group>
+  );
+}
+
+function BossShieldRing({ bossRef }) {
+  const { bossShield } = useGame();
+  const groupRef = useRef();
+  const [timeLeft, setTimeLeft] = useState(5);
+
+  useFrame(() => {
+    if (groupRef.current && bossRef.current) {
+      groupRef.current.position.copy(bossRef.current.position);
+    }
+  });
+
+  useEffect(() => {
+    if (!bossShield) { setTimeLeft(5); return; }
+    setTimeLeft(5);
+    const iv = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) { clearInterval(iv); return 0; }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [bossShield]);
+
+  if (!bossShield) return null;
+
+  return (
+    <group ref={groupRef}>
+      <Html
+        center
+        distanceFactor={10}
+        occlude={false}
+        zIndexRange={[10, 10]}
+        style={{ pointerEvents: "none", userSelect: "none" }}
+      >
+        <div style={{
+          width: 160,
+          height: 160,
+          borderRadius: "50%",
+          border: "3px solid rgba(0,245,255,0.8)",
+          boxShadow: "0 0 20px rgba(0,245,255,0.6), inset 0 0 20px rgba(0,245,255,0.1)",
+          animation: "spin 2s linear infinite",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+        }}>
+          <div style={{
+            position: "absolute",
+            inset: 8,
+            borderRadius: "50%",
+            border: "1.5px dashed rgba(0,245,255,0.4)",
+            animation: "spin 3s linear infinite reverse",
+          }} />
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+          }}>
+            <span style={{ fontSize: 22 }}>🛡️</span>
+            <span style={{
+              fontSize: 13,
+              fontWeight: 800,
+              color: "#00f5ff",
+              textShadow: "0 0 8px rgba(0,245,255,0.9)",
+            }}>{timeLeft}s</span>
+          </div>
+        </div>
+        <style>{`
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        `}</style>
       </Html>
     </group>
   );

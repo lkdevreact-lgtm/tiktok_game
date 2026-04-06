@@ -111,6 +111,7 @@ export function updateModel(req, res) {
   const allowed = [
     "label", "emoji", "role", "scale", "gunTipOffset",
     "rotationY", "bulletColor", "damage", "fireRate", "gifts", "active",
+    "healGifts", "shieldGifts",
   ];
   allowed.forEach((key) => {
     if (req.body[key] !== undefined) db[idx][key] = req.body[key];

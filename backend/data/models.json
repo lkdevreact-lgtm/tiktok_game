@@ -67,6 +67,8 @@
     "damage": 1,
     "fireRate": 1,
     "gifts": [],
+    "healGifts": [],
+    "shieldGifts": [],
     "updatedAt": "2026-04-06T10:14:09.063Z"
   },
   {

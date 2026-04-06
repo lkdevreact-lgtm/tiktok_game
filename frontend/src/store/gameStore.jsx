@@ -7,7 +7,8 @@ export function GameProvider({ children }) {
   const [connected,     setConnected]    = useState(false);
   const [username,      setUsername]     = useState("");
   const [bossHp,        setBossHp]       = useState(100);
-  const [gameStatus,    setGameStatus]   = useState("idle"); // idle | playing | win | lose
+  const [bossShield,    setBossShield]   = useState(false);
+  const [gameStatus,    setGameStatus]   = useState("idle");
   const [shipCount,     setShipCount]    = useState(0);
   const [notifications, setNotifications] = useState([]);
   const notifId = useRef(0);
@@ -32,6 +33,7 @@ export function GameProvider({ children }) {
         connected, setConnected,
         username,  setUsername,
         bossHp,    setBossHp,
+        bossShield, setBossShield,
         gameStatus, setGameStatus,
         shipCount,  setShipCount,
         notifications, addNotification,

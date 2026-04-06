@@ -45,6 +45,8 @@ export default function ModelCard({
     damage: model.damage ?? 1,
     fireRate: model.fireRate ?? 1.0,
     gifts: model.gifts || [],
+    healGifts: model.healGifts || [],
+    shieldGifts: model.shieldGifts || [],
   });
 
   useEffect(() => {
@@ -57,6 +59,8 @@ export default function ModelCard({
       damage: model.damage ?? 1,
       fireRate: model.fireRate ?? 1.0,
       gifts: model.gifts || [],
+      healGifts: model.healGifts || [],
+      shieldGifts: model.shieldGifts || [],
     });
   }, [
     model.label,
@@ -67,6 +71,8 @@ export default function ModelCard({
     model.damage,
     model.fireRate,
     model.gifts,
+    model.healGifts,
+    model.shieldGifts,
   ]);
 
   const isBoss = model.role === "boss";
@@ -83,6 +89,8 @@ export default function ModelCard({
       damage: Number(local.damage),
       fireRate: Number(local.fireRate),
       gifts: local.gifts,
+      healGifts: local.healGifts,
+      shieldGifts: local.shieldGifts,
     });
     setExpanded(false);
   };

@@ -15,15 +15,31 @@ export default function GameCanvas() {
     resetGame,
   } = useGame();
 
-  const { giftModelMap } = useModels();
+  const { giftModelMap, bossHealGiftMap, bossShieldGiftMap } = useModels();
   const spawnShipRef = useRef(null);
+  const bossHealRef  = useRef(null);
+  const bossShieldRef = useRef(null);
   const giftModelMapRef = useRef(giftModelMap);
+  const bossHealGiftMapRef = useRef(bossHealGiftMap);
+  const bossShieldGiftMapRef = useRef(bossShieldGiftMap);
   useEffect(() => {
     giftModelMapRef.current = giftModelMap;
   }, [giftModelMap]);
+  useEffect(() => {
+    bossHealGiftMapRef.current = bossHealGiftMap;
+  }, [bossHealGiftMap]);
+  useEffect(() => {
+    bossShieldGiftMapRef.current = bossShieldGiftMap;
+  }, [bossShieldGiftMap]);
 
   const handleGiftSpawn = useCallback((fn) => {
     spawnShipRef.current = fn;
+  }, []);
+  const handleBossHeal = useCallback((fn) => {
+    bossHealRef.current = fn;
+  }, []);
+  const handleBossShield = useCallback((fn) => {
+    bossShieldRef.current = fn;
   }, []);
   useEffect(() => {
     const handleGift = (data) => {
@@ -36,6 +52,20 @@ export default function GameCanvas() {
         avatarUrl: senderAvatar,
         profilePictureUrl,
       } = data;
+
+      // Boss heal gift?
+      if (bossHealGiftMapRef.current[String(giftId)]) {
+        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "heal" });
+        bossHealRef.current?.();
+        return;
+      }
+
+      // Boss shield gift?
+      if (bossShieldGiftMapRef.current[String(giftId)]) {
+        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "shield" });
+        bossShieldRef.current?.();
+        return;
+      }
 
       const model = giftModelMapRef.current[String(giftId)];
       if (!model) return;
@@ -130,7 +160,11 @@ export default function GameCanvas() {
           gl={{ antialias: true, alpha: false }}
           style={{ background: "#000" }}
         >
-          <GameScene onGiftSpawn={handleGiftSpawn} />
+          <GameScene
+            onGiftSpawn={handleGiftSpawn}
+            onBossHeal={handleBossHeal}
+            onBossShield={handleBossShield}
+          />
         </Canvas>
 
         {/* ── Gift Notification Feed ── */}
@@ -166,26 +200,56 @@ export default function GameCanvas() {
           ))}
         </div>
 
-        {/* ── Dev: Simulate Gift Button ── */}
-        <button
-          id="btn-simulate-gift"
-          onClick={handleSimulate}
-          className="absolute bottom-5 right-[316px] uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer z-[15] transition-colors duration-200"
-          style={{
-            background: "rgba(0,245,255,0.12)",
-            border: "1px solid rgba(0,245,255,0.35)",
-            color: "var(--color-cyan)",
-            fontFamily: "var(--font-game)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(0,245,255,0.22)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(0,245,255,0.12)";
-          }}
-        >
-          Test gift
-        </button>
+        {/* ── Dev: Test Buttons ── */}
+        <div className="absolute bottom-5 right-[316px] flex gap-2 z-[15]">
+          <button
+            id="btn-simulate-gift"
+            onClick={handleSimulate}
+            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer transition-colors duration-200"
+            style={{
+              background: "rgba(0,245,255,0.12)",
+              border: "1px solid rgba(0,245,255,0.35)",
+              color: "var(--color-cyan)",
+              fontFamily: "var(--font-game)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,245,255,0.22)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,245,255,0.12)"; }}
+          >
+            🎁 Test Gift
+          </button>
+
+          <button
+            id="btn-test-heal"
+            onClick={() => bossHealRef.current?.()}
+            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer transition-colors duration-200"
+            style={{
+              background: "rgba(74,222,128,0.12)",
+              border: "1px solid rgba(74,222,128,0.35)",
+              color: "#4ade80",
+              fontFamily: "var(--font-game)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(74,222,128,0.22)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(74,222,128,0.12)"; }}
+          >
+            💚 Test Heal
+          </button>
+
+          <button
+            id="btn-test-shield"
+            onClick={() => bossShieldRef.current?.()}
+            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer transition-colors duration-200"
+            style={{
+              background: "rgba(0,245,255,0.06)",
+              border: "1px solid rgba(0,245,255,0.5)",
+              color: "#00f5ff",
+              fontFamily: "var(--font-game)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,245,255,0.18)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,245,255,0.06)"; }}
+          >
+            🛡️ Test Shield
+          </button>
+        </div>
 
         {/* ── Win / Lose Screen ── */}
         {(gameStatus === "win" || gameStatus === "lose") && (

@@ -6,7 +6,7 @@ import {
   DAMAGE_OPTIONS,
 } from "../ui/styles";
 
-function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
+function GiftCheckboxList({ selected = [], activeGifts = [], onChange, accentColor = "#00f5ff" }) {
   if (activeGifts.length === 0) {
     return (
       <div className="text-xs text-[#B4C8FF4D] italic">
@@ -30,17 +30,18 @@ function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
         return (
           <label
             key={gift.giftId}
-            className={`flex items-center gap-2 cursor-pointer px-[6px] py-[4px] rounded-[6px] transition-all duration-150 ${
-              checked
-                ? "bg-[#00F5FF14] border border-[#00F5FF40]"
-                : "bg-[#FFFFFF05] border border-[#FFFFFF0F]"
-            }`}
+            className="flex items-center gap-2 cursor-pointer px-[6px] py-[4px] rounded-[6px] transition-all duration-150"
+            style={{
+              background: checked ? `${accentColor}14` : "rgba(255,255,255,0.02)",
+              border: `1px solid ${checked ? accentColor + "40" : "rgba(255,255,255,0.06)"}`,
+            }}
           >
             <input
               type="checkbox"
               checked={checked}
               onChange={() => toggle(gift.giftId)}
-              className="text-cyan-1 w-3.5 h-3.5 shrink-0"
+              className="w-3.5 h-3.5 shrink-0"
+              style={{ accentColor }}
             />
             {gift.image ? (
               <img
@@ -52,9 +53,8 @@ function GiftCheckboxList({ selected = [], activeGifts = [], onChange }) {
               <span className="text-base leading-0.5 shrink-0">🎁</span>
             )}
             <span
-              className={`text-[0.7rem] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${
-                checked ? "text-[#e0e8ff]" : "text-[#B4C8FF80]"
-              }`}
+              className="text-[0.7rem] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+              style={{ color: checked ? "#e0e8ff" : "rgba(180,200,255,0.5)" }}
             >
               {gift.giftName}
             </span>
@@ -197,6 +197,46 @@ export default function EditForm({ local, setLocal, onSave, isBoss = false }) {
             onChange={(next) => setLocal((p) => ({ ...p, gifts: next }))}
           />
         </div>
+      )}
+
+      {isBoss && (
+        <>
+          {/* Heal gifts */}
+          <div>
+            <label style={{ ...labelStyle, marginBottom: 6, color: "#4ade80" }}>
+              💚 Quà hồi máu boss
+              {local.healGifts?.length > 0 && (
+                <span style={{ marginLeft: 6, color: "#4ade80", opacity: 0.8 }}>
+                  ({local.healGifts.length} đã chọn)
+                </span>
+              )}
+            </label>
+            <GiftCheckboxList
+              selected={local.healGifts || []}
+              activeGifts={activeGifts}
+              onChange={(next) => setLocal((p) => ({ ...p, healGifts: next }))}
+              accentColor="#4ade80"
+            />
+          </div>
+
+          {/* Shield gifts */}
+          <div>
+            <label style={{ ...labelStyle, marginBottom: 6, color: "#00f5ff" }}>
+              🛡️ Quà tạo khiên boss
+              {local.shieldGifts?.length > 0 && (
+                <span style={{ marginLeft: 6, color: "#00f5ff", opacity: 0.8 }}>
+                  ({local.shieldGifts.length} đã chọn)
+                </span>
+              )}
+            </label>
+            <GiftCheckboxList
+              selected={local.shieldGifts || []}
+              activeGifts={activeGifts}
+              onChange={(next) => setLocal((p) => ({ ...p, shieldGifts: next }))}
+              accentColor="#00f5ff"
+            />
+          </div>
+        </>
       )}
 
       <button
