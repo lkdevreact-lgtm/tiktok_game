@@ -8,10 +8,10 @@ import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
 
-const MAX_SHIPS = 50;
+const MAX_SHIPS = 60;
 const BOSS_START_X = -11;
-const BOSS_END_X = 4.2;
-const BOSS_SPEED = 0.0004;
+const BOSS_END_X = 5.2;
+const BOSS_SPEED = 0.0005;
 const BULLET_SPEED = 0.07;
 
 // AudioPool: 8 instances → nhiều tàu bắn cùng lúc vẫn phát đủ số lần
@@ -69,8 +69,8 @@ export default function GameScene({ onGiftSpawn }) {
 
       const mesh = cloneShipMesh(type);
 
-      const y = (Math.random() - 0.5) * 3.5;
-      const z = (Math.random() - 0.5) * 1.5;
+      const y = (Math.random() - 0.5) * 6.4;   // ~±3.2, nằm trong frustum dọc
+      const z = (Math.random() - 0.5) * 3.6;   // ~±1.8, không bị cắt ở góc
       mesh.position.set(8.0, y, z);
 
       scene.add(mesh);
@@ -412,6 +412,7 @@ function ShipLabel({ mesh, aliveRef, nickname, avatarUrl }) {
         center
         distanceFactor={8}
         occlude={false}
+        zIndexRange={[10, 10]}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
         <div
@@ -479,6 +480,7 @@ function BossLabel({ bossRef }) {
         center
         distanceFactor={10}
         occlude={false}
+        zIndexRange={[10, 10]}
         style={{ pointerEvents: "none", userSelect: "none" }}
         className="relative"
       >

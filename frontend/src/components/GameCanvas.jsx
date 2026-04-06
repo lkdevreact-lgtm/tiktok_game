@@ -170,7 +170,7 @@ export default function GameCanvas() {
         <button
           id="btn-simulate-gift"
           onClick={handleSimulate}
-          className="absolute bottom-5 right-[316px] rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer z-[15] transition-colors duration-200"
+          className="absolute bottom-5 right-[316px] uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer z-[15] transition-colors duration-200"
           style={{
             background: "rgba(0,245,255,0.12)",
             border: "1px solid rgba(0,245,255,0.35)",
@@ -184,7 +184,7 @@ export default function GameCanvas() {
             e.currentTarget.style.background = "rgba(0,245,255,0.12)";
           }}
         >
-          🎁 SIMULATE GIFT
+          Test gift
         </button>
 
         {/* ── Win / Lose Screen ── */}
