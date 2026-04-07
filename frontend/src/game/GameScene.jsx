@@ -93,7 +93,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       const slotY = -Y_RANGE / 2 + (slotIdx + 0.5) * (Y_RANGE / NUM_Y_SLOTS);
       const y = slotY + (Math.random() - 0.5) * 0.3; // jitter nhỏ cho tự nhiên
       const z = (Math.random() - 0.5) * 2.0; // ~±1.0, tránh bị cắt ngang
-      mesh.position.set(7.0, y, z);
+      // Bắt đầu từ ngoài màn hình bên phải, sẽ bay vào qua animation
+      const FLY_IN_START_X = 16.0;
+      mesh.position.set(FLY_IN_START_X, y, z);
 
       // --- SMART AUTO-FLARE INJECTION (ROOT ATTACHMENT VERSION) ---
       // Gắn trực tiếp vào root mesh để duy trì Scale và hướng (+X) chuẩn xác
@@ -143,10 +145,10 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         baseX: 7.0,
         baseY: y,
         baseZ: z,
-        // Orbital movement — mỗi tàu có quỹ đạo riêng, phase/speed/radius ngẫu nhiên
-        orbitPhaseX: Math.random() * Math.PI * 2,
-        orbitPhaseY: Math.random() * Math.PI * 2,
-        orbitPhaseZ: Math.random() * Math.PI * 2,
+        // Orbital movement — phase bắt đầu = 0 để sin(0)=0, tránh giật khi fly-in xong
+        orbitPhaseX: 0,
+        orbitPhaseY: 0,
+        orbitPhaseZ: 0,
         orbitSpeedX: 0.25 + Math.random() * 0.35,
         orbitSpeedY: 0.40 + Math.random() * 0.80,
         orbitSpeedZ: 0.30 + Math.random() * 0.50,
@@ -157,6 +159,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         recoilTarget: 0, // Mục tiêu giật lùi (Phase 1)
         nickname,
         avatarUrl,
+        // Fly-in animation: tàu bay từ bên phải vào
+        flyInProgress: 0,    // 0 → 1 (chưa vào → đã vào)
+        flyInDuration: 1.2,  // giây để hoàn thành fly-in
       });
 
       setShipLabels((prev) => [
@@ -463,6 +468,21 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     boss.getWorldPosition(tmpBossPos.current);
 
     shipsRef.current.forEach((ship) => {
+      // 0. Fly-in animation: lerp từ ngoài màn hình vào vị trí
+      const isFlyingIn = ship.flyInProgress < 1;
+      if (isFlyingIn) {
+        ship.flyInProgress = Math.min(1, ship.flyInProgress + delta / ship.flyInDuration);
+        // Easing: ease-out cubic (1 - (1-t)^3)
+        const t = ship.flyInProgress;
+        const eased = 1 - Math.pow(1 - t, 3);
+        const startX = 16.0;
+        const currentX = startX + (ship.baseX - startX) * eased;
+        ship.mesh.position.set(currentX, ship.baseY, ship.baseZ);
+        // Trong khi fly-in, không bắn và không update orbital
+        ship.fireTimer = 0;
+        return;
+      }
+
       // 1. Cập nhật phase cho 3 trục độc lập
       ship.orbitPhaseX += delta * ship.orbitSpeedX;
       ship.orbitPhaseY += delta * ship.orbitSpeedY;
@@ -545,6 +565,41 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         playAttackSound();
       }
     });
+
+    // ── Ship-to-Ship Separation (chống hoà tan vào nhau) ─────────
+    // Không cần physics engine — dùng separation force thuần túy trên baseY/baseZ
+    const MIN_SHIP_DIST = 1.6; // khoảng cách tối thiểu giữa 2 tàu (world units)
+    const SEP_STRENGTH  = 2.5; // độ mạnh của lực đẩy
+    const Y_LIMIT = Y_RANGE / 2 - 0.2; // giới hạn biên trên/dưới
+    const Z_LIMIT = 1.8;
+
+    const activeShips = shipsRef.current.filter(s => s.flyInProgress >= 1);
+    for (let i = 0; i < activeShips.length; i++) {
+      for (let j = i + 1; j < activeShips.length; j++) {
+        const a = activeShips[i];
+        const b = activeShips[j];
+
+        const dx = a.mesh.position.x - b.mesh.position.x;
+        const dy = a.mesh.position.y - b.mesh.position.y;
+        const dz = a.mesh.position.z - b.mesh.position.z;
+        const distSq = dx * dx + dy * dy + dz * dz;
+
+        if (distSq < MIN_SHIP_DIST * MIN_SHIP_DIST && distSq > 0.0001) {
+          const dist = Math.sqrt(distSq);
+          // Lực đẩy: càng gần → càng mạnh, scale theo delta
+          const force = ((MIN_SHIP_DIST - dist) / MIN_SHIP_DIST) * SEP_STRENGTH * delta;
+          const ny = dy / dist;
+          const nz = dz / dist;
+
+          // Đẩy baseY/baseZ — không đụng baseX (hướng bay)
+          a.baseY = Math.max(-Y_LIMIT, Math.min(Y_LIMIT, a.baseY + ny * force));
+          b.baseY = Math.max(-Y_LIMIT, Math.min(Y_LIMIT, b.baseY - ny * force));
+          a.baseZ = Math.max(-Z_LIMIT, Math.min(Z_LIMIT, a.baseZ + nz * force));
+          b.baseZ = Math.max(-Z_LIMIT, Math.min(Z_LIMIT, b.baseZ - nz * force));
+        }
+      }
+    }
+    // ─────────────────────────────────────────────────────────────
 
     // Collision detection
     const bossBox = new THREE.Box3().setFromObject(boss);

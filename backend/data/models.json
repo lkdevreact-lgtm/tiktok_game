@@ -85,7 +85,36 @@
     "shieldGifts": [
       5827
     ],
+    "weapons": {
+      "laser": { "gifts": [], "damagePercent": 3 },
+      "missile": { "gifts": [], "damagePercent": 6 },
+      "nuclear": { "gifts": [], "damagePercent": 10 }
+    },
     "updatedAt": "2026-04-07T03:45:34.774Z"
+  },
+  {
+    "id": "space_ship_big",
+    "label": "Mother Ship",
+    "emoji": "🛸",
+    "role": "space_ship_big",
+    "path": "/models/space_ship_big.glb",
+    "scale": 1.5,
+    "gunTipOffset": 0,
+    "rotationY": 90,
+    "bulletColor": "#00f5ff",
+    "builtIn": true,
+    "active": true,
+    "damage": 1,
+    "fireRate": 1,
+    "gifts": [],
+    "healGifts": [],
+    "shieldGifts": [],
+    "weapons": {
+      "laser": { "gifts": [], "damagePercent": 3 },
+      "missile": { "gifts": [], "damagePercent": 6 },
+      "nuclear": { "gifts": [], "damagePercent": 10 }
+    },
+    "updatedAt": "2026-04-07T08:55:00.000Z"
   },
   {
     "id": "custom_1775465375358_space_ship_5",
