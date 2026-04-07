@@ -91,6 +91,7 @@ export default function GameCanvas() {
             type: model.id,
             damage: model.damage ?? 1,
             fireRate: model.fireRate ?? 1.0,
+            maxShots: model.maxShots ?? 20,
             nickname: nickname || uniqueId || "Viewer",
             avatarUrl: shipAvatar,
           });
@@ -111,6 +112,7 @@ export default function GameCanvas() {
           type: model.id,
           damage: model.damage ?? 1,
           fireRate: model.fireRate ?? 1.0,
+          maxShots: model.maxShots ?? 20,
           nickname: "Test User",
           avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=test",
         });
@@ -138,6 +140,7 @@ export default function GameCanvas() {
         type: model.id,
         damage: model.damage ?? 1,
         fireRate: model.fireRate ?? 1.0,
+        maxShots: model.maxShots ?? 20,
         nickname: "Test User",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=simulate",
       });
@@ -146,6 +149,7 @@ export default function GameCanvas() {
         type: "spaceship_1",
         damage: 1,
         fireRate: 1.0,
+        maxShots: 20,
         nickname: "Test User",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=simulate",
       });

@@ -16,10 +16,11 @@
     "gifts": [
       5655
     ],
-    "updatedAt": "2026-04-07T10:06:16.980Z",
+    "updatedAt": "2026-04-07T10:28:58.687Z",
     "iconUrl": "/images/icons/icon_1775532263967_avatar.jpg",
     "healGifts": [],
-    "shieldGifts": []
+    "shieldGifts": [],
+    "maxShots": 10
   },
   {
     "id": "spaceship_2",
@@ -38,10 +39,11 @@
     "gifts": [
       7934
     ],
-    "updatedAt": "2026-04-07T10:12:31.332Z",
+    "updatedAt": "2026-04-07T10:24:51.157Z",
     "iconUrl": "/images/icons/icon_1775532290904_avatar.jpg",
     "healGifts": [],
-    "shieldGifts": []
+    "shieldGifts": [],
+    "maxShots": 5
   },
   {
     "id": "spaceship_3",
@@ -60,9 +62,10 @@
     "gifts": [
       13651
     ],
-    "updatedAt": "2026-04-07T07:17:48.481Z",
+    "updatedAt": "2026-04-07T10:25:39.798Z",
     "healGifts": [],
-    "shieldGifts": []
+    "shieldGifts": [],
+    "maxShots": 5
   },
   {
     "id": "spaceship_boss",
@@ -151,8 +154,9 @@
     "builtIn": false,
     "active": true,
     "uploadedAt": "2026-04-06T08:49:35.366Z",
-    "updatedAt": "2026-04-07T06:40:27.830Z",
+    "updatedAt": "2026-04-07T10:25:35.022Z",
     "healGifts": [],
-    "shieldGifts": []
+    "shieldGifts": [],
+    "maxShots": 5
   }
 ]

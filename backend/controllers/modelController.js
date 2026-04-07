@@ -144,6 +144,7 @@ export function uploadModel(req, res) {
     bulletColor:  req.body.bulletColor  || "#00f5ff",
     damage:       parseInt(req.body.damage)         || 1,
     fireRate:     parseFloat(req.body.fireRate)     || 1.0,
+    maxShots:     parseInt(req.body.maxShots)       || 20,
     gifts,
     builtIn:      false,
     active:       true,
@@ -194,7 +195,7 @@ export function updateModel(req, res) {
 
   const allowed = [
     "label", "emoji", "iconUrl", "role", "scale", "gunTipOffset",
-    "rotationY", "bulletColor", "damage", "fireRate", "gifts", "active",
+    "rotationY", "bulletColor", "damage", "fireRate", "maxShots", "gifts", "active",
     "healGifts", "shieldGifts",
   ];
   allowed.forEach((key) => {
