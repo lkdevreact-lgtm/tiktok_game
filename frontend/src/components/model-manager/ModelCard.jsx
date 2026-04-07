@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import RoleBadge from "../ui/RoleBadge";
 import ToggleSwitch from "../ui/ToggleSwitch";
 import EditForm from "./EditForm";
@@ -6,6 +6,7 @@ import { FaEdit, FaCamera, FaCube } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { API_URL, IMAGES } from "../../utils/constant";
 import { FIRE_RATE_OPTIONS } from "../ui/styles";
+import { useGifts } from "../../hooks/useGifts";
 
 const actionBtn =
   "w-7 h-7 flex items-center justify-center rounded-md border cursor-pointer transition-all duration-150 text-[0]";
@@ -165,6 +166,18 @@ export default function ModelCard({
   const isActive = isBoss ? isActiveBoss : model.active;
   const color = model.bulletColor || "#00f5ff";
 
+  // ── Gift lookup ─────────────────────────────────────────────
+  const { gifts: allGifts } = useGifts();
+  const giftMap = useMemo(() => {
+    const map = {};
+    (allGifts || []).forEach((g) => { map[String(g.giftId)] = g; });
+    return map;
+  }, [allGifts]);
+
+  // Resolve gift ids → gift objects
+  const resolveGifts = (ids = []) =>
+    ids.map((id) => giftMap[String(id)]).filter(Boolean);
+
   const handleSave = () => {
     onUpdate?.(model.id, {
       label: local.label,
@@ -269,15 +282,70 @@ export default function ModelCard({
               </div>
             </div>
 
-            {!isBoss && (
-              <div
-                className={`mt-2 text-sm ${model.gifts?.length ? "text-gold" : "text-white/20"}`}
-              >
-                {model.gifts?.length
-                  ? `${model.gifts.length} quà gắn`
-                  : "Chưa gắn quà"}
-              </div>
-            )}
+            {/* Ship: danh sách tên quà kích hoạt */}
+            {!isBoss && (() => {
+              const gifts = resolveGifts(model.gifts);
+              return gifts.length ? (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {gifts.map((g) => (
+                    <span
+                      key={g.giftId}
+                      className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-[var(--color-gold)]/10 border border-[var(--color-gold)]/30 text-[var(--color-gold)]"
+                    >
+                      {g.image && (
+                        <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
+                      )}
+                      {g.giftName}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-2 text-[0.6rem] text-white/20">Chưa gắn quà</div>
+              );
+            })()}
+
+            {/* Boss: healGifts + shieldGifts */}
+            {isBoss && (() => {
+              const healList   = resolveGifts(model.healGifts);
+              const shieldList = resolveGifts(model.shieldGifts);
+              if (!healList.length && !shieldList.length) return null;
+              return (
+                <div className="mt-2 flex flex-col gap-1">
+                  {healList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-green-400/60 w-full">💚 Hồi máu</span>
+                      {healList.map((g) => (
+                        <span
+                          key={g.giftId}
+                          className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-green-400/10 border border-green-400/30 text-green-300"
+                        >
+                          {g.image && (
+                            <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
+                          )}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {shieldList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-cyan-400/60 w-full">🛡️ Khiên</span>
+                      {shieldList.map((g) => (
+                        <span
+                          key={g.giftId}
+                          className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 text-cyan-300"
+                        >
+                          {g.image && (
+                            <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
+                          )}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
         <div className="flex items-end justify-end">

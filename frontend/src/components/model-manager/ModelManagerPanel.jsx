@@ -6,7 +6,7 @@ import { useModels } from "../../hooks/useModels";
 import { useGifts } from "../../hooks/useGifts";
 
 const TABS = [
-  { id: "ships", label: "Ships User", color: "#00f5ff" },
+  { id: "ships", label: "Ship user", color: "#00f5ff" },
   { id: "boss", label: "Boss", color: "#ff4466" },
   { id: "add", label: "Upload Model", color: "#a78bfa" },
 ];
@@ -87,7 +87,7 @@ function ModalContent({
               {t.label}
               {count != null && (
                 <span
-                  className={`text-[0.6rem] px-[7px] py-px rounded-full font-bold
+                  className={` w-4 h-4 text-xs flex items-center justify-center rounded-full font-bold
                   ${active ? "bg-white/20 text-white" : "bg-white/10 text-white/40"}`}
                 >
                   {count}
