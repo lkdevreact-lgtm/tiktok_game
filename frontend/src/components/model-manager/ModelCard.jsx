@@ -14,7 +14,7 @@ const actionBtn = "w-7 h-7 flex items-center justify-center rounded-md border cu
 function ModelAvatar({ iconUrl, isBoss, modelId, onIconUploaded, active }) {
   const inputRef = useRef();
   const [uploading, setUploading] = useState(false);
-  const [hovered,   setHovered]   = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   const src = iconUrl || (isBoss ? IMAGES.SHIP_BOSS : IMAGES.SHIP_USER);
 
@@ -25,7 +25,7 @@ function ModelAvatar({ iconUrl, isBoss, modelId, onIconUploaded, active }) {
     try {
       const fd = new FormData();
       fd.append("iconImage", f);
-      const res  = await fetch(`${API_URL}/api/models/${modelId}/icon`, { method: "POST", body: fd });
+      const res = await fetch(`${API_URL}/api/models/${modelId}/icon`, { method: "POST", body: fd });
       const data = await res.json();
       if (res.ok && data.iconUrl) onIconUploaded?.(data.iconUrl);
     } catch { /* ignore */ }
@@ -73,7 +73,7 @@ function ReplaceGLBButton({ modelId, onReplaced }) {
     try {
       const fd = new FormData();
       fd.append("file", f);
-      const res  = await fetch(`${API_URL}/api/models/${modelId}/glb`, { method: "POST", body: fd });
+      const res = await fetch(`${API_URL}/api/models/${modelId}/glb`, { method: "POST", body: fd });
       const data = await res.json();
       if (res.ok && data.model) onReplaced?.(data.model);
     } catch { /* ignore */ }
@@ -106,36 +106,36 @@ function fireRateLabel(v) {
 
 export default function ModelCard({ model, isActiveBoss = false, onUpdate, onDelete, onToggleShip, onSetActiveBoss }) {
   const [expanded, setExpanded] = useState(false);
-  const [local,    setLocal]    = useState({
-    label:       model.label,
-    scale:       model.scale,
+  const [local, setLocal] = useState({
+    label: model.label,
+    scale: model.scale,
     gunTipOffset: model.gunTipOffset,
-    rotationY:   model.rotationY,
+    rotationY: model.rotationY,
     bulletColor: model.bulletColor || "#00f5ff",
-    damage:      model.damage ?? 1,
-    fireRate:    model.fireRate ?? 1.0,
-    gifts:       model.gifts || [],
-    healGifts:   model.healGifts || [],
+    damage: model.damage ?? 1,
+    fireRate: model.fireRate ?? 1.0,
+    gifts: model.gifts || [],
+    healGifts: model.healGifts || [],
     shieldGifts: model.shieldGifts || [],
-    iconUrl:     model.iconUrl || null,
+    iconUrl: model.iconUrl || null,
   });
 
-  const isBoss   = model.role === "boss";
+  const isBoss = model.role === "boss";
   const isActive = isBoss ? isActiveBoss : model.active;
-  const color    = model.bulletColor || "#00f5ff";
+  const color = model.bulletColor || "#00f5ff";
 
   const handleSave = () => {
     onUpdate?.(model.id, {
-      label:        local.label,
-      scale:        parseFloat(local.scale),
+      label: local.label,
+      scale: parseFloat(local.scale),
       gunTipOffset: parseFloat(local.gunTipOffset),
-      rotationY:    parseFloat(local.rotationY),
-      bulletColor:  local.bulletColor,
-      damage:       Number(local.damage),
-      fireRate:     Number(local.fireRate),
-      gifts:        local.gifts,
-      healGifts:    local.healGifts,
-      shieldGifts:  local.shieldGifts,
+      rotationY: parseFloat(local.rotationY),
+      bulletColor: local.bulletColor,
+      damage: Number(local.damage),
+      fireRate: Number(local.fireRate),
+      gifts: local.gifts,
+      healGifts: local.healGifts,
+      shieldGifts: local.shieldGifts,
     });
     setExpanded(false);
   };

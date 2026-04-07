@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Stars, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useGame } from "../hooks/useGame";
-import { createBullet, createExplosion } from "./models";
+import { createBullet, createExplosion, createShockwave, createExhaustFlare } from "./models";
 import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
@@ -42,6 +42,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   const shipsRef = useRef([]);
   const bulletsRef = useRef([]);
   const explosionsRef = useRef([]);
+  const shockwavesRef = useRef([]);
   const gameActiveRef = useRef(false);
   const statusRef = useRef("idle");
   const prevGameStatus = useRef("idle");
@@ -66,6 +67,11 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   const Y_RANGE = 8; // tổng chiều cao an toàn (~±2.2)
   const spawnSlotRef = useRef(0);
 
+  // === Pre-allocated vectors for performance (avoid GC) ===
+  const tmpVec1 = useRef(new THREE.Vector3());
+  const tmpVec2 = useRef(new THREE.Vector3());
+  const tmpBossPos = useRef(new THREE.Vector3());
+
   const [shipLabels, setShipLabels] = useState([]);
 
   // ── Spawn Ship ───────────────────────────────────────────────
@@ -89,6 +95,39 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       const z = (Math.random() - 0.5) * 2.0; // ~±1.0, tránh bị cắt ngang
       mesh.position.set(7.0, y, z);
 
+      // --- SMART AUTO-FLARE INJECTION (ROOT ATTACHMENT VERSION) ---
+      // Gắn trực tiếp vào root mesh để duy trì Scale và hướng (+X) chuẩn xác
+      const enginePositions = [];
+      mesh.updateWorldMatrix(true, true); // Cập nhật matrix để lấy world position chính xác
+
+      mesh.traverse((child) => {
+        if (child.isMesh) {
+          const name = child.name.toLowerCase();
+          const isEngine = name.includes("engine") || name.includes("glow") ||
+            name.includes("thruster") || name.includes("fire") ||
+            name.includes("nozzle");
+
+          if (isEngine || (child.material && child.material.emissive &&
+            (child.material.emissive.r > 0 || child.material.emissive.g > 0 || child.material.emissive.b > 0))) {
+
+            // Lấy vị trí engine trong world space rồi chuyển về local space của ship-root
+            const worldPos = new THREE.Vector3();
+            child.getWorldPosition(worldPos);
+            const localPos = mesh.worldToLocal(worldPos);
+            enginePositions.push(localPos.clone());
+          }
+        }
+      });
+
+      // Gắn flare vào root mesh
+      enginePositions.forEach(pos => {
+        const bulletColor = getBulletColor(type);
+        const flare = createExhaustFlare(bulletColor);
+        flare.position.copy(pos); // Đặt đúng chỗ động cơ
+        // Flare KHÔNG cần bù trừ scale vì nó đã thuộc root mesh (scale ~1.0)
+        mesh.add(flare);
+      });
+
       scene.add(mesh);
 
       const id = `ship-${Date.now()}-${Math.random()}`;
@@ -101,8 +140,21 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         damage,
         fireRate,
         fireTimer: Math.random(),
+        baseX: 7.0,
         baseY: y,
-        hoverPhase: Math.random() * Math.PI * 2,
+        baseZ: z,
+        // Orbital movement — mỗi tàu có quỹ đạo riêng, phase/speed/radius ngẫu nhiên
+        orbitPhaseX: Math.random() * Math.PI * 2,
+        orbitPhaseY: Math.random() * Math.PI * 2,
+        orbitPhaseZ: Math.random() * Math.PI * 2,
+        orbitSpeedX: 0.25 + Math.random() * 0.35,
+        orbitSpeedY: 0.40 + Math.random() * 0.80,
+        orbitSpeedZ: 0.30 + Math.random() * 0.50,
+        orbitRadiusX: 0.15 + Math.random() * 0.25,
+        orbitRadiusY: 0.20 + Math.random() * 0.35,
+        orbitRadiusZ: 0.10 + Math.random() * 0.20,
+        recoil: 0, // Vị trí giật lùi (0 -> recoilTarget)
+        recoilTarget: 0, // Mục tiêu giật lùi (Phase 1)
         nickname,
         avatarUrl,
       });
@@ -254,9 +306,11 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       shipsRef.current.forEach((s) => scene.remove(s.mesh));
       bulletsRef.current.forEach((b) => scene.remove(b.mesh));
       explosionsRef.current.forEach((p) => scene.remove(p.mesh));
+      shockwavesRef.current.forEach((sw) => scene.remove(sw.mesh));
       shipsRef.current = [];
       bulletsRef.current = [];
       explosionsRef.current = [];
+      shockwavesRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
@@ -302,6 +356,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       bulletMesh.position.copy(startPos);
       bulletMesh.lookAt(bossPos);
 
+      // Kích hoạt độ giật: trượt lùi từ từ theo Phase 1
+      ship.recoilTarget = 0.15;
+
       scene.add(bulletMesh);
       bulletsRef.current.push({
         mesh: bulletMesh,
@@ -325,6 +382,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     bulletsRef.current = [];
     explosionsRef.current.forEach((p) => scene.remove(p.mesh));
     explosionsRef.current = [];
+    shockwavesRef.current.forEach((sw) => scene.remove(sw.mesh));
+    shockwavesRef.current = [];
 
     // Clear ship labels (avatar + tên người donate cũ)
     setShipLabels([]);
@@ -396,10 +455,88 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       return;
     }
 
-    // Tàu: hover + bắn
+    // Tàu: orbital flight + bắn + recoil + engine pulse
+    const elapsedTime = _.clock.elapsedTime;
+    const pulseIntensity = 2.0 + Math.sin(elapsedTime * 12) * 1.5;
+
+    // Lấy vị trí Boss 1 lần duy nhất trong frame này
+    boss.getWorldPosition(tmpBossPos.current);
+
     shipsRef.current.forEach((ship) => {
-      ship.hoverPhase += delta * 1.5;
-      ship.mesh.position.y = ship.baseY + Math.sin(ship.hoverPhase) * 0.07;
+      // 1. Cập nhật phase cho 3 trục độc lập
+      ship.orbitPhaseX += delta * ship.orbitSpeedX;
+      ship.orbitPhaseY += delta * ship.orbitSpeedY;
+      ship.orbitPhaseZ += delta * ship.orbitSpeedZ;
+
+      // 2. Chuyển động Orbital cơ sở
+      const orbitalX = ship.baseX + Math.sin(ship.orbitPhaseX) * ship.orbitRadiusX;
+      const orbitalY = ship.baseY + Math.sin(ship.orbitPhaseY) * ship.orbitRadiusY;
+      const orbitalZ = ship.baseZ + Math.sin(ship.orbitPhaseZ) * ship.orbitRadiusZ;
+
+      // 3. Deluxe Slide Recoil (Phase 1: Slide Back, Phase 2: Slide Forward)
+      if (ship.recoilTarget > 0) {
+        // Phase 1: Lùi lại với tốc độ trung bình (0.8 đơn vị/giây)
+        ship.recoil += 0.8 * delta;
+        if (ship.recoil >= ship.recoilTarget) {
+          ship.recoil = ship.recoilTarget;
+          ship.recoilTarget = 0; // Chuyển sang Phase 2 (Trôi về)
+        }
+      } else if (ship.recoil > 0) {
+        // Phase 2: Trôi về từ từ (0.3 đơn vị/giây)
+        ship.recoil -= 0.3 * delta;
+        if (ship.recoil < 0) ship.recoil = 0;
+      }
+
+      // 4. Hướng giật lùi (Boss -> Ship)
+      tmpVec1.current.set(orbitalX, orbitalY, orbitalZ);
+      tmpVec2.current.subVectors(tmpVec1.current, tmpBossPos.current).normalize();
+
+      // Vị trí cuối = Orbital + Recoil offset
+      ship.mesh.position.copy(tmpVec1.current).addScaledVector(tmpVec2.current, ship.recoil);
+
+      // 5. Banking effect
+      ship.mesh.rotation.z = Math.sin(ship.orbitPhaseX) * 0.18;
+
+      // 6. Smart Engine Pulse & Emissive Fix + Exhaust Flares Animation
+      if (ship.mesh) {
+        ship.mesh.traverse((child) => {
+          if (child.isMesh) {
+            const mat = child.material;
+            if (mat && mat.emissive) {
+              const name = child.name.toLowerCase();
+              const isEngine = name.includes("engine") || name.includes("glow") || name.includes("thruster");
+
+              if (isEngine && mat.emissive.r === 0 && mat.emissive.g === 0 && mat.emissive.b === 0) {
+                if (mat.color) mat.emissive.copy(mat.color);
+                else mat.emissive.setHex(0x00f5ff);
+                mat.emissiveIntensity = 2.0;
+              }
+
+              if (mat.emissive.r > 0 || mat.emissive.g > 0 || mat.emissive.b > 0) {
+                mat.emissiveIntensity = pulseIntensity;
+              }
+            }
+          }
+
+          // 7. Hoạt ảnh Flickering cho vệt lửa Mega (2 lớp)
+          if (child.name === "engine_flare") {
+            const seed = ship.baseY * 1000;
+            // Biên độ flicker cực mạnh (0.8 -> 1.4)
+            const flicker = 1.0 + Math.sin(elapsedTime * 35 + seed) * 0.3;
+            child.scale.x = flicker;
+            child.scale.y = 1.0 + Math.sin(elapsedTime * 40 + seed) * 0.12;
+
+            const outer = child.getObjectByName("flare_outer");
+            const inner = child.getObjectByName("flare_inner");
+            if (outer && outer.material) {
+              outer.material.opacity = 0.3 + Math.sin(elapsedTime * 30 + seed) * 0.2;
+            }
+            if (inner && inner.material) {
+              inner.material.opacity = 0.7 + Math.sin(elapsedTime * 45 + seed) * 0.25;
+            }
+          }
+        });
+      }
 
       ship.fireTimer += delta;
       if (ship.fireTimer >= 1 / ship.fireRate) {
@@ -437,6 +574,14 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         );
         exps.forEach(({ mesh }) => scene.add(mesh));
         explosionsRef.current.push(...exps);
+
+        // Shockwave ring tại điểm trúng đạn
+        const swColor = bossShieldActiveRef.current
+          ? 0x00f5ff
+          : getBulletColor(bullet.ownerType);
+        const sw = createShockwave(bullet.mesh.position.clone(), swColor);
+        scene.add(sw.mesh);
+        shockwavesRef.current.push(sw);
 
         deadBullets.add(idx);
 
@@ -513,6 +658,20 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     deadParticles.reverse().forEach((idx) => {
       scene.remove(explosionsRef.current[idx].mesh);
       explosionsRef.current.splice(idx, 1);
+    });
+
+    // Shockwave rings — expand & fade out
+    const deadSW = [];
+    shockwavesRef.current.forEach((sw, idx) => {
+      sw.life -= delta * 4.0;
+      const t = 1 - sw.life;
+      sw.mesh.scale.setScalar(0.4 + t * 3.5);
+      if (sw.mesh.material) sw.mesh.material.opacity = Math.max(0, sw.life * 0.85);
+      if (sw.life <= 0) deadSW.push(idx);
+    });
+    deadSW.reverse().forEach((idx) => {
+      scene.remove(shockwavesRef.current[idx].mesh);
+      shockwavesRef.current.splice(idx, 1);
     });
   });
 
