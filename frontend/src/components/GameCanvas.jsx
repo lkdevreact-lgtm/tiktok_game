@@ -6,6 +6,8 @@ import Navbar from "./Navbar";
 import socket from "../socket/socketClient";
 import { useModels } from "../hooks/useModels";
 import { IMAGES } from "../utils/constant";
+import BossGiftPanel from "./BossGiftPanel";
+import ShipGiftPanel from "./ShipGiftPanel";
 
 export default function GameCanvas() {
   const { gameStatus, setBossHp, notifications, addNotification, resetGame } =
@@ -169,6 +171,10 @@ export default function GameCanvas() {
             onBossShield={handleBossShield}
           />
         </Canvas>
+
+        {/* Gift info panels */}
+        <BossGiftPanel />
+        <ShipGiftPanel />
 
         <div className="absolute bottom-5 left-5 flex flex-col-reverse gap-2 pointer-events-none z-[15] max-h-60 overflow-hidden">
           {notifications.map((n) => (

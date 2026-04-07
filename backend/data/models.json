@@ -8,13 +8,18 @@
     "scale": 0.25,
     "gunTipOffset": 0.1,
     "rotationY": 45,
-    "bulletColor": "#00f5ff",
+    "bulletColor": "#f00f0f",
     "builtIn": true,
-    "active": true,
+    "active": false,
     "damage": 1,
     "fireRate": 1,
-    "gifts": [],
-    "updatedAt": "2026-04-06T10:24:53.111Z"
+    "gifts": [
+      5655
+    ],
+    "updatedAt": "2026-04-07T04:49:22.998Z",
+    "iconUrl": "/images/icons/icon_1775532263967_avatar.jpg",
+    "healGifts": [],
+    "shieldGifts": []
   },
   {
     "id": "spaceship_2",
@@ -25,13 +30,18 @@
     "scale": 0.35,
     "gunTipOffset": 0.1,
     "rotationY": -100,
-    "bulletColor": "#bf00ff",
+    "bulletColor": "#0011ff",
     "builtIn": true,
     "active": true,
     "damage": 3,
     "fireRate": 0.5,
-    "gifts": [],
-    "updatedAt": "2026-04-06T09:58:36.393Z"
+    "gifts": [
+      7934
+    ],
+    "updatedAt": "2026-04-07T04:21:02.970Z",
+    "iconUrl": "/images/icons/icon_1775532290904_avatar.jpg",
+    "healGifts": [],
+    "shieldGifts": []
   },
   {
     "id": "spaceship_3",
@@ -42,19 +52,22 @@
     "scale": 0.04,
     "gunTipOffset": 0.5,
     "rotationY": 150,
-    "bulletColor": "#ffaa00",
+    "bulletColor": "#ff0000",
     "builtIn": true,
     "active": true,
     "damage": 5,
     "fireRate": 0.3,
     "gifts": [
+      13651,
       5655
     ],
-    "updatedAt": "2026-04-06T11:55:11.986Z"
+    "updatedAt": "2026-04-07T04:20:49.448Z",
+    "healGifts": [],
+    "shieldGifts": []
   },
   {
     "id": "spaceship_boss",
-    "label": "Boss (Default)",
+    "label": "Boss",
     "emoji": "💀",
     "role": "boss",
     "path": "/models/spaceship_boss.glb",
@@ -67,9 +80,13 @@
     "damage": 1,
     "fireRate": 1,
     "gifts": [],
-    "healGifts": [],
-    "shieldGifts": [],
-    "updatedAt": "2026-04-06T10:14:09.063Z"
+    "healGifts": [
+      10961
+    ],
+    "shieldGifts": [
+      5827
+    ],
+    "updatedAt": "2026-04-07T03:45:34.774Z"
   },
   {
     "id": "custom_1775465375358_space_ship_5",
@@ -84,10 +101,14 @@
     "bulletColor": "#f31212",
     "damage": 1,
     "fireRate": 1,
-    "gifts": [],
+    "gifts": [
+      6592
+    ],
     "builtIn": false,
     "active": true,
     "uploadedAt": "2026-04-06T08:49:35.366Z",
-    "updatedAt": "2026-04-06T11:56:05.607Z"
+    "updatedAt": "2026-04-07T03:43:41.049Z",
+    "healGifts": [],
+    "shieldGifts": []
   }
 ]

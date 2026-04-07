@@ -32,15 +32,33 @@ function ModalContent({
       className="
         flex flex-col
         w-[min(860px,100%)] h-[calc(100vh-40px)] max-h-[820px]
-        bg-[#6b5ddc] rounded-3xl overflow-hidden
-        shadow-[0_32px_80px_rgba(0,0,0,0.7)]
+        bg-[radial-gradient(circle_at_20%_20%,#1e1b4b,#020617)] to-[#1e1b4b] rounded-3xl overflow-hidden
+        shadow-[0_32px_80px_rgba(0,0,0,0.7)] border border-white/60
       "
     >
-      <div className="shrink-0 text-center px-6 pt-6 pb-0">
-        <h3 className="text-[2rem] font-bold text-white m-0">Model Manager</h3>
-        <p className="text-[0.82rem] text-white/50 mt-1.5">
-          Chỉnh sửa và thêm vào model yêu thích của bạn
-        </p>
+      <div className="flex flex-col gap-3 py-2 p-3">
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            title="Đóng (Esc)"
+            className="
+            w-8 h-8 flex items-center justify-center rounded-lg border-0
+            bg-white/10 text-white/60 cursor-pointer
+            transition-all duration-150
+            hover:bg-[rgba(255,51,102,0.4)] hover:text-white
+          "
+          >
+            <IoClose size={18} />
+          </button>
+        </div>
+        <div className="shrink-0 text-center ">
+          <h3 className="text-[2rem] font-bold text-white m-0">
+            Model Manager
+          </h3>
+          <p className="text-[0.82rem] text-white/50 mt-1.5">
+            Chỉnh sửa và thêm vào model yêu thích của bạn
+          </p>
+        </div>
       </div>
 
       <div className="shrink-0 flex items-center gap-1.5 px-5 pt-4">
@@ -80,18 +98,6 @@ function ModalContent({
         })}
 
         <div className="flex-1" />
-        <button
-          onClick={onClose}
-          title="Đóng (Esc)"
-          className="
-            w-8 h-8 flex items-center justify-center rounded-lg border-0
-            bg-white/10 text-white/60 cursor-pointer
-            transition-all duration-150
-            hover:bg-[rgba(255,51,102,0.4)] hover:text-white
-          "
-        >
-          <IoClose size={18} />
-        </button>
       </div>
 
       <div className="shrink-0 h-px bg-white/10 mx-5 mt-3" />
@@ -185,7 +191,7 @@ export default function ModelManagerPanel({ isOpen, onClose }) {
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-[rgba(2,6,20,0.82)] backdrop-blur-md"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-5 backdrop-blur-md"
     >
       <ModalContent
         key={String(isOpen)}
