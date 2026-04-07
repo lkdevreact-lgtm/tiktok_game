@@ -16,7 +16,7 @@
     "gifts": [
       5655
     ],
-    "updatedAt": "2026-04-07T06:49:56.384Z",
+    "updatedAt": "2026-04-07T10:06:16.980Z",
     "iconUrl": "/images/icons/icon_1775532263967_avatar.jpg",
     "healGifts": [],
     "shieldGifts": []
@@ -38,7 +38,7 @@
     "gifts": [
       7934
     ],
-    "updatedAt": "2026-04-07T04:21:02.970Z",
+    "updatedAt": "2026-04-07T10:12:31.332Z",
     "iconUrl": "/images/icons/icon_1775532290904_avatar.jpg",
     "healGifts": [],
     "shieldGifts": []
@@ -86,9 +86,18 @@
       5827
     ],
     "weapons": {
-      "laser": { "gifts": [], "damagePercent": 3 },
-      "missile": { "gifts": [], "damagePercent": 6 },
-      "nuclear": { "gifts": [], "damagePercent": 10 }
+      "laser": {
+        "gifts": [],
+        "damagePercent": 3
+      },
+      "missile": {
+        "gifts": [],
+        "damagePercent": 6
+      },
+      "nuclear": {
+        "gifts": [],
+        "damagePercent": 10
+      }
     },
     "updatedAt": "2026-04-07T03:45:34.774Z"
   },
@@ -110,9 +119,18 @@
     "healGifts": [],
     "shieldGifts": [],
     "weapons": {
-      "laser": { "gifts": [], "damagePercent": 3 },
-      "missile": { "gifts": [], "damagePercent": 6 },
-      "nuclear": { "gifts": [], "damagePercent": 10 }
+      "laser": {
+        "gifts": [],
+        "damagePercent": 3
+      },
+      "missile": {
+        "gifts": [],
+        "damagePercent": 6
+      },
+      "nuclear": {
+        "gifts": [],
+        "damagePercent": 10
+      }
     },
     "updatedAt": "2026-04-07T08:55:00.000Z"
   },

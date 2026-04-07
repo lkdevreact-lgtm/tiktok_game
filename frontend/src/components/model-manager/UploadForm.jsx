@@ -23,6 +23,7 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
     bulletColor: "#00f5ff",
     damage: 1,
     fireRate: 1.0,
+    maxShots: 20,
     gifts: [],
   });
   const fileRef = useRef();
@@ -86,6 +87,7 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
       fd.append("bulletColor", params.bulletColor);
       fd.append("damage", params.damage);
       fd.append("fireRate", params.fireRate);
+      fd.append("maxShots", params.maxShots);
       fd.append("gifts", JSON.stringify(params.gifts));
 
       const res = await fetch(`${API_URL}/api/models/upload`, {
@@ -116,6 +118,7 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
         bulletColor: "#00f5ff",
         damage: 1,
         fireRate: 1.0,
+        maxShots: 20,
         gifts: [],
       });
       if (fileRef.current) fileRef.current.value = "";
@@ -339,6 +342,24 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
                 ))}
               </select>
             </div>
+
+            {params.role === "ship" && (
+              <div>
+                <label className={labelCls}>Max Shots 🔫</label>
+                <input
+                  type="number"
+                  step="1"
+                  min="1"
+                  max="999"
+                  className={inputCls}
+                  value={params.maxShots}
+                  onChange={(e) =>
+                    setParams((p) => ({ ...p, maxShots: Number(e.target.value) }))
+                  }
+                />
+                <div className="text-[0.58rem] text-white/30 mt-0.5">Số lần bắn trước khi tàu tan biến</div>
+              </div>
+            )}
 
             <div className="col-span-2">
               <label className={labelCls}>Bullet Color</label>

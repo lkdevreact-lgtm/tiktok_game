@@ -125,9 +125,20 @@ export default function EditForm({ local, setLocal, onSave, isBoss = false }) {
             {FIRE_RATE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
+
+        {!isBoss && (
+          <div>
+            <label className={labelCls}>Max Shots 🔫</label>
+            <input type="number" step="1" min="1" max="999"
+              className={inputCls} value={local.maxShots ?? 20}
+              onChange={(e) => setLocal((p) => ({ ...p, maxShots: Number(e.target.value) }))} />
+            <div className="text-[0.58rem] text-white/30 mt-0.5">Số lần bắn trước khi tàu tan biến</div>
+          </div>
+        )}
       </div>
 
       {/* Ship gifts */}
+
       {!isBoss && (
         <div>
           <label className={`${labelCls} mb-1.5`}>

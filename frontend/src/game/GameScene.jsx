@@ -76,7 +76,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
 
   // ── Spawn Ship ───────────────────────────────────────────────
   const spawnShip = useCallback(
-    ({ type, damage, fireRate, nickname = "", avatarUrl = "" }) => {
+    ({ type, damage, fireRate, nickname = "", avatarUrl = "", maxShots = 20 }) => {
       if (shipsRef.current.length >= SETTINGS_GAME.MAX_SHIPS) {
         const oldest = shipsRef.current.shift();
         // Đánh dấu ship cũ là dead trước khi remove khỏi scene
@@ -155,22 +155,29 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         orbitRadiusX: 0.15 + Math.random() * 0.25,
         orbitRadiusY: 0.20 + Math.random() * 0.35,
         orbitRadiusZ: 0.10 + Math.random() * 0.20,
-        recoil: 0, // Vị trí giật lùi (0 -> recoilTarget)
-        recoilTarget: 0, // Mục tiêu giật lùi (Phase 1)
+        recoil: 0,
+        recoilTarget: 0,
         nickname,
         avatarUrl,
-        // Fly-in animation: tàu bay từ bên phải vào
-        flyInProgress: 0,    // 0 → 1 (chưa vào → đã vào)
-        flyInDuration: 1.2,  // giây để hoàn thành fly-in
+        // Fly-in animation
+        flyInProgress: 0,
+        flyInDuration: 1.2,
+        // Shots / HP system
+        maxShots,
+        shotsLeft: maxShots,
+        shotsRef: { current: maxShots }, // shared ref cho label đọc
+        // Dissolve animation
+        dissolving: false,
+        dissolveProgress: 0,
       });
 
       setShipLabels((prev) => [
         ...prev,
-        { id, mesh, aliveRef, nickname, avatarUrl },
+        { id, mesh, aliveRef, nickname, avatarUrl, shotsRef: shipsRef.current[shipsRef.current.length - 1].shotsRef, maxShots },
       ]);
       setShipCount(shipsRef.current.length);
     },
-    [scene, setShipCount, cloneShipMesh],
+    [scene, setShipCount, cloneShipMesh, getBulletColor],
   );
 
   useEffect(() => {
@@ -298,6 +305,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         type: m.id,
         damage: m.damage ?? 1,
         fireRate: m.fireRate ?? 1.0,
+        maxShots: m.maxShots ?? 20,
       });
     });
 
@@ -361,8 +369,19 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       bulletMesh.position.copy(startPos);
       bulletMesh.lookAt(bossPos);
 
-      // Kích hoạt độ giật: trượt lùi từ từ theo Phase 1
+      // Kích hoạt độ giật
       ship.recoilTarget = 0.15;
+
+      // Trừ số đạn còn lại
+      if (ship.shotsLeft > 0) {
+        ship.shotsLeft--;
+        ship.shotsRef.current = ship.shotsLeft;
+        // Khi hết đạn → bắt đầu hiệu ứng tan biến
+        if (ship.shotsLeft <= 0 && !ship.dissolving) {
+          ship.dissolving = true;
+          ship.aliveRef.current = false; // ẩn label ngay
+        }
+      }
 
       scene.add(bulletMesh);
       bulletsRef.current.push({
@@ -425,6 +444,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         type: m.id,
         damage: m.damage ?? 1,
         fireRate: m.fireRate ?? 1.0,
+        maxShots: m.maxShots ?? 20,
       });
     });
 
@@ -468,20 +488,51 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     boss.getWorldPosition(tmpBossPos.current);
 
     shipsRef.current.forEach((ship) => {
-      // 0. Fly-in animation: lerp từ ngoài màn hình vào vị trí
+      // 0. Fly-in animation
       const isFlyingIn = ship.flyInProgress < 1;
       if (isFlyingIn) {
         ship.flyInProgress = Math.min(1, ship.flyInProgress + delta / ship.flyInDuration);
-        // Easing: ease-out cubic (1 - (1-t)^3)
         const t = ship.flyInProgress;
         const eased = 1 - Math.pow(1 - t, 3);
         const startX = 16.0;
         const currentX = startX + (ship.baseX - startX) * eased;
         ship.mesh.position.set(currentX, ship.baseY, ship.baseZ);
-        // Trong khi fly-in, không bắn và không update orbital
         ship.fireTimer = 0;
         return;
       }
+
+      // 0b. Dissolve (tan biến)
+      if (ship.dissolving) {
+        // Frame đầu tiên: clone tất cả materials để tránh ô nhiễm shared materials
+        // (THREE.js clone() không deep-clone materials → ship mới sẽ dùng lại và bị opacity=0)
+        if (!ship._dissolveMatCloned) {
+          ship.mesh.traverse((child) => {
+            if (child.isMesh) {
+              child.material = Array.isArray(child.material)
+                ? child.material.map((m) => m.clone())
+                : child.material.clone();
+            }
+          });
+          ship._dissolveMatCloned = true;
+        }
+
+        ship.dissolveProgress = Math.min(1, ship.dissolveProgress + delta / 1.4);
+        const t = ship.dissolveProgress;
+        const s = Math.max(0, 1 - Math.pow(t, 2.5));
+        ship.mesh.scale.setScalar(s);
+
+        ship.mesh.traverse((child) => {
+          if (child.isMesh) {
+            const mats = Array.isArray(child.material) ? child.material : [child.material];
+            mats.forEach((m) => {
+              if (!m.transparent) { m.transparent = true; m.needsUpdate = true; }
+              m.opacity = Math.max(0, 1 - t * 1.6);
+            });
+          }
+        });
+        return;
+      }
+
 
       // 1. Cập nhật phase cho 3 trục độc lập
       ship.orbitPhaseX += delta * ship.orbitSpeedX;
@@ -566,7 +617,21 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       }
     });
 
-    // ── Ship-to-Ship Separation (chống hoà tan vào nhau) ─────────
+    // ── Dọn tàu đã tan biến xong ─────────────────────────────────
+    const dissolvedIds = new Set();
+    shipsRef.current.forEach((s) => {
+      if (s.dissolving && s.dissolveProgress >= 1) {
+        scene.remove(s.mesh);
+        dissolvedIds.add(s.id);
+      }
+    });
+    if (dissolvedIds.size > 0) {
+      shipsRef.current = shipsRef.current.filter((s) => !dissolvedIds.has(s.id));
+      setShipLabels((prev) => prev.filter((l) => !dissolvedIds.has(l.id)));
+      setShipCount(shipsRef.current.length);
+    }
+
+    // ── Ship-to-Ship Separation ───────────────────────────────────────
     // Không cần physics engine — dùng separation force thuần túy trên baseY/baseZ
     const MIN_SHIP_DIST = 1.6; // khoảng cách tối thiểu giữa 2 tàu (world units)
     const SEP_STRENGTH  = 2.5; // độ mạnh của lực đẩy
@@ -751,36 +816,45 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
 
       {/* Render labels bằng Html đính vào scene position của từng tàu */}
       {shipLabels
-        .filter((l) => l.nickname || l.avatarUrl)
-        .map(({ id, mesh, aliveRef, nickname, avatarUrl }) => (
+        .map(({ id, mesh, aliveRef, nickname, avatarUrl, shotsRef, maxShots }) => (
           <ShipLabel
             key={id}
             mesh={mesh}
             aliveRef={aliveRef}
             nickname={nickname}
             avatarUrl={avatarUrl}
+            shotsRef={shotsRef}
+            maxShots={maxShots}
           />
         ))}
     </>
   );
 }
 
-function ShipLabel({ mesh, aliveRef, nickname, avatarUrl }) {
+function ShipLabel({ mesh, aliveRef, nickname, avatarUrl, shotsRef, maxShots }) {
   const groupRef = useRef();
   const [visible, setVisible] = useState(true);
+  const [shotsDisplay, setShotsDisplay] = useState(maxShots ?? 20);
 
-  // Theo dõi vị trí mesh trong game loop
   useFrame(() => {
     if (!groupRef.current || !mesh) return;
-    // Ẩn label ngay khi ship bị đánh dấu dead
     if (aliveRef && !aliveRef.current) {
       if (visible) setVisible(false);
       return;
     }
     groupRef.current.position.copy(mesh.position);
+    // Cập nhật số đạn hiển thị khi thay đổi
+    if (shotsRef && shotsRef.current !== shotsDisplay) {
+      setShotsDisplay(shotsRef.current);
+    }
   });
 
   if (!visible) return null;
+
+  const pct = maxShots ? Math.max(0, shotsDisplay / maxShots) : 1;
+  const hpColor = pct > 0.5 ? "#00f5ff" : pct > 0.25 ? "#ffaa00" : "#ff4466";
+
+  const hasInfo = nickname || avatarUrl;
 
   return (
     <group ref={groupRef}>
@@ -806,12 +880,48 @@ function ShipLabel({ mesh, aliveRef, nickname, avatarUrl }) {
           {nickname && (
             <span
               className="text-[10px] font-bold text-white whitespace-nowrap tracking-[0.02em]"
-              style={{
-                textShadow:
-                  "0 0 6px rgba(0,245,255,0.9), 0 1px 2px rgba(0,0,0,0.8)",
-              }}
+              style={{ textShadow: "0 0 6px rgba(0,245,255,0.9), 0 1px 2px rgba(0,0,0,0.8)" }}
             >
               {nickname.length > 12 ? nickname.slice(0, 12) + "…" : nickname}
+            </span>
+          )}
+          {/* HP / Shots bar */}
+          {maxShots && (
+            <div
+              style={{
+                width: hasInfo ? 60 : 40,
+                height: 4,
+                borderRadius: 3,
+                background: "rgba(255,255,255,0.12)",
+                overflow: "hidden",
+                marginTop: hasInfo ? 1 : 0,
+              }}
+            >
+              <div
+                style={{
+                  width: `${pct * 100}%`,
+                  height: "100%",
+                  borderRadius: 3,
+                  background: hpColor,
+                  boxShadow: `0 0 4px ${hpColor}`,
+                  transition: "width 0.15s ease-out, background 0.3s",
+                }}
+              />
+            </div>
+          )}
+          {/* Số phát còn lại */}
+          {maxShots && (
+            <span
+              style={{
+                fontSize: 8,
+                color: hpColor,
+                textShadow: `0 0 4px ${hpColor}`,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                lineHeight: 1,
+              }}
+            >
+              {shotsDisplay}/{maxShots}
             </span>
           )}
         </div>
