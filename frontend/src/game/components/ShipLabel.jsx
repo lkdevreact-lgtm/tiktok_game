@@ -2,14 +2,20 @@ import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 
-/**
- * ShipLabel — hiển thị avatar, nickname và HP bar (shots) cho mỗi tàu con.
- * Theo dõi vị trí mesh trong game loop để label luôn đúng vị trí.
- */
-export default function ShipLabel({ mesh, aliveRef, nickname, avatarUrl, shotsRef, maxShots }) {
+export default function ShipLabel({
+  mesh,
+  aliveRef,
+  nickname,
+  avatarUrl,
+  shotsRef,
+  maxShots,
+}) {
   const groupRef = useRef();
   const [visible, setVisible] = useState(true);
   const [shotsDisplay, setShotsDisplay] = useState(maxShots ?? 20);
+  // Prevent flash-at-origin: only show after the first position sync
+  const positionSynced = useRef(false);
+  const [ready, setReady] = useState(false);
 
   useFrame(() => {
     if (!groupRef.current || !mesh) return;
@@ -18,13 +24,17 @@ export default function ShipLabel({ mesh, aliveRef, nickname, avatarUrl, shotsRe
       return;
     }
     groupRef.current.position.copy(mesh.position);
-    // Cập nhật số đạn hiển thị khi thay đổi
+    if (!positionSynced.current) {
+      positionSynced.current = true;
+      setReady(true);
+    }
     if (shotsRef && shotsRef.current !== shotsDisplay) {
       setShotsDisplay(shotsRef.current);
     }
   });
 
   if (!visible) return null;
+  if (!ready) return <group ref={groupRef} />;
 
   const pct = maxShots ? Math.max(0, shotsDisplay / maxShots) : 1;
   const hpColor = pct > 0.5 ? "#00f5ff" : pct > 0.25 ? "#ffaa00" : "#ff4466";
@@ -54,13 +64,15 @@ export default function ShipLabel({ mesh, aliveRef, nickname, avatarUrl, shotsRe
           {nickname && (
             <span
               className="text-[10px] font-bold text-white whitespace-nowrap tracking-[0.02em]"
-              style={{ textShadow: "0 0 6px rgba(0,245,255,0.9), 0 1px 2px rgba(0,0,0,0.8)" }}
+              style={{
+                textShadow:
+                  "0 0 6px rgba(0,245,255,0.9), 0 1px 2px rgba(0,0,0,0.8)",
+              }}
             >
               {nickname.length > 12 ? nickname.slice(0, 12) + "…" : nickname}
             </span>
           )}
 
-          {/* HP / Shots bar */}
           {maxShots && (
             <div
               style={{

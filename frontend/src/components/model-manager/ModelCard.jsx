@@ -198,7 +198,7 @@ export default function ModelCard({
 
   return (
     <div
-      className={`rounded-sm border border-pink-500 bg-pink-500/20 px-3 py-2.5 flex flex-col gap-2 transition-all duration-200 ${isActive ? "opacity-100" : "opacity-60"}`}
+      className={`rounded-xl border border-white  px-3 py-2.5 flex flex-col gap-2 transition-all duration-200 ${isActive ? "opacity-100" : "opacity-60"}`}
     >
       {/* Top row */}
       <div className="flex flex-col gap-3">
@@ -261,7 +261,7 @@ export default function ModelCard({
                 </div>
               )}
             </div>
-            <div className="flex items-center text-sm gap-3 mt-3">
+            <div className="flex items-center text-xs gap-3 mt-3">
               <div className="flex items-center gap-1 bg-amber-500/30 p-1 rounded-md border border-amber-500">
                 <p>Scale:</p>
                 <span>{model.scale}</span>
@@ -292,7 +292,7 @@ export default function ModelCard({
                   {gifts.map((g) => (
                     <span
                       key={g.giftId}
-                      className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-[var(--color-gold)]/10 border border-[var(--color-gold)]/30 text-[var(--color-gold)]"
+                      className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-gold/10 border border-gold/30 text-gold"
                     >
                       {g.image && (
                         <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
@@ -356,12 +356,12 @@ export default function ModelCard({
             <button
               onClick={() => setExpanded((v) => !v)}
               title="Sửa thông số"
-              className={`${actionBtn} border-[rgba(0,245,255,0.3)] text-[var(--color-cyan)] ${expanded ? "bg-[rgba(0,245,255,0.18)]" : "bg-[rgba(0,245,255,0.08)] hover:bg-[rgba(0,245,255,0.18)]"}`}
+              className={`${actionBtn} border-[rgba(0,245,255,0.3)] text-cyan-1 ${expanded ? "bg-[rgba(0,245,255,0.18)]" : "bg-[rgba(0,245,255,0.08)] hover:bg-[rgba(0,245,255,0.18)]"}`}
             >
               {expanded ? (
-                <IoClose size={17} color="var(--color-cyan)" />
+                <IoClose size={17} className="text-cyan-1" />
               ) : (
-                <FaEdit size={13} color="var(--color-cyan)" />
+                <FaEdit size={13} className="text-cyan-1" />
               )}
             </button>
 

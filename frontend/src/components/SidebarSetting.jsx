@@ -19,8 +19,8 @@ export default function SidebarSetting({ isOpen, onClose }) {
       <div
         onClick={onClose}
         className={`
-          fixed inset-0 z-[90] bg-black/55 backdrop-blur-[4px]
-          transition-opacity duration-[250ms] ease-in-out
+          fixed inset-0 z-[90] bg-black/55 backdrop-blur-xs
+          transition-opacity duration-300 ease-in-out
           ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
         `}
       />
@@ -31,7 +31,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
         className={`
           fixed top-0 right-0 bottom-0 w-[300px] z-[100]
           flex flex-col
-          bg-[rgba(4,10,28,0.97)] border-l border-[rgba(0,245,255,0.18)] backdrop-blur-[24px]
+          bg-[rgba(4,10,28,0.97)] border-l border-[rgba(0,245,255,0.18)] backdrop-blur-xl
           transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
           ${isOpen
             ? "translate-x-0 shadow-[-8px_0_40px_rgba(0,0,0,0.6)]"
@@ -40,10 +40,10 @@ export default function SidebarSetting({ isOpen, onClose }) {
         `}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-[18px] py-4 border-b border-[rgba(0,245,255,0.15)] font-[var(--font-game)]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,245,255,0.15)]">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[var(--color-success)] shadow-[0_0_8px_var(--color-success)] shrink-0 inline-block" />
-            <span className="text-[0.7rem] uppercase tracking-[0.15em] text-[var(--color-cyan)]">
+            <span className="text-[0.7rem] uppercase tracking-[0.15em] text-cyan-1">
               Gift Config
             </span>
           </div>
@@ -61,7 +61,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
         </div>
 
         {/* Subtitle */}
-        <div className="px-[18px] pt-2 pb-1 text-[0.6rem] text-white/35 font-[var(--font-game)] tracking-[0.05em]">
+        <div className="px-[18px] pt-2 pb-1 text-[0.6rem] text-white/35 tracking-[0.05em]">
           Bật/tắt quà để hiển thị trong danh sách chọn của Model Manager
         </div>
 
@@ -108,7 +108,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
                 <div className={`text-[0.78rem] font-semibold overflow-hidden text-ellipsis whitespace-nowrap ${gift.active ? "text-[#e0e8ff]" : "text-white/45"}`}>
                   {gift.giftName}
                 </div>
-                <div className="text-[0.65rem] text-[var(--color-gold)] mt-px">
+                <div className="text-[0.65rem] text-gold mt-px">
                   💎 {gift.diamonds}
                 </div>
               </div>

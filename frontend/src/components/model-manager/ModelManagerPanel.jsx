@@ -109,7 +109,7 @@ function ModalContent({
         )}
 
         {tab === "ships" && !loading && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-6">
             {ships.length === 0 && (
               <div className="text-center text-white/30 text-[0.75rem] py-10">
                 Chưa có ship nào. Upload model mới ở tab Upload Model.

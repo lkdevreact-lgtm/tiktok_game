@@ -187,7 +187,7 @@ export default function GameCanvas() {
               className="
                 flex items-center gap-2 px-[14px] py-2 rounded-[30px] text-[0.8rem]
                 animate-slide-in animate-fade-out
-                bg-[rgba(5,15,30,0.88)] border border-[var(--color-border)] backdrop-blur-[8px]
+                bg-[rgba(5,15,30,0.88)] border border-[var(--color-border)] backdrop-blur-sm
               "
             >
               {n.imgUrl ? (
@@ -199,11 +199,11 @@ export default function GameCanvas() {
               ) : (
                 <span>🎁</span>
               )}
-              <span className="font-semibold text-[var(--color-cyan)]">
+              <span className="font-semibold text-cyan-1">
                 {n.user}
               </span>
               <span className="text-white/60">sent</span>
-              <span className="text-[var(--color-gold)]">{n.giftName}</span>
+              <span className="text-gold">{n.giftName}</span>
             </div>
           ))}
         </div>
@@ -214,9 +214,8 @@ export default function GameCanvas() {
             id="btn-simulate-gift"
             onClick={handleSimulate}
             className="
-              uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer
-              font-[var(--font-game)] transition-colors duration-200
-              bg-[rgba(0,245,255,0.12)] border border-[rgba(0,245,255,0.35)] text-[var(--color-cyan)]
+              uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer transition-colors duration-200
+              bg-[rgba(0,245,255,0.12)] border border-[rgba(0,245,255,0.35)] text-cyan-1
               hover:bg-[rgba(0,245,255,0.22)]
             "
           >
@@ -227,8 +226,7 @@ export default function GameCanvas() {
             id="btn-test-heal"
             onClick={() => bossHealRef.current?.()}
             className="
-              uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer
-              font-[var(--font-game)] transition-colors duration-200
+              uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer transition-colors duration-200
               bg-[rgba(74,222,128,0.12)] border border-[rgba(74,222,128,0.35)] text-green-400
               hover:bg-[rgba(74,222,128,0.22)]
             "
@@ -240,8 +238,7 @@ export default function GameCanvas() {
             id="btn-test-shield"
             onClick={() => bossShieldRef.current?.()}
             className="
-              uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer
-              font-[var(--font-game)] transition-colors duration-200
+              uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer transition-colors duration-200
               bg-[rgba(0,245,255,0.06)] border border-[rgba(0,245,255,0.5)] text-cyan-400
               hover:bg-[rgba(0,245,255,0.18)]
             "
@@ -252,9 +249,9 @@ export default function GameCanvas() {
 
         {/* Win / Lose overlay */}
         {isOver && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 z-20 animate-fade-in bg-black/70 backdrop-blur-[8px]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 z-20 animate-fade-in bg-black/70 backdrop-blur-sm">
             <div
-              className={`text-5xl font-black animate-pulse-scale font-[var(--font-game)] ${isWin ? "neon-success" : "neon-danger"}`}
+              className={`text-5xl font-black animate-pulse-scale ${isWin ? "neon-success" : "neon-danger"}`}
               style={{
                 color: isWin ? "var(--color-success)" : "var(--color-danger)",
                 textShadow: isWin

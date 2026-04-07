@@ -433,7 +433,7 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
                         >
                           {gift.giftName}
                         </span>
-                        <span className="text-[0.6rem] text-[var(--color-gold)] shrink-0">
+                        <span className="text-[0.6rem] text-gold shrink-0">
                           💎{gift.diamonds}
                         </span>
                       </label>
@@ -458,8 +458,7 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
         onClick={handleUpload}
         disabled={!file || uploading}
         className={`
-          w-full py-2.5 rounded-lg border-0 font-bold text-[0.76rem] tracking-[0.05em]
-          font-[var(--font-game)] transition-all duration-150
+          w-full py-2.5 rounded-lg border-0 font-bold text-[0.76rem] tracking-[0.05em] transition-all duration-150
           ${
             file
               ? "bg-gradient-to-r from-cyan-400 to-[#0088aa] text-black cursor-pointer hover:brightness-110"

@@ -51,7 +51,7 @@ function GiftCheckboxList({ selected = [], activeGifts = [], onChange, accentCol
             <span className={`text-[0.7rem] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${checked ? "text-[#e0e8ff]" : "text-white/50"}`}>
               {gift.giftName}
             </span>
-            <span className="text-[0.6rem] text-[var(--color-gold)] shrink-0">
+            <span className="text-[0.6rem] text-gold shrink-0">
               💎{gift.diamonds}
             </span>
           </label>
@@ -198,7 +198,7 @@ export default function EditForm({ local, setLocal, onSave, isBoss = false }) {
 
       <button
         onClick={onSave}
-        className="w-full py-2 rounded-lg border-0 bg-gradient-to-r from-[var(--color-cyan)] to-[#0088aa] text-black font-bold text-[0.74rem] cursor-pointer hover:brightness-110 transition-all"
+        className="w-full py-2 rounded-lg border-0 bg-gradient-to-r from-cyan-1 to-[#0088aa] text-black font-bold text-[0.74rem] cursor-pointer hover:brightness-110 transition-all"
       >
         Save Changes
       </button>
