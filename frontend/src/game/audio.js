@@ -15,7 +15,7 @@ export function playAttackSound() {
 }
 
 // ── Ship Spawn Sound Pool ─────────────────────────────────────────
-const SPAWN_POOL_SIZE = 5;
+const SPAWN_POOL_SIZE = 10;
 const spawnPool = Array.from({ length: SPAWN_POOL_SIZE }, () => {
   const a = new Audio("/sound/start_sound.mp3");
   a.volume = 0.6;
@@ -31,7 +31,7 @@ export function playSpawnSound() {
 }
 
 // ── Ship Hidden (Dissolve) Sound Pool ────────────────────────────
-const HIDDEN_POOL_SIZE = 5;
+const HIDDEN_POOL_SIZE = 10;
 const hiddenPool = Array.from({ length: HIDDEN_POOL_SIZE }, () => {
   const a = new Audio("/sound/sound_hidden.mp3");
   a.volume = 0.6;
