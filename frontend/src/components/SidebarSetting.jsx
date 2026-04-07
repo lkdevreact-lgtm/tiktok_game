@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import ToggleSwitch from "./ui/ToggleSwitch";
 import { useGifts } from "../hooks/useGifts";
+import { IMAGES } from "../utils/constant";
 
 export default function SidebarSetting({ isOpen, onClose }) {
   const { gifts, toggleGiftActive } = useGifts();
@@ -67,7 +68,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
 
         {/* Active count */}
         <div className="px-[18px] pb-2 text-[0.63rem] text-[rgba(0,245,255,0.6)]">
-          ✅ {gifts.filter((g) => g.active).length}/{gifts.length} quà đang active
+          {gifts.filter((g) => g.active).length}/{gifts.length} quà đang active
         </div>
 
         {/* Scroll area */}
@@ -108,8 +109,9 @@ export default function SidebarSetting({ isOpen, onClose }) {
                 <div className={`text-[0.78rem] font-semibold overflow-hidden text-ellipsis whitespace-nowrap ${gift.active ? "text-[#e0e8ff]" : "text-white/45"}`}>
                   {gift.giftName}
                 </div>
-                <div className="text-[0.65rem] text-gold mt-px">
-                  💎 {gift.diamonds}
+                <div className="text-xs text-gold mt-px flex items-center gap-1">
+                  <p>{gift.diamonds}</p>
+                  <img src={IMAGES.COIN} alt="Coin" className="w-3 h-3 object-contain"/>
                 </div>
               </div>
 

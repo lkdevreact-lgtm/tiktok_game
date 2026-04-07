@@ -3,10 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { useGame } from "../../hooks/useGame";
 
-/**
- * BossShieldRing — vòng khiên quay quanh boss với countdown SVG arc.
- * Hiện khi boss có khiên, ẩn khi hết thời gian.
- */
+
 export default function BossShieldRing({ bossRef, shieldEndTime }) {
   const { bossShield } = useGame();
   const groupRef = useRef();

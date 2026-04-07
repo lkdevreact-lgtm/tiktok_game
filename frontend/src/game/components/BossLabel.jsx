@@ -3,9 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { useGame } from "../../hooks/useGame";
 
-/**
- * BossLabel — thanh máu boss hiển thị phía trước boss, theo vị trí boss trong game loop.
- */
+
 export default function BossLabel({ bossRef }) {
   const { bossHp } = useGame();
   const groupRef = useRef();
