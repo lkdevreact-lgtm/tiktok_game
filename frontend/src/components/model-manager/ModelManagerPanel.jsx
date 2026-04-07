@@ -77,10 +77,9 @@ function ModalContent({
               className={`
                 flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.78rem] font-medium
                 transition-all duration-150 cursor-pointer border-0
-                ${
-                  active
-                    ? "bg-white/15 text-white font-bold"
-                    : "bg-transparent text-white/45 hover:text-white/70"
+                ${active
+                  ? "bg-white/15 text-white font-bold"
+                  : "bg-transparent text-white/45 hover:text-white/70"
                 }
               `}
             >

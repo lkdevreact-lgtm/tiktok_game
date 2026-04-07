@@ -1,5 +1,47 @@
 import * as THREE from "three";
 
+// --- Hỗ trợ Visual Flare ---
+export function createExhaustFlare(color) {
+  const group = new THREE.Group();
+  group.name = "engine_flare";
+
+  // --- LỚP NGOÀI (OUTER CONE) ---
+  const outerGeo = new THREE.ConeGeometry(0.12, 2.2, 12);
+  outerGeo.rotateZ(-Math.PI / 2); // đỉnh tại tâm, đáy phụt về phía sau (+X)
+  outerGeo.translate(1.1, 0, 0); // Đẩy toàn bộ hình nón ra sau
+
+  const outerMat = new THREE.MeshBasicMaterial({
+    color: color || 0x00f5ff,
+    transparent: true,
+    opacity: 0.4,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const outerMesh = new THREE.Mesh(outerGeo, outerMat);
+  outerMesh.name = "flare_outer";
+  group.add(outerMesh);
+
+  // --- LỚP LÕI (INNER CORE) ---
+  const innerGeo = new THREE.ConeGeometry(0.06, 1.8, 12);
+  innerGeo.rotateZ(-Math.PI / 2);
+  innerGeo.translate(0.9, 0, 0);
+
+  const innerMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff, // Màu trắng tinh khôi ở tâm
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+  innerMesh.name = "flare_inner";
+  group.add(innerMesh);
+
+  return group;
+}
+
 // ── Spaceship 1: Fighter (Cyan, sleek delta wing) ──
 export function createSpaceship1() {
   const group = new THREE.Group();
@@ -31,8 +73,14 @@ export function createSpaceship1() {
   const engineGeo = new THREE.SphereGeometry(0.04, 8, 8);
   const engineMat = new THREE.MeshStandardMaterial({ color: 0x00f5ff, emissive: 0x00f5ff, emissiveIntensity: 2, transparent: true, opacity: 0.9 });
   const engine = new THREE.Mesh(engineGeo, engineMat);
+  engine.name = "engine_glow";
   engine.position.set(-0.28, 0, 0);
   group.add(engine);
+
+  // Thêm vệt lửa
+  const flare = createExhaustFlare(0x00f5ff);
+  flare.position.set(-0.28, 0, 0);
+  group.add(flare);
 
   // Gun tip marker (invisible, used for bullet spawn)
   const gunTip = new THREE.Object3D();
@@ -71,8 +119,14 @@ export function createSpaceship2() {
   const engMat = new THREE.MeshStandardMaterial({ color: 0xcc00ff, emissive: 0xcc00ff, emissiveIntensity: 2.5 });
   [-0.09, 0.09].forEach((z) => {
     const eng = new THREE.Mesh(engGeo, engMat);
+    eng.name = "engine_glow";
     eng.position.set(-0.26, 0, z);
     group.add(eng);
+
+    // Thêm vệt lửa
+    const flare = createExhaustFlare(0xcc00ff);
+    flare.position.set(-0.26, 0, z);
+    group.add(flare);
   });
 
   const gunTip = new THREE.Object3D();
@@ -122,8 +176,14 @@ export function createSpaceship3() {
   const engMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0xffaa00, emissiveIntensity: 3 });
   [[-0.3, -0.08], [-0.3, 0.08], [-0.24, -0.12], [-0.24, 0.12]].forEach(([x, z]) => {
     const eng = new THREE.Mesh(engGeo, engMat);
+    eng.name = "engine_glow";
     eng.position.set(x, 0, z);
     group.add(eng);
+
+    // Thêm vệt lửa
+    const flare = createExhaustFlare(0xffaa00);
+    flare.position.set(x, 0, z);
+    group.add(flare);
   });
 
   const gunTip = new THREE.Object3D();
@@ -156,10 +216,10 @@ export function createBoss() {
   const spikeGeo = new THREE.ConeGeometry(0.07, 0.45, 6);
   const spikeMat = new THREE.MeshStandardMaterial({ color: 0xff0033, emissive: 0xff0033, emissiveIntensity: 0.8 });
   const spikeConfigs = [
-    { pos: [0, 0.3, 0],  rot: [0, 0, 0] },
+    { pos: [0, 0.3, 0], rot: [0, 0, 0] },
     { pos: [0, -0.3, 0], rot: [Math.PI, 0, 0] },
-    { pos: [0.4, 0, 0],  rot: [0, 0, -Math.PI/2] },
-    { pos: [-0.4, 0, 0], rot: [0, 0, Math.PI/2] },
+    { pos: [0.4, 0, 0], rot: [0, 0, -Math.PI / 2] },
+    { pos: [-0.4, 0, 0], rot: [0, 0, Math.PI / 2] },
   ];
   spikeConfigs.forEach(({ pos, rot }) => {
     const spike = new THREE.Mesh(spikeGeo, spikeMat);
@@ -237,4 +297,20 @@ export function createExplosion(position, color = 0xff6600) {
   }
 
   return particles;
+}
+
+// ── Shockwave Ring ──
+export function createShockwave(position, color = 0xff3366) {
+  const geo = new THREE.TorusGeometry(0.12, 0.018, 4, 32);
+  const mat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.9,
+    side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(position);
+  // Ring nằm ngang (XZ plane) — nhìn từ camera sẽ thấy hình ellipse/vòng
+  mesh.rotation.x = Math.PI / 2;
+  return { mesh, life: 1.0 };
 }
