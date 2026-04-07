@@ -8,7 +8,7 @@ import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
 import { SETTINGS_GAME } from "../utils/constant";
-import { playAttackSound } from "./audio";
+import { playAttackSound, playSpawnSound, playHiddenSound } from "./audio";
 import ShipLabel from "./components/ShipLabel";
 import BossLabel from "./components/BossLabel";
 import BossShieldRing from "./components/BossShieldRing";
@@ -36,27 +36,20 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   const statusRef = useRef("idle");
   const prevGameStatus = useRef("idle");
   const spawnShipFn = useRef(null);
-  // === Material flash system ===
-  // Lưu materials GỐC 1 lần duy nhất (không bị ghi đè bởi flash)
   const bossOrigMatsRef = useRef(null); // { mesh, mat }[] - chỉ lưu 1 lần khi boss mount
-  // Trạng thái flash hiện tại: "none" | "red" | "green"
   const bossFlashStateRef = useRef("none");
   const bossFlashTimeoutRef = useRef(null);
   const bossGreenFlashRef = useRef(null);
-  // Shield state
   const bossShieldActiveRef = useRef(false);
   const bossShieldTimerRef = useRef(null);
   const bossShieldEndRef = useRef(0); // timestamp kết thúc shield (ms)
   const healCooldownRef = useRef(false); // chống spam heal
-  // Heal sound
   const healAudio = useRef(new Audio("/sound/heal_sound.mp3"));
   healAudio.current.volume = 0.5;
-  // Slot-based spawn: chia màn hình thành NUM_Y_SLOTS rãnh, tàu mới vào rãnh tiếp theo
   const NUM_Y_SLOTS = 10;
   const Y_RANGE = 8; // tổng chiều cao an toàn (~±2.2)
   const spawnSlotRef = useRef(0);
 
-  // === Pre-allocated vectors for performance (avoid GC) ===
   const tmpVec1 = useRef(new THREE.Vector3());
   const tmpVec2 = useRef(new THREE.Vector3());
   const tmpBossPos = useRef(new THREE.Vector3());
@@ -120,6 +113,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       });
 
       scene.add(mesh);
+      playSpawnSound();
 
       const id = `ship-${Date.now()}-${Math.random()}`;
       const aliveRef = { current: true };
@@ -368,7 +362,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         // Khi hết đạn → bắt đầu hiệu ứng tan biến
         if (ship.shotsLeft <= 0 && !ship.dissolving) {
           ship.dissolving = true;
-          ship.aliveRef.current = false; // ẩn label ngay
+          ship.aliveRef.current = false;
+          playHiddenSound();
         }
       }
 
