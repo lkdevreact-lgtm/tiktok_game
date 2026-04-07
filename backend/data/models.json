@@ -58,10 +58,9 @@
     "damage": 5,
     "fireRate": 0.3,
     "gifts": [
-      13651,
-      5655
+      13651
     ],
-    "updatedAt": "2026-04-07T04:20:49.448Z",
+    "updatedAt": "2026-04-07T07:17:48.481Z",
     "healGifts": [],
     "shieldGifts": []
   },
