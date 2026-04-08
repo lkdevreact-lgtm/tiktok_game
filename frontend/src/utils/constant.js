@@ -17,5 +17,5 @@ export const SETTINGS_GAME = {
   BOSS_START_X: -11,
   BOSS_END_X: 5.2,
   BOSS_SPEED: 0.0005,
-  BULLET_SPEED: 0.07,
+  BULLET_SPEED: 0.2,
 };

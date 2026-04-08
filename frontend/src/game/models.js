@@ -255,14 +255,14 @@ export function createBullet(color = 0x00f5ff) {
   const group = new THREE.Group();
 
   // Core laser (dài và mỏng)
-  const geo = new THREE.CylinderGeometry(0.015, 0.015, 0.65, 6);
+  const geo = new THREE.CylinderGeometry(0.015, 0.015, 0.85, 6);
   geo.rotateX(Math.PI / 2); // Nằm dọc theo trục Z để hàm lookAt() chĩa thẳng mũi nhọn vào Boss
   const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 4, transparent: true, opacity: 1.0 });
   const mesh = new THREE.Mesh(geo, mat);
   group.add(mesh);
 
   // Outer glow
-  const glowGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.7, 6);
+  const glowGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.9, 6);
   glowGeo.rotateX(Math.PI / 2);
   const glowMat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending });
   const glow = new THREE.Mesh(glowGeo, glowMat);
@@ -407,33 +407,77 @@ export function createPortal(position, color = 0x6600ff) {
 }
 export function createHealParticles(position, color = 0x00ff66) {
   const particles = [];
-  const count = 15;
 
+  // 1. Heal Pulse (Nhỏ lại cho vừa vặn)
+  const ringGeo = new THREE.TorusGeometry(0.8, 0.03, 16, 64);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+  ringMesh.position.copy(position);
+  ringMesh.rotation.x = Math.PI / 2;
+  particles.push({ mesh: ringMesh, velocity: new THREE.Vector3(0, 0, 0), life: 1.0, isShockwave: true });
+
+  // 2. Heal Core Flash (Nhỏ lại)
+  const coreGeo = new THREE.SphereGeometry(0.8, 32, 32);
+  const coreMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.3,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+  coreMesh.position.copy(position);
+  particles.push({ mesh: coreMesh, velocity: new THREE.Vector3(0, 0, 0), life: 0.6, isCoreFlash: true });
+
+  // 3. Bong bóng khí + Dấu "+" hồi phục
+  const count = 30;
   for (let i = 0; i < count; i++) {
-    const geo = new THREE.SphereGeometry(0.02 + Math.random() * 0.03, 6, 6);
-    const mat = new THREE.MeshStandardMaterial({
-      color,
-      emissive: color,
-      emissiveIntensity: 2,
-      transparent: true,
-      opacity: 1,
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    // Tỏa ra xung quanh và bay lên
+    let mesh;
+    const isPlus = i % 2 === 0; // Một nửa là dấu +, một nửa là hình cầu
+
+    if (isPlus) {
+      // Tạo dấu "+" bằng 2 Box
+      const plusGroup = new THREE.Group();
+      const pMat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 3, transparent: true });
+      const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.04, 0.04), pMat);
+      const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.15, 0.04), pMat);
+      plusGroup.add(b1, b2);
+      mesh = plusGroup;
+    } else {
+      const geo = new THREE.SphereGeometry(0.04 + Math.random() * 0.04, 8, 8);
+      const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 3, transparent: true });
+      mesh = new THREE.Mesh(geo, mat);
+    }
+
+    // Tỏa ra chân boss và bay lên
     const offset = new THREE.Vector3(
+      (Math.random() - 0.5) * 2.0,
       (Math.random() - 0.5) * 1.5,
-      (Math.random() - 0.2) * 1.5,
-      (Math.random() - 0.5) * 1.5
+      (Math.random() - 0.5) * 2.0
     );
     mesh.position.copy(position).add(offset);
+    if (isPlus) {
+      mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    }
 
     const velocity = new THREE.Vector3(
-      (Math.random() - 0.5) * 0.02,
-      0.03 + Math.random() * 0.04, // Bay lên nhanh
-      (Math.random() - 0.5) * 0.02
+      (Math.random() - 0.5) * 0.01,
+      0.03 + Math.random() * 0.05,
+      (Math.random() - 0.5) * 0.01
     );
 
-    particles.push({ mesh, velocity, life: 1.0 });
+    particles.push({
+      mesh,
+      velocity,
+      life: 1.0 + Math.random() * 0.5,
+      rotationSpeed: isPlus ? { x: Math.random() * 0.1, y: Math.random() * 0.1, z: Math.random() * 0.1 } : null
+    });
   }
 
   return particles;

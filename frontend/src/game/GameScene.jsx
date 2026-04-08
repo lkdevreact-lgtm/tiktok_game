@@ -196,7 +196,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       // Chỉ hiện particles và text
 
       const bossPos = new THREE.Vector3();
-      boss.getWorldPosition(bossPos);
+      bossRef.current.getWorldPosition(bossPos);
 
       // Heal Particles
       const healExps = createHealParticles(bossPos);
@@ -286,11 +286,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       shipsRef.current.forEach((s) => scene.remove(s.mesh));
       bulletsRef.current.forEach((b) => scene.remove(b.mesh));
       explosionsRef.current.forEach((p) => scene.remove(p.mesh));
-      shockwavesRef.current.forEach((sw) => scene.remove(sw.mesh));
       shipsRef.current = [];
       bulletsRef.current = [];
       explosionsRef.current = [];
-      shockwavesRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
@@ -354,7 +352,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
           ship.mesh.getWorldPosition(shipPos);
           // Đặt portal ở +1.2 so với tàu (trục X) vì portal xuất hiện phía sau đuôi tàu
           const portalPos = shipPos.clone().add(new THREE.Vector3(1.2, 0, 0));
-          
+
           const shipColor = getBulletColor(ship.type);
           const portal = createPortal(portalPos, shipColor);
           scene.add(portal.group);
@@ -605,18 +603,18 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     shipsRef.current.forEach((ship) => {
       if (ship.dissolving) {
         // Tàu bị cuốn vào cực nhanh (tốc độ 2.0 -> 0.5s là bị nuốt sạch trơn)
-        ship.dissolveProgress += delta * 2.0; 
-        
+        ship.dissolveProgress += delta * 2.0;
+
         if (ship.dissolveProgress < 1.0) {
-           if (ship.targetPortal) {
-               ship.mesh.position.lerp(ship.targetPortal, delta * 8);
-               // Lộn vòng điên loạn
-               ship.mesh.rotation.x += delta * 15;
-               ship.mesh.rotation.y += delta * 10;
-               // Thu nhỏ dần thun lút
-               const t = Math.max(0, 1 - ship.dissolveProgress);
-               ship.mesh.scale.setScalar(0.25 * t);
-           }
+          if (ship.targetPortal) {
+            ship.mesh.position.lerp(ship.targetPortal, delta * 8);
+            // Lộn vòng điên loạn
+            ship.mesh.rotation.x += delta * 15;
+            ship.mesh.rotation.y += delta * 10;
+            // Thu nhỏ dần thun lút
+            const t = Math.max(0, 1 - ship.dissolveProgress);
+            ship.mesh.scale.setScalar(0.25 * t);
+          }
         } else {
           // Từ 0.5s trở đi: Tàu biến mất hoàn toàn
           scene.remove(ship.mesh);
@@ -780,21 +778,25 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
         p.mesh.rotation.y += p.rotationSpeed.y;
         p.mesh.rotation.z += p.rotationSpeed.z;
       }
-      p.life -= delta * 2.5;
-
-      if (p.mesh.material) {
-        p.mesh.material.opacity = Math.max(0, p.life);
-      }
+      p.life -= delta * 1.5; // Sống lâu hơn (khoảng 0.66s), cháy chậm để nhìn rõ
 
       if (p.isCoreFlash) {
-        // Lõi sáng phình to
-        const t = 1.0 - p.life; // 0 -> 1
-        p.mesh.scale.setScalar(1 + t * 4); // To cực độ
-        // Giảm opacity nhanh hơn đối với lõi
-        if (p.mesh.material) p.mesh.material.opacity = Math.max(0, p.life * 1.5);
+        // Lõi sáng phình to đều
+        const t = 1.0 - p.life;
+        p.mesh.scale.setScalar(1 + t * 2.5);
+        // Fade out mượt mà toàn thời gian
+        if (p.mesh.material) p.mesh.material.opacity = Math.max(0, p.life);
+      } else if (p.isShockwave) {
+        // Vòng xung kích thổi bùng ra
+        const t = 1.0 - p.life;
+        p.mesh.scale.setScalar(1 + t * 10);
+        if (p.mesh.material) p.mesh.material.opacity = Math.max(0, p.life);
       } else {
         // Mảnh vỡ tiêu tán 
-        p.mesh.scale.setScalar(Math.max(0.01, p.life));
+        p.mesh.scale.setScalar(Math.max(0.01, Math.pow(p.life, 2))); // Rút nhỏ theo gia tốc
+        // Cản lực để mảnh vụn dội chậm lại tự nhiên
+        p.velocity.multiplyScalar(0.9);
+        if (p.mesh.material) p.mesh.material.opacity = Math.max(0, p.life);
       }
 
       if (p.life <= 0) deadParticles.push(idx);
@@ -807,27 +809,27 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     // Portal Update
     const deadPortals = [];
     portalsRef.current.forEach((p, idx) => {
-      p.life -= delta; 
-      
+      p.life -= delta;
+
       // Xoay đĩa bồi tụ siêu nhanh
       p.ringGroup.rotation.z -= delta * 3.0; // Đĩa quay vòng quanh hố đen
-      
+
       // Lõi phát sáng nhấp nháy ảo ảnh
       p.innerGlow.material.opacity = 0.6 + Math.sin(p.life * 15) * 0.3;
 
       // Hút bụi không gian vào tâm siêu nhanh
       p.particles.forEach(pm => {
-         pm.position.lerp(new THREE.Vector3(0,0,0), delta * 8.0); // Tăng tốc độ hút
-         if (pm.position.length() < 0.2) {
-             // Bị nuốt xong thì nhả ra lại ở ngoài xa để liên tục hút vào
-             pm.position.set((Math.random()-0.5)*6, (Math.random()-0.5)*6, (Math.random()-0.5)*6);
-         }
+        pm.position.lerp(new THREE.Vector3(0, 0, 0), delta * 8.0); // Tăng tốc độ hút
+        if (pm.position.length() < 0.2) {
+          // Bị nuốt xong thì nhả ra lại ở ngoài xa để liên tục hút vào
+          pm.position.set((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
+        }
       });
-      
+
       // Hoạt ảnh Scale mượt (maxLife = 0.8)
       if (p.life > Math.max(0, p.maxLife - 0.2)) {
         // Mở rộng cực nhanh lúc đầu (tốn 0.2s)
-        const t = (p.maxLife - p.life) / 0.2; 
+        const t = (p.maxLife - p.life) / 0.2;
         p.group.scale.setScalar(t * 0.5);
       } else if (p.life < 0.2) {
         // Thu hẹp lại và biến mất (tốn 0.2s)
@@ -882,4 +884,3 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     </>
   );
 }
-
