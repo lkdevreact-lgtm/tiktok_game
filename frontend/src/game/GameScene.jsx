@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 import { useGame } from "../hooks/useGame";
-import { createBullet, createExplosion, createExhaustFlare, createHealParticles, createPortal } from "./models";
+import { createBullet, createExplosion, createExhaustFlare, createHealParticles, createPortal, createBossLaser, createBossMissile, createNukeExplosion, createLaserCharge } from "./models";
 import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
@@ -14,7 +14,7 @@ import BossLabel from "./components/BossLabel";
 import BossShieldRing from "./components/BossShieldRing";
 import DamageManager from "./components/DamageManager";
 
-export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
+export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBossLaser, onBossMissile, onBossNuclear }) {
   const { scene } = useThree();
   const { setBossHp, setGameStatus, setShipCount, setBossShield, gameStatus } =
     useGame();
@@ -33,6 +33,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
   const bulletsRef = useRef([]);
   const explosionsRef = useRef([]);
   const portalsRef = useRef([]);
+  const bossMissilesRef = useRef([]); // { group, target, life, type }
+  const bossLasersRef = useRef([]);   // { group, mesh, shell, life }
+  const nukeExplosionsRef = useRef([]); // { mesh, type, life }
   const gameActiveRef = useRef(false);
   const statusRef = useRef("idle");
   const prevGameStatus = useRef("idle");
@@ -165,6 +168,22 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     [scene, setShipCount, cloneShipMesh, getBulletColor],
   );
 
+  const destroyShip = useCallback((shipId) => {
+    const idx = shipsRef.current.findIndex(s => s.id === shipId);
+    if (idx === -1) return;
+    const s = shipsRef.current[idx];
+    if (s.dissolving) return;
+
+    s.dissolving = true;
+    s.dissolveProgress = 0;
+    // Tạo portal ngay sau đuôi tàu để nó "bị hút" vào
+    const portalPos = s.mesh.position.clone().add(new THREE.Vector3(1.2, 0, 0));
+    const portal = createPortal(portalPos, 0xdc00ff);
+    scene.add(portal.group);
+    portalsRef.current.push(portal);
+    s.targetPortal = portalPos;
+  }, [scene]);
+
   useEffect(() => {
     spawnShipFn.current = spawnShip;
   }, [spawnShip]);
@@ -250,6 +269,76 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onBossShield]);
+
+  // ── Boss Attacks (Laser, Missile, Nuke) ──────────────────
+  useEffect(() => {
+    if (onBossLaser) {
+      onBossLaser(() => {
+        if (!bossRef.current || shipsRef.current.length === 0) return;
+        const target = shipsRef.current[Math.floor(Math.random() * shipsRef.current.length)];
+        const bossPos = new THREE.Vector3();
+        bossRef.current.getWorldPosition(bossPos);
+        
+        // Bắt đầu tụ tia (800ms)
+        const gunPos = bossPos.clone().add(new THREE.Vector3(2.5, 0, 0));
+        const charge = createLaserCharge(gunPos, 0xff0000);
+        scene.add(charge.group);
+        const chargeObj = { ...charge, life: 0.8 };
+        
+        // Quản lý charge trong loop để nó scale up
+        bossLasersRef.current.push({ ...chargeObj, type: "charge" });
+
+        setTimeout(() => {
+          if (!target.aliveRef.current) return;
+          
+          const laser = createBossLaser(gunPos, target.mesh.position, 0xff0000);
+          scene.add(laser.group);
+          bossLasersRef.current.push({ ...laser, type: "beam" });
+          destroyShip(target.id);
+          playAttackSound();
+        }, 800);
+      });
+    }
+  }, [onBossLaser, scene, destroyShip]);
+
+  useEffect(() => {
+    if (onBossMissile) {
+      onBossMissile(() => {
+        if (!bossRef.current || shipsRef.current.length === 0) return;
+        const bossPos = new THREE.Vector3();
+        bossRef.current.getWorldPosition(bossPos);
+        // Bắn 3 tên lửa vào 3 tàu ngẫu nhiên
+        const count = Math.min(3, shipsRef.current.length);
+        for (let i = 0; i < count; i++) {
+          const missile = createBossMissile(bossPos);
+          missile.targetShip = shipsRef.current[i]; // Tạm thời chọn theo thứ tự
+          scene.add(missile.group);
+          bossMissilesRef.current.push(missile);
+        }
+        playAttackSound();
+      });
+    }
+  }, [onBossMissile, scene]);
+
+  useEffect(() => {
+    if (onBossNuclear) {
+      onBossNuclear(() => {
+        if (!bossRef.current) return;
+        const bossPos = new THREE.Vector3();
+        bossRef.current.getWorldPosition(bossPos);
+        const nuke = createNukeExplosion(bossPos);
+        nuke.forEach(p => scene.add(p.mesh));
+        nukeExplosionsRef.current.push(...nuke);
+        // Tiêu diệt TẤT CẢ tàu trong tầm 10 đơn vị
+        shipsRef.current.forEach(s => {
+           if (s.mesh.position.distanceTo(bossPos) < 15) {
+               destroyShip(s.id);
+           }
+        });
+        playAttackSound();
+      });
+    }
+  }, [onBossNuclear, scene, destroyShip]);
 
   // ── Init scene (lights + starter ships) ─────────────────────
   useEffect(() => {
@@ -598,7 +687,69 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield }) {
       }
     });
 
-    // ── Update tàu bay vào portal + Dọn dẹp ───────────────────
+    // 7. Update Boss Attacks
+    const deadMissiles = [];
+    bossMissilesRef.current.forEach((m, idx) => {
+      m.life -= delta;
+      if (m.life <= 0 || !m.targetShip.aliveRef.current) {
+        deadMissiles.push(idx);
+        scene.remove(m.group);
+        return;
+      }
+      m.update(delta, m.targetShip.mesh.position);
+      // Va chạm tên lửa
+      if (m.group.position.distanceTo(m.targetShip.mesh.position) < 0.5) {
+        destroyShip(m.targetShip.id);
+        deadMissiles.push(idx);
+        scene.remove(m.group);
+        const exp = createExplosion(m.group.position, 0xffaa00);
+        exp.forEach(p => scene.add(p.mesh));
+        explosionsRef.current.push(...exp);
+      }
+    });
+    bossMissilesRef.current = bossMissilesRef.current.filter((_, i) => !deadMissiles.includes(i));
+
+    const deadLasers = [];
+    bossLasersRef.current.forEach((l, idx) => {
+      l.life -= delta;
+      if (l.life <= 0) {
+        deadLasers.push(idx);
+        scene.remove(l.group);
+      } else {
+        const t = l.life / l.maxLife;
+        if (l.type === "beam") {
+          l.mesh.scale.x = l.mesh.scale.z = t;
+          l.shell.scale.x = l.shell.scale.z = t + 0.2;
+        } else if (l.type === "charge") {
+          // Charge hiệu ứng tụ lại: scale to dần lên
+          const chargeT = 1.0 - t;
+          l.group.scale.setScalar(chargeT * 3);
+          l.core.material.opacity = chargeT;
+        }
+      }
+    });
+    bossLasersRef.current = bossLasersRef.current.filter((_, i) => !deadLasers.includes(i));
+
+    const deadNukes = [];
+    nukeExplosionsRef.current.forEach((n, idx) => {
+      n.life -= delta;
+      if (n.life <= 0) {
+        deadNukes.push(idx);
+        scene.remove(n.mesh);
+      } else {
+        const t = 1.0 - n.life;
+        if (n.type === "nuke_core") {
+          n.mesh.scale.setScalar(1 + t * 25);
+          n.mesh.material.opacity = n.life;
+        } else if (n.type === "nuke_wave") {
+          n.mesh.scale.setScalar(1 + t * 35);
+          n.mesh.material.opacity = n.life * 0.5;
+        }
+      }
+    });
+    nukeExplosionsRef.current = nukeExplosionsRef.current.filter((_, i) => !deadNukes.includes(i));
+
+    // 8. Update portals
     const dissolvedIds = new Set();
     shipsRef.current.forEach((ship) => {
       if (ship.dissolving) {

@@ -483,3 +483,149 @@ export function createHealParticles(position, color = 0x00ff66) {
   return particles;
 }
 
+// ── Boss Missile (Tên lửa tầm nhiệt) ──
+export function createBossMissile(startPos) {
+  const group = new THREE.Group();
+  group.position.copy(startPos);
+
+  // Thân tên lửa
+  const bodyGeo = new THREE.CylinderGeometry(0.06, 0.08, 0.4, 8);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.3, metalness: 0.8 });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.rotation.x = Math.PI / 2;
+  group.add(body);
+
+  // Đầu đạn (Màu đỏ cảnh báo)
+  const tipGeo = new THREE.ConeGeometry(0.08, 0.15, 8);
+  const tipMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  const tip = new THREE.Mesh(tipGeo, tipMat);
+  tip.position.z = 0.25;
+  tip.rotation.x = Math.PI / 2;
+  group.add(tip);
+
+  // Đuôi lửa (Glow)
+  const fireGeo = new THREE.SphereGeometry(0.1, 8, 8);
+  const fireMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.8 });
+  const fire = new THREE.Mesh(fireGeo, fireMat);
+  fire.position.z = -0.25;
+  group.add(fire);
+
+  return { 
+    group, 
+    velocity: new THREE.Vector3(), 
+    life: 3.0, 
+    type: "missile",
+    update: (delta, targetPos) => {
+        if (!targetPos) return;
+        // Logic hướng tên lửa về phía mục tiêu
+        const dir = targetPos.clone().sub(group.position).normalize();
+        group.position.add(dir.multiplyScalar(delta * 5)); // Tốc độ tên lửa
+        group.lookAt(targetPos);
+    }
+  };
+}
+
+// ── Boss Laser (Tia Laze hủy diệt) ──
+export function createBossLaser(startPos, endPos, color = 0xff0000) {
+  const distance = startPos.distanceTo(endPos);
+  const group = new THREE.Group();
+  
+  // Trục Laser
+  const geo = new THREE.CylinderGeometry(0.15, 0.15, distance, 12);
+  const mat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  
+  // Quay cylinder nằm ngang nối 2 điểm
+  mesh.position.set(0, 0, distance / 2);
+  mesh.rotation.x = Math.PI / 2;
+  group.add(mesh);
+  
+  // Vỏ Laser (Glow to hơn)
+  const shellGeo = new THREE.CylinderGeometry(0.3, 0.3, distance, 12);
+  const shellMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.3,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const shell = new THREE.Mesh(shellGeo, shellMat);
+  shell.position.set(0, 0, distance / 2);
+  shell.rotation.x = Math.PI / 2;
+  group.add(shell);
+
+  group.position.copy(startPos);
+  group.lookAt(endPos);
+
+  return { group, mesh, shell, life: 0.6, maxLife: 0.6 };
+}
+
+// ── Laser Charge (Hiệu ứng tụ tia trước khi bắn) ──
+export function createLaserCharge(position, color = 0xff0000) {
+  const group = new THREE.Group();
+  group.position.copy(position);
+
+  // Lõi tụ năng lượng
+  const coreGeo = new THREE.SphereGeometry(0.3, 16, 16);
+  const coreMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending
+  });
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  group.add(core);
+
+  // Vòng tia sét/hào quang xung quanh
+  const glowGeo = new THREE.SphereGeometry(0.5, 16, 16);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.3,
+    blending: THREE.AdditiveBlending
+  });
+  const glow = new THREE.Mesh(glowGeo, glowMat);
+  group.add(glow);
+
+  return { group, core, glow, life: 0.8, maxLife: 0.8 };
+}
+
+// ── Nuclear Explosion (Vụ nổ hạt nhân diện rộng) ──
+export function createNukeExplosion(position) {
+  const particles = [];
+  
+  // 1. Siêu lõi sáng (Vàng chói)
+  const coreGeo = new THREE.SphereGeometry(1, 32, 32);
+  const coreMat = new THREE.MeshBasicMaterial({
+    color: 0xffff00,
+    transparent: true,
+    opacity: 1.0,
+    blending: THREE.AdditiveBlending
+  });
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  core.position.copy(position);
+  particles.push({ mesh: core, type: "nuke_core", life: 1.0 });
+
+  // 2. Vòng shockwave khổng lồ
+  const waveGeo = new THREE.TorusGeometry(1, 0.1, 16, 100);
+  const waveMat = new THREE.MeshBasicMaterial({
+    color: 0xffaa00,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending
+  });
+  const wave = new THREE.Mesh(waveGeo, waveMat);
+  wave.position.copy(position);
+  wave.rotation.x = Math.PI / 2;
+  particles.push({ mesh: wave, type: "nuke_wave", life: 1.0 });
+
+  return particles;
+}
+
+

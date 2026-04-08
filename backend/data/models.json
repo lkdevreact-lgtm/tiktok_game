@@ -102,8 +102,15 @@
         "damagePercent": 10
       }
     },
-    "updatedAt": "2026-04-08T01:37:11.738Z",
-    "maxShots": 20
+    "updatedAt": "2026-04-08T04:35:13.426Z",
+    "maxShots": 20,
+    "laserGifts": [],
+    "missileGifts": [
+      5655
+    ],
+    "nuclearGifts": [
+      15232
+    ]
   },
   {
     "id": "space_ship_big",

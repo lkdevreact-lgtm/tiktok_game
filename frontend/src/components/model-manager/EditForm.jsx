@@ -193,6 +193,57 @@ export default function EditForm({ local, setLocal, onSave, isBoss = false }) {
               accentColor="#00f5ff"
             />
           </div>
+
+          <div>
+            <label className={`${labelCls} mb-1.5 text-red-400`}>
+              🔴 Quà kích hoạt Laser
+              {local.laserGifts?.length > 0 && (
+                <span className="ml-1.5 text-red-400/80 font-normal normal-case tracking-normal">
+                  ({local.laserGifts.length} đã chọn)
+                </span>
+              )}
+            </label>
+            <GiftCheckboxList
+              selected={local.laserGifts || []}
+              activeGifts={activeGifts}
+              onChange={(next) => setLocal((p) => ({ ...p, laserGifts: next }))}
+              accentColor="#f87171"
+            />
+          </div>
+
+          <div>
+            <label className={`${labelCls} mb-1.5 text-orange-400`}>
+              🚀 Quà kích hoạt Missile
+              {local.missileGifts?.length > 0 && (
+                <span className="ml-1.5 text-orange-400/80 font-normal normal-case tracking-normal">
+                  ({local.missileGifts.length} đã chọn)
+                </span>
+              )}
+            </label>
+            <GiftCheckboxList
+              selected={local.missileGifts || []}
+              activeGifts={activeGifts}
+              onChange={(next) => setLocal((p) => ({ ...p, missileGifts: next }))}
+              accentColor="#fb923c"
+            />
+          </div>
+
+          <div>
+            <label className={`${labelCls} mb-1.5 text-yellow-400`}>
+              ☢️ Quà kích hoạt Nuclear
+              {local.nuclearGifts?.length > 0 && (
+                <span className="ml-1.5 text-yellow-400/80 font-normal normal-case tracking-normal">
+                  ({local.nuclearGifts.length} đã chọn)
+                </span>
+              )}
+            </label>
+            <GiftCheckboxList
+              selected={local.nuclearGifts || []}
+              activeGifts={activeGifts}
+              onChange={(next) => setLocal((p) => ({ ...p, nuclearGifts: next }))}
+              accentColor="#facc15"
+            />
+          </div>
         </>
       )}
 

@@ -12,7 +12,7 @@ import ShipGiftPanel from "./ShipGiftPanel";
 export default function GameCanvas() {
   const { gameStatus, setBossHp, notifications, addNotification, resetGame } =
     useGame();
-  const { giftModelMap, bossHealGiftMap, bossShieldGiftMap } = useModels();
+  const { giftModelMap, bossHealGiftMap, bossShieldGiftMap, bossLaserGiftMap, bossMissileGiftMap, bossNuclearGiftMap } = useModels();
 
   const spawnShipRef = useRef(null);
   const bossHealRef = useRef(null);
@@ -20,6 +20,13 @@ export default function GameCanvas() {
   const giftModelMapRef = useRef(giftModelMap);
   const bossHealGiftMapRef = useRef(bossHealGiftMap);
   const bossShieldGiftMapRef = useRef(bossShieldGiftMap);
+  const bossLaserGiftMapRef = useRef(bossLaserGiftMap);
+  const bossMissileGiftMapRef = useRef(bossMissileGiftMap);
+  const bossNuclearGiftMapRef = useRef(bossNuclearGiftMap);
+
+  const bossLaserTriggerRef = useRef(null);
+  const bossMissileTriggerRef = useRef(null);
+  const bossNuclearTriggerRef = useRef(null);
 
   useEffect(() => {
     giftModelMapRef.current = giftModelMap;
@@ -30,6 +37,15 @@ export default function GameCanvas() {
   useEffect(() => {
     bossShieldGiftMapRef.current = bossShieldGiftMap;
   }, [bossShieldGiftMap]);
+  useEffect(() => {
+    bossLaserGiftMapRef.current = bossLaserGiftMap;
+  }, [bossLaserGiftMap]);
+  useEffect(() => {
+    bossMissileGiftMapRef.current = bossMissileGiftMap;
+  }, [bossMissileGiftMap]);
+  useEffect(() => {
+    bossNuclearGiftMapRef.current = bossNuclearGiftMap;
+  }, [bossNuclearGiftMap]);
 
   const handleGiftSpawn = useCallback((fn) => {
     spawnShipRef.current = fn;
@@ -39,6 +55,15 @@ export default function GameCanvas() {
   }, []);
   const handleBossShield = useCallback((fn) => {
     bossShieldRef.current = fn;
+  }, []);
+  const handleBossLaserTrigger = useCallback((fn) => {
+    bossLaserTriggerRef.current = fn;
+  }, []);
+  const handleBossMissileTrigger = useCallback((fn) => {
+    bossMissileTriggerRef.current = fn;
+  }, []);
+  const handleBossNuclearTrigger = useCallback((fn) => {
+    bossNuclearTriggerRef.current = fn;
   }, []);
 
   useEffect(() => {
@@ -64,13 +89,23 @@ export default function GameCanvas() {
         return;
       }
       if (bossShieldGiftMapRef.current[String(giftId)]) {
-        addNotification({
-          user: nickname || uniqueId || "Viewer",
-          giftName,
-          imgUrl,
-          type: "shield",
-        });
+        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "shield" });
         bossShieldRef.current?.();
+        return;
+      }
+      if (bossLaserGiftMapRef.current[String(giftId)]) {
+        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "attack" });
+        bossLaserTriggerRef.current?.();
+        return;
+      }
+      if (bossMissileGiftMapRef.current[String(giftId)]) {
+        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "attack" });
+        bossMissileTriggerRef.current?.();
+        return;
+      }
+      if (bossNuclearGiftMapRef.current[String(giftId)]) {
+        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "attack" });
+        bossNuclearTriggerRef.current?.();
         return;
       }
 
@@ -173,6 +208,9 @@ export default function GameCanvas() {
             onGiftSpawn={handleGiftSpawn}
             onBossHeal={handleBossHeal}
             onBossShield={handleBossShield}
+            onBossLaser={handleBossLaserTrigger}
+            onBossMissile={handleBossMissileTrigger}
+            onBossNuclear={handleBossNuclearTrigger}
           />
         </Canvas>
 
@@ -235,15 +273,31 @@ export default function GameCanvas() {
           </button>
 
           <button
-            id="btn-test-shield"
             onClick={() => bossShieldRef.current?.()}
-            className="
-              uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer transition-colors duration-200
-              bg-[rgba(0,245,255,0.06)] border border-[rgba(0,245,255,0.5)] text-cyan-400
-              hover:bg-[rgba(0,245,255,0.18)]
-            "
+            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(0,245,255,0.06)] border border-[rgba(0,245,255,0.5)] text-cyan-400 hover:bg-[rgba(0,245,255,0.18)]"
           >
-            🛡️ Test Shield
+            🛡️ Shield
+          </button>
+
+          <button
+            onClick={() => bossLaserTriggerRef.current?.()}
+            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.35)] text-red-500 hover:bg-[rgba(239,68,68,0.22)]"
+          >
+            🔴 Laser
+          </button>
+
+          <button
+            onClick={() => bossMissileTriggerRef.current?.()}
+            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(251,146,60,0.12)] border border-[rgba(251,146,60,0.35)] text-orange-400 hover:bg-[rgba(251,146,60,0.22)]"
+          >
+            🚀 Missile
+          </button>
+
+          <button
+            onClick={() => bossNuclearTriggerRef.current?.()}
+            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(250,204,21,0.12)] border border-[rgba(250,204,21,0.35)] text-yellow-400 hover:bg-[rgba(250,204,21,0.22)]"
+          >
+            ☢️ Nuclear
           </button>
         </div>
 

@@ -161,6 +161,9 @@ export default function ModelCard({
     healGifts: model.healGifts || [],
     shieldGifts: model.shieldGifts || [],
     iconUrl: model.iconUrl || null,
+    laserGifts: model.laserGifts || [],
+    missileGifts: model.missileGifts || [],
+    nuclearGifts: model.nuclearGifts || [],
   });
 
   const isBoss = model.role === "boss";
@@ -192,6 +195,9 @@ export default function ModelCard({
       gifts: local.gifts,
       healGifts: local.healGifts,
       shieldGifts: local.shieldGifts,
+      laserGifts: local.laserGifts,
+      missileGifts: local.missileGifts,
+      nuclearGifts: local.nuclearGifts,
     });
     setExpanded(false);
   };
@@ -306,40 +312,68 @@ export default function ModelCard({
               );
             })()}
 
-            {/* Boss: healGifts + shieldGifts */}
+            {/* Boss: healGifts + shieldGifts + skills */}
             {isBoss && (() => {
-              const healList   = resolveGifts(model.healGifts);
-              const shieldList = resolveGifts(model.shieldGifts);
-              if (!healList.length && !shieldList.length) return null;
+              const hList = resolveGifts(model.healGifts);
+              const sList = resolveGifts(model.shieldGifts);
+              const lList = resolveGifts(model.laserGifts);
+              const mList = resolveGifts(model.missileGifts);
+              const nList = resolveGifts(model.nuclearGifts);
+
+              if (!hList.length && !sList.length && !lList.length && !mList.length && !nList.length) return null;
+
               return (
-                <div className="mt-2 flex flex-col gap-1">
-                  {healList.length > 0 && (
+                <div className="mt-2 flex flex-col gap-1.5">
+                  {hList.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      <span className="text-[0.55rem] text-green-400/60 w-full">💚 Hồi máu</span>
-                      {healList.map((g) => (
-                        <span
-                          key={g.giftId}
-                          className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-green-400/10 border border-green-400/30 text-green-300"
-                        >
-                          {g.image && (
-                            <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
-                          )}
+                      <span className="text-[0.55rem] text-green-400/60 w-full uppercase tracking-tighter">💚 Heal</span>
+                      {hList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-green-400/10 border border-green-400/30 text-green-300">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
                           {g.giftName}
                         </span>
                       ))}
                     </div>
                   )}
-                  {shieldList.length > 0 && (
+                  {sList.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      <span className="text-[0.55rem] text-cyan-400/60 w-full">🛡️ Khiên</span>
-                      {shieldList.map((g) => (
-                        <span
-                          key={g.giftId}
-                          className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 text-cyan-300"
-                        >
-                          {g.image && (
-                            <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
-                          )}
+                      <span className="text-[0.55rem] text-cyan-400/60 w-full uppercase tracking-tighter">🛡️ Shield</span>
+                      {sList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 text-cyan-300">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {lList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-red-500/60 w-full uppercase tracking-tighter">🔴 Laser</span>
+                      {lList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-400">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {mList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-orange-400/60 w-full uppercase tracking-tighter">🚀 Missile</span>
+                      {mList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-orange-400/10 border border-orange-400/30 text-orange-300">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {nList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-yellow-400/60 w-full uppercase tracking-tighter">☢️ Nuclear</span>
+                      {nList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/30 text-yellow-300">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
                           {g.giftName}
                         </span>
                       ))}
