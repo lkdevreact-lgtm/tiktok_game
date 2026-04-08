@@ -250,47 +250,187 @@ export function createBoss() {
   return group;
 }
 
-// ── Bullet ──
+// ── Bullet (Laser) ──
 export function createBullet(color = 0x00f5ff) {
   const group = new THREE.Group();
 
-  const geo = new THREE.SphereGeometry(0.025, 8, 8);
-  const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 3, transparent: true, opacity: 0.95 });
+  // Core laser (dài và mỏng)
+  const geo = new THREE.CylinderGeometry(0.015, 0.015, 0.65, 6);
+  geo.rotateX(Math.PI / 2); // Nằm dọc theo trục Z để hàm lookAt() chĩa thẳng mũi nhọn vào Boss
+  const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 4, transparent: true, opacity: 1.0 });
   const mesh = new THREE.Mesh(geo, mat);
   group.add(mesh);
 
-  // Trail glow
-  const trailGeo = new THREE.CylinderGeometry(0.012, 0.025, 0.12, 6);
-  const trailMat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2, transparent: true, opacity: 0.5 });
-  const trail = new THREE.Mesh(trailGeo, trailMat);
-  trail.rotation.z = Math.PI / 2;
-  trail.position.set(-0.07, 0, 0);
-  group.add(trail);
+  // Outer glow
+  const glowGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.7, 6);
+  glowGeo.rotateX(Math.PI / 2);
+  const glowMat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending });
+  const glow = new THREE.Mesh(glowGeo, glowMat);
+  group.add(glow);
 
   return group;
 }
 
-// ── Explosion Particles ──
+// ── Explosion Particles (Tia lửa Spark 3D) ──
 export function createExplosion(position, color = 0xff6600) {
   const particles = [];
   const count = 12;
 
   for (let i = 0; i < count; i++) {
-    const geo = new THREE.SphereGeometry(0.02 + Math.random() * 0.03, 6, 6);
+    // Dùng khối hộp dài để tạo tia lửa văng ra thay vì khối tròn cầu
+    const geo = new THREE.BoxGeometry(0.01, 0.01, 0.08 + Math.random() * 0.06);
     const mat = new THREE.MeshStandardMaterial({
-      color,
+      color: Math.random() > 0.6 ? 0xffffff : color,
       emissive: color,
-      emissiveIntensity: 3,
+      emissiveIntensity: 5,
       transparent: true,
       opacity: 1,
     });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(position);
 
+    // Văng 3D theo hình cầu
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(Math.random() * 2 - 1);
+    const speed = 0.06 + Math.random() * 0.08;
+
     const velocity = new THREE.Vector3(
-      (Math.random() - 0.5) * 0.06,
-      (Math.random() - 0.5) * 0.06,
-      (Math.random() - 0.5) * 0.04
+      Math.sin(phi) * Math.cos(theta) * speed,
+      Math.sin(phi) * Math.sin(theta) * speed,
+      Math.cos(phi) * speed
+    );
+
+    // Hướng tia lửa nhọn theo chiều đang văng tới
+    mesh.lookAt(position.clone().add(velocity));
+
+    particles.push({ mesh, velocity, rotationSpeed: null, life: 1.0 });
+  }
+
+  return particles;
+}
+
+// ── Portal (Hố Đen Vũ Trụ Siêu Thực) ──
+export function createPortal(position, color = 0x6600ff) {
+  const group = new THREE.Group();
+  group.position.copy(position);
+
+  // Xóa lõi Đen Tuyệt Đối vì khối đen đặc này đè lên tàu khiến người chơi tưởng tàu biến thành màu đen.
+
+  // 1. Event Horizon Glow (Hào quang bức xạ bọc lõi) - Giờ là quả cầu rực sáng
+  const glowGeo = new THREE.SphereGeometry(0.85, 32, 32);
+  const glowMat = new THREE.MeshStandardMaterial({
+    color: color,
+    emissive: color,
+    emissiveIntensity: 5,
+    transparent: true,
+    opacity: 0.4, // Reduce opacity to view ships properly
+    blending: THREE.AdditiveBlending, // Tạo hiệu ứng ảo ảnh
+    depthWrite: false
+  });
+  const glow = new THREE.Mesh(glowGeo, glowMat);
+  group.add(glow);
+
+  // 3. Đĩa Bồi Tụ (Accretion Disk) ngả nghiêng
+  const ringGroup = new THREE.Group();
+
+  // Đĩa ngoài cùng khổng lồ (Sương mù)
+  const disk1Geo = new THREE.RingGeometry(1.0, 3.0, 64);
+  const disk1Mat = new THREE.MeshBasicMaterial({
+    color: color,
+    transparent: true,
+    opacity: 0.4,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const disk1 = new THREE.Mesh(disk1Geo, disk1Mat);
+  ringGroup.add(disk1);
+
+  // Đĩa giữa sáng ngắt
+  const disk2Geo = new THREE.RingGeometry(0.8, 2.0, 64);
+  const disk2Mat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const disk2 = new THREE.Mesh(disk2Geo, disk2Mat);
+  ringGroup.add(disk2);
+
+  // Vành đai ma sát rực lửa sát mép
+  const disk3Geo = new THREE.TorusGeometry(0.9, 0.04, 16, 100);
+  const disk3Mat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 1.0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const disk3 = new THREE.Mesh(disk3Geo, disk3Mat);
+  ringGroup.add(disk3);
+
+  // Xoay đĩa bồi tụ giống hố đen trong Interstellar (nghiêng X và Y)
+  ringGroup.rotation.x = Math.PI / 2.5;
+  ringGroup.rotation.y = Math.PI / 8;
+  group.add(ringGroup);
+
+  // 4. Các hạt ánh sáng bị hút vào (Swirling Dust)
+  const particles = [];
+  const pGeo = new THREE.SphereGeometry(0.04, 6, 6);
+  const pMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  for (let i = 0; i < 30; i++) {
+    const pMesh = new THREE.Mesh(pGeo, pMat);
+    // Bố trí xa tít để hút dần vào
+    pMesh.position.set(
+      (Math.random() - 0.5) * 6,
+      (Math.random() - 0.5) * 6,
+      (Math.random() - 0.5) * 6
+    );
+    group.add(pMesh);
+    particles.push(pMesh);
+  }
+
+  // Góc của hố đen đối diện với tàu đang trôi tới
+  group.rotation.y = Math.PI / 4;
+  group.scale.setScalar(0.01);
+
+  return { group, ringGroup, innerGlow: glow, particles, life: 0.8, maxLife: 0.8 };
+}
+export function createHealParticles(position, color = 0x00ff66) {
+  const particles = [];
+  const count = 15;
+
+  for (let i = 0; i < count; i++) {
+    const geo = new THREE.SphereGeometry(0.02 + Math.random() * 0.03, 6, 6);
+    const mat = new THREE.MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 2,
+      transparent: true,
+      opacity: 1,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    // Tỏa ra xung quanh và bay lên
+    const offset = new THREE.Vector3(
+      (Math.random() - 0.5) * 1.5,
+      (Math.random() - 0.2) * 1.5,
+      (Math.random() - 0.5) * 1.5
+    );
+    mesh.position.copy(position).add(offset);
+
+    const velocity = new THREE.Vector3(
+      (Math.random() - 0.5) * 0.02,
+      0.03 + Math.random() * 0.04, // Bay lên nhanh
+      (Math.random() - 0.5) * 0.02
     );
 
     particles.push({ mesh, velocity, life: 1.0 });
@@ -299,18 +439,3 @@ export function createExplosion(position, color = 0xff6600) {
   return particles;
 }
 
-// ── Shockwave Ring ──
-export function createShockwave(position, color = 0xff3366) {
-  const geo = new THREE.TorusGeometry(0.12, 0.018, 4, 32);
-  const mat = new THREE.MeshBasicMaterial({
-    color,
-    transparent: true,
-    opacity: 0.9,
-    side: THREE.DoubleSide,
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.copy(position);
-  // Ring nằm ngang (XZ plane) — nhìn từ camera sẽ thấy hình ellipse/vòng
-  mesh.rotation.x = Math.PI / 2;
-  return { mesh, life: 1.0 };
-}

@@ -273,7 +273,7 @@ export default function GameCanvas() {
               onClick={handleReset}
               className="relative hover:scale-105 cursor-pointer transition-transform duration-300 ease-in-out"
             >
-              <img src={IMAGES.GAME_BUTTON} alt="" className="w-[60%] m-auto object-contain"/>
+              <img src={IMAGES.GAME_BUTTON} alt="" className="w-[60%] m-auto object-contain" />
               <p className="absolute inset-0 top-5.5 flex items-center text-xl justify-center font-semibold text-white"
                 style={{ textShadow: "0 0 8px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.9)" }}>
                 Play Again

@@ -16,7 +16,7 @@
     "gifts": [
       5655
     ],
-    "updatedAt": "2026-04-07T17:25:36.874Z",
+    "updatedAt": "2026-04-08T01:36:51.791Z",
     "iconUrl": "/images/icons/icon_1775532263967_avatar.jpg",
     "healGifts": [],
     "shieldGifts": [],
@@ -73,7 +73,7 @@
     "emoji": "💀",
     "role": "boss",
     "path": "/models/spaceship_boss.glb",
-    "scale": 4.5,
+    "scale": 3,
     "gunTipOffset": 0,
     "rotationY": 90,
     "bulletColor": "#ff0044",
@@ -102,7 +102,8 @@
         "damagePercent": 10
       }
     },
-    "updatedAt": "2026-04-07T03:45:34.774Z"
+    "updatedAt": "2026-04-08T01:37:11.738Z",
+    "maxShots": 20
   },
   {
     "id": "space_ship_big",
