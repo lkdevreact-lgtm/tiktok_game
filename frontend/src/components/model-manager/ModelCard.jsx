@@ -1,24 +1,136 @@
-import { useState, useEffect } from "react";
-import { btnBase, FIRE_RATE_OPTIONS } from "../ui/styles";
+import { useState, useRef, useMemo } from "react";
 import RoleBadge from "../ui/RoleBadge";
 import ToggleSwitch from "../ui/ToggleSwitch";
 import EditForm from "./EditForm";
-import { FaEdit } from "react-icons/fa";
+import { FaEdit, FaCamera, FaCube } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
+import { API_URL, IMAGES } from "../../utils/constant";
+import { FIRE_RATE_OPTIONS } from "../ui/styles";
+import { useGifts } from "../../hooks/useGifts";
 
+const actionBtn =
+  "w-7 h-7 flex items-center justify-center rounded-md border cursor-pointer transition-all duration-150 text-[0]";
 
-function ModelBadge({ emoji, color, active }) {
+function ModelAvatar({ iconUrl, isBoss, modelId, onIconUploaded, active }) {
+  const inputRef = useRef();
+  const [uploading, setUploading] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  const src = iconUrl || (isBoss ? IMAGES.SHIP_BOSS : IMAGES.SHIP_USER);
+
+  const handleUpload = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f || !modelId) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("iconImage", f);
+      const res = await fetch(`${API_URL}/api/models/${modelId}/icon`, {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.ok && data.iconUrl) onIconUploaded?.(data.iconUrl);
+    } catch {
+      /* ignore */
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
   return (
     <div
-      className={`w-[42px] h-[42px] rounded-[10px] flex items-center justify-center text-[20px] shrink-0 transition-all duration-200 ${active ? "opacity-100" : "opacity-45"}`}
-      style={{
-        background: `${color}14`,
-        border: `1.5px solid ${active ? color + "66" : "rgba(255,255,255,0.1)"}`,
-        boxShadow: active ? `0 0 10px ${color}22` : "none",
-      }}
+      onClick={() => inputRef.current?.click()}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title="Click để đổi ảnh icon"
+      className={`
+        w-full h-full rounded-lg shrink-0 overflow-hidden cursor-pointer relative
+        border transition-all duration-150
+        ${
+          active
+            ? "border-[rgba(0,245,255,0.4)] opacity-100"
+            : "border-white/10 opacity-50"
+        }
+      `}
     >
-      {emoji}
+      <img src={src} alt="avatar" className="w-full h-full object-cover" />
+      {hovered && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+          {uploading ? (
+            <span className="text-[9px] text-white">...</span>
+          ) : (
+            <FaCamera size={12} color="#fff" />
+          )}
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleUpload}
+        className="hidden"
+      />
     </div>
+  );
+}
+
+function ReplaceGLBButton({ modelId, onReplaced }) {
+  const inputRef = useRef();
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f || !modelId) return;
+    if (!f.name.toLowerCase().endsWith(".glb")) {
+      alert("Chỉ hỗ trợ file .glb");
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", f);
+      const res = await fetch(`${API_URL}/api/models/${modelId}/glb`, {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.ok && data.model) onReplaced?.(data.model);
+    } catch {
+      /* ignore */
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        title="Thay file 3D (.glb)"
+        className={`
+          ${actionBtn}
+          border-[rgba(167,139,250,0.3)] text-[#a78bfa]
+          ${uploading ? "bg-[rgba(167,139,250,0.18)]" : "bg-[rgba(167,139,250,0.08)] hover:bg-[rgba(167,139,250,0.18)]"}
+        `}
+      >
+        {uploading ? (
+          <span className="text-[10px] text-[#a78bfa]">⏳</span>
+        ) : (
+          <FaCube size={13} color="#a78bfa" />
+        )}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".glb"
+        onChange={handleUpload}
+        className="hidden"
+      />
+    </>
   );
 }
 
@@ -44,34 +156,31 @@ export default function ModelCard({
     bulletColor: model.bulletColor || "#00f5ff",
     damage: model.damage ?? 1,
     fireRate: model.fireRate ?? 1.0,
+    maxShots: model.maxShots ?? 20,
     gifts: model.gifts || [],
+    healGifts: model.healGifts || [],
+    shieldGifts: model.shieldGifts || [],
+    iconUrl: model.iconUrl || null,
+    laserGifts: model.laserGifts || [],
+    missileGifts: model.missileGifts || [],
+    nuclearGifts: model.nuclearGifts || [],
   });
-
-  useEffect(() => {
-    setLocal({
-      label: model.label,
-      scale: model.scale,
-      gunTipOffset: model.gunTipOffset,
-      rotationY: model.rotationY,
-      bulletColor: model.bulletColor || "#00f5ff",
-      damage: model.damage ?? 1,
-      fireRate: model.fireRate ?? 1.0,
-      gifts: model.gifts || [],
-    });
-  }, [
-    model.label,
-    model.scale,
-    model.gunTipOffset,
-    model.rotationY,
-    model.bulletColor,
-    model.damage,
-    model.fireRate,
-    model.gifts,
-  ]);
 
   const isBoss = model.role === "boss";
   const isActive = isBoss ? isActiveBoss : model.active;
   const color = model.bulletColor || "#00f5ff";
+
+  // ── Gift lookup ─────────────────────────────────────────────
+  const { gifts: allGifts } = useGifts();
+  const giftMap = useMemo(() => {
+    const map = {};
+    (allGifts || []).forEach((g) => { map[String(g.giftId)] = g; });
+    return map;
+  }, [allGifts]);
+
+  // Resolve gift ids → gift objects
+  const resolveGifts = (ids = []) =>
+    ids.map((id) => giftMap[String(id)]).filter(Boolean);
 
   const handleSave = () => {
     onUpdate?.(model.id, {
@@ -82,174 +191,243 @@ export default function ModelCard({
       bulletColor: local.bulletColor,
       damage: Number(local.damage),
       fireRate: Number(local.fireRate),
+      maxShots: Number(local.maxShots),
       gifts: local.gifts,
+      healGifts: local.healGifts,
+      shieldGifts: local.shieldGifts,
+      laserGifts: local.laserGifts,
+      missileGifts: local.missileGifts,
+      nuclearGifts: local.nuclearGifts,
     });
     setExpanded(false);
   };
 
   return (
     <div
-      className={`rounded-[10px] px-3 py-2.5 flex flex-col gap-2 transition-all duration-200 ${isActive ? "opacity-100" : "opacity-65"} ${!isActive ? "bg-[#FFFFFF05] border border-[#FFFFFF14]" : ""}`}
-      style={
-        isActive
-          ? {
-              background: `${color}08`,
-              border: `1px solid ${color}33`,
-            }
-          : undefined
-      }
+      className={`rounded-xl border border-white  px-3 py-2.5 flex flex-col gap-2 transition-all duration-200 ${isActive ? "opacity-100" : "opacity-60"}`}
     >
-      {/* ── Top row ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <ModelBadge
-          emoji={model.emoji || "🚀"}
-          color={color}
-          active={isActive}
-        />
-
-        {/* Info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              marginBottom: 3,
-              flexWrap: "wrap",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                color: isActive ? "#e0e8ff" : "rgba(180,200,255,0.5)",
+      {/* Top row */}
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-4">
+          <div className="w-20 h-20">
+            <ModelAvatar
+              iconUrl={local.iconUrl}
+              isBoss={isBoss}
+              modelId={model.id}
+              active={isActive}
+              onIconUploaded={(url) => {
+                setLocal((p) => ({ ...p, iconUrl: url }));
+                onUpdate?.(model.id, { iconUrl: url });
               }}
-            >
-              {model.label}
-            </span>
-            <RoleBadge role={model.role} />
-            {isBoss && isActiveBoss && (
-              <span
-                style={{
-                  fontSize: "0.5rem",
-                  textTransform: "uppercase",
-                  color: "#ff4466",
-                  background: "rgba(255,0,66,0.12)",
-                  border: "1px solid rgba(255,0,66,0.3)",
-                  borderRadius: 4,
-                  padding: "1px 5px",
-                }}
-              >
-                ACTIVE
-              </span>
-            )}
-          </div>
-
-          {/* Stats row */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {[
-              `Scale: ${model.scale}`,
-              `Dmg: ${model.damage ?? 1}`,
-              `Rate: ${fireRateLabel(model.fireRate ?? 1)}`,
-              `Rot: ${model.rotationY}°`,
-            ].map((t) => (
-              <span
-                key={t}
-                style={{ fontSize: "0.6rem", color: "rgba(180,200,255,0.4)" }}
-              >
-                {t}
-              </span>
-            ))}
-            <span style={{ fontSize: "0.6rem", color, fontWeight: 700 }}>
-              ● {color}
-            </span>
-          </div>
-
-          {/* Gifts count (ship only) */}
-          {!isBoss && (
-            <div
-              style={{
-                marginTop: 2,
-                fontSize: "0.58rem",
-                color: model.gifts?.length
-                  ? "var(--color-gold)"
-                  : "rgba(180,200,255,0.25)",
-              }}
-            >
-              🎁{" "}
-              {model.gifts?.length
-                ? `${model.gifts.length} quà gắn`
-                : "Chưa gắn quà"}
-            </div>
-          )}
-        </div>
-
-        {/* ── Action buttons ── */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-            flexShrink: 0,
-          }}
-        >
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            title="Sửa thông số"
-            style={{
-              ...btnBase,
-              background: expanded
-                ? "rgba(0,245,255,0.18)"
-                : "rgba(0,245,255,0.08)",
-              border: "1px solid rgba(0,245,255,0.3)",
-              color: "var(--color-cyan)",
-            }}
-            className="flex items-center justify-center"
-          >
-            {expanded ? <IoClose size={18}/> : <FaEdit size={15} />}
-          </button>
-
-          {/* Toggle active (ship) */}
-          {!isBoss && onToggleShip && (
-            <ToggleSwitch
-              value={isActive}
-              onChange={() => onToggleShip(model.id)}
-              title={isActive ? "Tắt ship" : "Bật ship"}
             />
-          )}
+          </div>
 
-          {/* Toggle active boss */}
-          {isBoss && onSetActiveBoss && (
-            <ToggleSwitch
-              value={isActiveBoss}
-              onChange={() => !isActiveBoss && onSetActiveBoss(model.id)}
-              title={
-                isActiveBoss
-                  ? "Đang là Active Boss"
-                  : "Dùng làm Boss trong game"
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            {/* Name row */}
+            <div className="flex items-center justify-between mb-0.5 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-sm] font-semibold ${isActive ? "text-[#e0e8ff]" : "text-white/45"}`}
+                >
+                  Space ship: {model.label}
+                </span>
+                <RoleBadge role={model.role} />
+                {/* {isBoss && isActiveBoss && (
+                  <span className="text-[0.48rem] uppercase text-[#ff4466] bg-[rgba(255,0,66,0.12)] border border-[rgba(255,0,66,0.3)] rounded px-[5px] py-px">
+                    ACTIVE
+                  </span>
+                )} */}
+              </div>
+
+              {/* Toggle ship active */}
+              {!isBoss && onToggleShip && (
+                <div className="flex items-center gap-3">
+                  <p>Active ship:</p>
+                  <ToggleSwitch
+                    value={isActive}
+                    onChange={() => onToggleShip(model.id)}
+                    title={isActive ? "Tắt ship" : "Bật ship"}
+                  />
+                </div>
+              )}
+              {/* Toggle boss active */}
+              {isBoss && onSetActiveBoss && (
+                <div className="flex items-center gap-3">
+                  <p>Active bosss:</p>
+                  <ToggleSwitch
+                    value={isActiveBoss}
+                    onChange={() => !isActiveBoss && onSetActiveBoss(model.id)}
+                    title={
+                      isActiveBoss
+                        ? "Đang là Active Boss"
+                        : "Dùng làm Boss trong game"
+                    }
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex items-center text-xs gap-3 mt-3">
+              <div className="flex items-center gap-1 bg-amber-500/30 p-1 rounded-md border border-amber-500">
+                <p>Scale:</p>
+                <span>{model.scale}</span>
+              </div>
+              <div className="flex items-center gap-1 p-1 bg-red-500/30 rounded-md border border-red-500">
+                <p>Dame:</p>
+                <span>{model.damage ?? 1}</span>
+              </div>
+              <div className="flex items-center gap-1 p-1 bg-green-500/30 rounded-md border border-green-500">
+                <p>Rate:</p>
+                <span>{fireRateLabel(model.fireRate) ?? 1}</span>
+              </div>
+              <div className="flex items-center gap-1 p-1 bg-blue-500/30 rounded-md border border-blue-500">
+                <p>Rotate:</p>
+                <span>{model.rotationY}</span>
+              </div>
+              <div className="flex items-center gap-1 p-1 bg-white/30 rounded-md border border-white">
+                <p>Color bullet:</p>
+                <span className="font-semibold" style={{ color }}>{color}</span>
+              </div>
+            </div>
+
+            {/* Ship: danh sách tên quà kích hoạt */}
+            {!isBoss && (() => {
+              const gifts = resolveGifts(model.gifts);
+              return gifts.length ? (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {gifts.map((g) => (
+                    <span
+                      key={g.giftId}
+                      className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-gold/10 border border-gold/30 text-gold"
+                    >
+                      {g.image && (
+                        <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
+                      )}
+                      {g.giftName}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-2 text-[0.6rem] text-white/20">Chưa gắn quà</div>
+              );
+            })()}
+
+            {/* Boss: healGifts + shieldGifts + skills */}
+            {isBoss && (() => {
+              const hList = resolveGifts(model.healGifts);
+              const sList = resolveGifts(model.shieldGifts);
+              const lList = resolveGifts(model.laserGifts);
+              const mList = resolveGifts(model.missileGifts);
+              const nList = resolveGifts(model.nuclearGifts);
+
+              if (!hList.length && !sList.length && !lList.length && !mList.length && !nList.length) return null;
+
+              return (
+                <div className="mt-2 flex flex-col gap-1.5">
+                  {hList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-green-400/60 w-full uppercase tracking-tighter">💚 Heal</span>
+                      {hList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-green-400/10 border border-green-400/30 text-green-300">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {sList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-cyan-400/60 w-full uppercase tracking-tighter">🛡️ Shield</span>
+                      {sList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 text-cyan-300">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {lList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-red-500/60 w-full uppercase tracking-tighter">🔴 Laser</span>
+                      {lList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-400">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {mList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-orange-400/60 w-full uppercase tracking-tighter">🚀 Missile</span>
+                      {mList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-orange-400/10 border border-orange-400/30 text-orange-300">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {nList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-[0.55rem] text-yellow-400/60 w-full uppercase tracking-tighter">☢️ Nuclear</span>
+                      {nList.map((g) => (
+                        <span key={g.giftId} className="flex items-center gap-1 text-[0.6rem] px-1.5 py-0.5 rounded-full bg-yellow-400/10 border border-yellow-400/30 text-yellow-300">
+                          {g.image && <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />}
+                          {g.giftName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+        <div className="flex items-end justify-end">
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Edit */}
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              title="Sửa thông số"
+              className={`${actionBtn} border-[rgba(0,245,255,0.3)] text-cyan-1 ${expanded ? "bg-[rgba(0,245,255,0.18)]" : "bg-[rgba(0,245,255,0.08)] hover:bg-[rgba(0,245,255,0.18)]"}`}
+            >
+              {expanded ? (
+                <IoClose size={17} className="text-cyan-1" />
+              ) : (
+                <FaEdit size={13} className="text-cyan-1" />
+              )}
+            </button>
+
+            {/* Replace GLB */}
+            <ReplaceGLBButton
+              modelId={model.id}
+              onReplaced={(updated) =>
+                onUpdate?.(model.id, {
+                  path: updated.path,
+                  filename: updated.filename,
+                  builtIn: false,
+                })
               }
             />
-          )}
 
-          {/* Delete custom */}
-          {onDelete && (
-            <button
-              onClick={() => onDelete(model.id)}
-              title="Xóa model"
-              style={{
-                ...btnBase,
-                background: "rgba(255,51,102,0.08)",
-                border: "1px solid rgba(255,51,102,0.3)",
-                color: "#ff5577",
-              }}
-            >
-              🗑
-            </button>
-          )}
+            {/* Delete */}
+            {onDelete && (
+              <button
+                onClick={() => {
+                  if (window.confirm(`Xóa "${model.label}"?`))
+                    onDelete(model.id);
+                }}
+                title="Xóa model"
+                className={`${actionBtn} bg-[rgba(255,51,102,0.08)] border-[rgba(255,51,102,0.3)] hover:bg-[rgba(255,51,102,0.18)]`}
+              >
+                <span className="text-[#ff5577] text-sm">🗑</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* ── Edit form ── */}
       {expanded && (
         <EditForm
           local={local}

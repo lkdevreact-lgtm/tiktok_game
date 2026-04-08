@@ -60,6 +60,31 @@ export function ModelProvider({ children }) {
     });
   });
 
+  // Boss heal/shield gift maps: { [giftId]: true }
+  const bossHealGiftMap = {};
+  (activeBossModel?.healGifts || []).forEach((id) => {
+    bossHealGiftMap[String(id)] = true;
+  });
+  const bossShieldGiftMap = {};
+  (activeBossModel?.shieldGifts || []).forEach((id) => {
+    bossShieldGiftMap[String(id)] = true;
+  });
+
+  const bossLaserGiftMap = {};
+  (activeBossModel?.laserGifts || []).forEach((id) => {
+    bossLaserGiftMap[String(id)] = true;
+  });
+
+  const bossMissileGiftMap = {};
+  (activeBossModel?.missileGifts || []).forEach((id) => {
+    bossMissileGiftMap[String(id)] = true;
+  });
+
+  const bossNuclearGiftMap = {};
+  (activeBossModel?.nuclearGifts || []).forEach((id) => {
+    bossNuclearGiftMap[String(id)] = true;
+  });
+
   // ── Add model ────────────────────────────────────────────────
   const addModel = useCallback((model) => {
     _setAndCache((prev) => [...prev, model]);
@@ -139,6 +164,11 @@ export function ModelProvider({ children }) {
         activeBossModel,
         activeBossId,
         giftModelMap,
+        bossHealGiftMap,
+        bossShieldGiftMap,
+        bossLaserGiftMap,
+        bossMissileGiftMap,
+        bossNuclearGiftMap,
         addModel,
         updateModel,
         removeModel,

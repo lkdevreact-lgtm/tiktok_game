@@ -14,21 +14,18 @@ function BossMini() {
     return c;
   }, [scene]);
 
-
   return (
-    <group  rotation={[0.10, 0, 0]}>
+    <group rotation={[0.10, 0, 0]}>
       <primitive object={model} scale={5.35} />
     </group>
   );
 }
 
-/**
- * Avatar-sized static preview of the boss GLB for the HUD.
- */
 export default function BossHudPreview({ size = 40 }) {
   return (
     <Canvas
-      style={{ width: size, height: size, display: "block" }}
+      className="block"
+      style={{ width: size, height: size }}
       camera={{ position: [0, 0.15, 3.4], fov: 38 }}
       gl={{ alpha: true, antialias: true }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}

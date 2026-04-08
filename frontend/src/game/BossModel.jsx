@@ -2,7 +2,6 @@ import { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
-// Preload boss model mặc định
 useGLTF.preload("/models/spaceship_boss.glb");
 
 /**

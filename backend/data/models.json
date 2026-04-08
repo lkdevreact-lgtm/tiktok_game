@@ -8,13 +8,19 @@
     "scale": 0.25,
     "gunTipOffset": 0.1,
     "rotationY": 45,
-    "bulletColor": "#00f5ff",
+    "bulletColor": "#f00f0f",
     "builtIn": true,
     "active": true,
     "damage": 1,
     "fireRate": 1,
-    "gifts": [],
-    "updatedAt": "2026-04-06T10:24:53.111Z"
+    "gifts": [
+      5655
+    ],
+    "updatedAt": "2026-04-08T01:36:51.791Z",
+    "iconUrl": "/images/icons/icon_1775532263967_avatar.jpg",
+    "healGifts": [],
+    "shieldGifts": [],
+    "maxShots": 10
   },
   {
     "id": "spaceship_2",
@@ -25,13 +31,19 @@
     "scale": 0.35,
     "gunTipOffset": 0.1,
     "rotationY": -100,
-    "bulletColor": "#bf00ff",
+    "bulletColor": "#0011ff",
     "builtIn": true,
     "active": true,
     "damage": 3,
     "fireRate": 0.5,
-    "gifts": [],
-    "updatedAt": "2026-04-06T09:58:36.393Z"
+    "gifts": [
+      7934
+    ],
+    "updatedAt": "2026-04-07T10:24:51.157Z",
+    "iconUrl": "/images/icons/icon_1775532290904_avatar.jpg",
+    "healGifts": [],
+    "shieldGifts": [],
+    "maxShots": 5
   },
   {
     "id": "spaceship_3",
@@ -42,23 +54,26 @@
     "scale": 0.04,
     "gunTipOffset": 0.5,
     "rotationY": 150,
-    "bulletColor": "#ffaa00",
+    "bulletColor": "#ff0000",
     "builtIn": true,
-    "active": false,
+    "active": true,
     "damage": 5,
     "fireRate": 0.3,
     "gifts": [
-      5655
+      13651
     ],
-    "updatedAt": "2026-04-06T10:16:03.519Z"
+    "updatedAt": "2026-04-07T10:25:39.798Z",
+    "healGifts": [],
+    "shieldGifts": [],
+    "maxShots": 5
   },
   {
     "id": "spaceship_boss",
-    "label": "Boss (Default)",
+    "label": "Boss",
     "emoji": "💀",
     "role": "boss",
     "path": "/models/spaceship_boss.glb",
-    "scale": 4.5,
+    "scale": 3,
     "gunTipOffset": 0,
     "rotationY": 90,
     "bulletColor": "#ff0044",
@@ -67,7 +82,68 @@
     "damage": 1,
     "fireRate": 1,
     "gifts": [],
-    "updatedAt": "2026-04-06T10:14:09.063Z"
+    "healGifts": [
+      10961
+    ],
+    "shieldGifts": [
+      5827
+    ],
+    "weapons": {
+      "laser": {
+        "gifts": [],
+        "damagePercent": 3
+      },
+      "missile": {
+        "gifts": [],
+        "damagePercent": 6
+      },
+      "nuclear": {
+        "gifts": [],
+        "damagePercent": 10
+      }
+    },
+    "updatedAt": "2026-04-08T04:35:13.426Z",
+    "maxShots": 20,
+    "laserGifts": [],
+    "missileGifts": [
+      5655
+    ],
+    "nuclearGifts": [
+      15232
+    ]
+  },
+  {
+    "id": "space_ship_big",
+    "label": "Mother Ship",
+    "emoji": "🛸",
+    "role": "space_ship_big",
+    "path": "/models/space_ship_big.glb",
+    "scale": 1.5,
+    "gunTipOffset": 0,
+    "rotationY": 90,
+    "bulletColor": "#00f5ff",
+    "builtIn": true,
+    "active": true,
+    "damage": 1,
+    "fireRate": 1,
+    "gifts": [],
+    "healGifts": [],
+    "shieldGifts": [],
+    "weapons": {
+      "laser": {
+        "gifts": [],
+        "damagePercent": 3
+      },
+      "missile": {
+        "gifts": [],
+        "damagePercent": 6
+      },
+      "nuclear": {
+        "gifts": [],
+        "damagePercent": 10
+      }
+    },
+    "updatedAt": "2026-04-07T08:55:00.000Z"
   },
   {
     "id": "custom_1775465375358_space_ship_5",
@@ -86,6 +162,9 @@
     "builtIn": false,
     "active": true,
     "uploadedAt": "2026-04-06T08:49:35.366Z",
-    "updatedAt": "2026-04-06T10:03:25.122Z"
+    "updatedAt": "2026-04-07T10:25:35.022Z",
+    "healGifts": [],
+    "shieldGifts": [],
+    "maxShots": 5
   }
 ]
