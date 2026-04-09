@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import { FIRE_RATE_OPTIONS, DAMAGE_OPTIONS } from "../ui/styles";
 import { API_URL } from "../../utils/constant";
@@ -7,6 +7,129 @@ const inputCls =
   "w-full rounded-lg px-2.5 py-1.5 text-[0.72rem] bg-black/30 border border-white/10 text-[#e0e8ff] outline-none focus:border-cyan-400/50 transition-colors";
 const labelCls =
   "block text-[0.62rem] uppercase tracking-widest text-white/40 mb-1";
+
+/* ─── Custom multi-select dropdown for gifts (Upload form) ──── */
+function GiftSelect({ selected = [], activeGifts = [], onChange, accentColor = "#00f5ff" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const toggle = (giftId) => {
+    const numId = Number(giftId);
+    const next = selected.includes(numId)
+      ? selected.filter((x) => x !== numId)
+      : [...selected, numId];
+    onChange(next);
+  };
+
+  const selectedGifts = activeGifts.filter((g) => selected.includes(Number(g.giftId)));
+
+  if (activeGifts.length === 0) {
+    return (
+      <div className="text-[0.65rem] text-white/30 italic">
+        Chưa có quà active. Bật quà trong Gift Config.
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* Select trigger */}
+      <div
+        onClick={() => setOpen((v) => !v)}
+        className={`
+          w-full min-h-[36px] rounded-lg px-2.5 py-1.5 text-[0.72rem] bg-black/30
+          border cursor-pointer transition-all duration-150 flex items-center gap-1.5 flex-wrap
+          ${open ? "border-cyan-400/50 ring-1 ring-cyan-400/20" : "border-white/10 hover:border-white/20"}
+        `}
+      >
+        {selectedGifts.length === 0 ? (
+          <span className="text-white/30 text-[0.7rem]">Chọn quà...</span>
+        ) : (
+          selectedGifts.map((g) => (
+            <span
+              key={g.giftId}
+              className="flex items-center gap-1 text-[0.62rem] px-1.5 py-0.5 rounded-full border shrink-0"
+              style={{
+                background: `${accentColor}14`,
+                borderColor: `${accentColor}40`,
+                color: accentColor,
+              }}
+            >
+              {g.image && (
+                <img src={g.image} alt={g.giftName} className="w-3.5 h-3.5 rounded-sm object-contain" />
+              )}
+              {g.giftName}
+              <button
+                onClick={(e) => { e.stopPropagation(); toggle(g.giftId); }}
+                className="ml-0.5 text-[0.6rem] opacity-60 hover:opacity-100 cursor-pointer bg-transparent border-0 p-0"
+                style={{ color: accentColor }}
+              >
+                ✕
+              </button>
+            </span>
+          ))
+        )}
+        <span className={`ml-auto text-white/30 text-[0.6rem] shrink-0 transition-transform duration-150 ${open ? "rotate-180" : ""}`}>
+          ▼
+        </span>
+      </div>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-50 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-[#0d1117] shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden">
+          <div className="max-h-[180px] overflow-y-auto p-1.5 flex flex-col gap-0.5">
+            {activeGifts.map((gift) => {
+              const checked = selected.includes(Number(gift.giftId));
+              return (
+                <div
+                  key={gift.giftId}
+                  onClick={() => toggle(gift.giftId)}
+                  className={`
+                    flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded-md transition-all duration-100
+                    ${checked ? "bg-[rgba(0,245,255,0.08)]" : "hover:bg-white/[0.04]"}
+                  `}
+                  style={checked ? { background: `${accentColor}14` } : undefined}
+                >
+                  <div
+                    className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all duration-150"
+                    style={{
+                      borderColor: checked ? accentColor : "rgba(255,255,255,0.15)",
+                      background: checked ? accentColor : "transparent",
+                    }}
+                  >
+                    {checked && (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                        <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  {gift.image
+                    ? <img src={gift.image} alt={gift.giftName} className="w-5 h-5 rounded-sm object-contain shrink-0" />
+                    : <span className="text-base shrink-0">🎁</span>
+                  }
+                  <span className={`text-[0.7rem] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${checked ? "text-[#e0e8ff]" : "text-white/50"}`}>
+                    {gift.giftName}
+                  </span>
+                  <span className="text-[0.6rem] text-gold shrink-0">
+                    💎{gift.diamonds}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function UploadForm({ onSuccess, activeGifts = [] }) {
   const [file, setFile] = useState(null);
@@ -54,16 +177,6 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
     if (iconPreview) URL.revokeObjectURL(iconPreview);
     setIconPreview(null);
     if (iconRef.current) iconRef.current.value = "";
-  };
-
-  const toggleGift = (giftId) => {
-    const numId = Number(giftId);
-    setParams((p) => ({
-      ...p,
-      gifts: p.gifts.includes(numId)
-        ? p.gifts.filter((x) => x !== numId)
-        : [...p.gifts, numId],
-    }));
   };
 
   const handleUpload = async () => {
@@ -393,54 +506,11 @@ export default function UploadForm({ onSuccess, activeGifts = [] }) {
                   </span>
                 )}
               </label>
-              {activeGifts.length === 0 ? (
-                <div className="text-[0.65rem] text-white/30 italic">
-                  Chưa có quà active. Bật quà trong Gift Config.
-                </div>
-              ) : (
-                <div className="max-h-[130px] overflow-y-auto flex flex-col gap-1">
-                  {activeGifts.map((gift) => {
-                    const checked = params.gifts.includes(Number(gift.giftId));
-                    return (
-                      <label
-                        key={gift.giftId}
-                        className={`
-                          flex items-center gap-2 cursor-pointer px-1.5 py-1 rounded-md border transition-all duration-150
-                          ${
-                            checked
-                              ? "bg-[rgba(0,245,255,0.08)] border-[rgba(0,245,255,0.25)]"
-                              : "bg-white/[0.02] border-white/[0.06]"
-                          }
-                        `}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleGift(gift.giftId)}
-                          className="w-3 h-3 shrink-0 accent-cyan-400"
-                        />
-                        {gift.image ? (
-                          <img
-                            src={gift.image}
-                            alt={gift.giftName}
-                            className="w-5 h-5 rounded object-contain shrink-0"
-                          />
-                        ) : (
-                          <span className="text-base shrink-0">🎁</span>
-                        )}
-                        <span
-                          className={`text-[0.7rem] flex-1 overflow-hidden text-ellipsis whitespace-nowrap ${checked ? "text-[#e0e8ff]" : "text-white/50"}`}
-                        >
-                          {gift.giftName}
-                        </span>
-                        <span className="text-[0.6rem] text-gold shrink-0">
-                          💎{gift.diamonds}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
+              <GiftSelect
+                selected={params.gifts}
+                activeGifts={activeGifts}
+                onChange={(next) => setParams((p) => ({ ...p, gifts: next }))}
+              />
             </div>
           )}
         </div>
