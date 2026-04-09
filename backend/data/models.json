@@ -102,7 +102,7 @@
         "damagePercent": 10
       }
     },
-    "updatedAt": "2026-04-08T04:35:13.426Z",
+    "updatedAt": "2026-04-09T06:59:35.956Z",
     "maxShots": 20,
     "laserGifts": [],
     "missileGifts": [
@@ -110,7 +110,10 @@
     ],
     "nuclearGifts": [
       15232
-    ]
+    ],
+    "healAmount": 5,
+    "shieldDuration": 10,
+    "nuclearKillCount": 2
   },
   {
     "id": "space_ship_big",

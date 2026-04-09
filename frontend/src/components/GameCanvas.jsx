@@ -200,7 +200,7 @@ export default function GameCanvas() {
 
       <div className="flex-1 relative mt-14">
         <Canvas
-          camera={{ position: [0, 1.5, 9], fov: 55 }}
+          camera={{ position: [0, 1.5, 8], fov: 55 }}
           gl={{ antialias: true, alpha: false }}
           style={{ background: "#000" }}
         >

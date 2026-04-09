@@ -105,6 +105,9 @@ export default function ModelCard({
     laserGifts: model.laserGifts || [],
     missileGifts: model.missileGifts || [],
     nuclearGifts: model.nuclearGifts || [],
+    healAmount: model.healAmount ?? 3,
+    shieldDuration: model.shieldDuration ?? 5,
+    nuclearKillCount: model.nuclearKillCount ?? 0,
   });
 
   const isBoss = model.role === "boss";
@@ -139,6 +142,9 @@ export default function ModelCard({
       laserGifts: local.laserGifts,
       missileGifts: local.missileGifts,
       nuclearGifts: local.nuclearGifts,
+      healAmount: Number(local.healAmount),
+      shieldDuration: Number(local.shieldDuration),
+      nuclearKillCount: Number(local.nuclearKillCount),
     };
 
     // If there's a pending GLB file, upload it first
@@ -230,27 +236,51 @@ export default function ModelCard({
                 </div>
               )}
             </div>
-            <div className="flex items-center text-xs gap-3 mt-3">
+            <div className="flex items-center text-xs gap-3 mt-3 flex-wrap">
               <div className="flex items-center gap-1 bg-amber-500/30 p-1 rounded-md border border-amber-500">
                 <p>Scale:</p>
                 <span>{model.scale}</span>
               </div>
-              <div className="flex items-center gap-1 p-1 bg-red-500/30 rounded-md border border-red-500">
-                <p>Dame:</p>
-                <span>{model.damage ?? 1}</span>
-              </div>
-              <div className="flex items-center gap-1 p-1 bg-green-500/30 rounded-md border border-green-500">
-                <p>Rate:</p>
-                <span>{fireRateLabel(model.fireRate) ?? 1}</span>
-              </div>
+              {!isBoss && (
+                <>
+                  <div className="flex items-center gap-1 p-1 bg-red-500/30 rounded-md border border-red-500">
+                    <p>Dame:</p>
+                    <span>{model.damage ?? 1}</span>
+                  </div>
+                  <div className="flex items-center gap-1 p-1 bg-green-500/30 rounded-md border border-green-500">
+                    <p>Rate:</p>
+                    <span>{fireRateLabel(model.fireRate) ?? 1}</span>
+                  </div>
+                </>
+              )}
               <div className="flex items-center gap-1 p-1 bg-blue-500/30 rounded-md border border-blue-500">
                 <p>Rotate:</p>
                 <span>{model.rotationY}</span>
               </div>
-              <div className="flex items-center gap-1 p-1 bg-white/30 rounded-md border border-white">
-                <p>Color bullet:</p>
-                <span className="font-semibold" style={{ color }}>{color}</span>
-              </div>
+              {!isBoss && (
+                <div className="flex items-center gap-1 p-1 bg-white/30 rounded-md border border-white">
+                  <p>Color bullet:</p>
+                  <span className="font-semibold" style={{ color }}>{color}</span>
+                </div>
+              )}
+              {isBoss && (
+                <>
+                  <div className="flex items-center gap-1 p-1 bg-green-500/30 rounded-md border border-green-500">
+                    <p>💚 Heal:</p>
+                    <span>{model.healAmount ?? 3}%</span>
+                  </div>
+                  <div className="flex items-center gap-1 p-1 bg-cyan-500/30 rounded-md border border-cyan-500">
+                    <p>🛡️ Shield:</p>
+                    <span>{model.shieldDuration ?? 5}s</span>
+                  </div>
+                  {(model.nuclearKillCount ?? 0) > 0 && (
+                    <div className="flex items-center gap-1 p-1 bg-yellow-500/30 rounded-md border border-yellow-500">
+                      <p>☢️ Nuke Kill:</p>
+                      <span>{model.nuclearKillCount}</span>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Ship: danh sách tên quà kích hoạt */}

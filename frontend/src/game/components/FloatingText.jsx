@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 
@@ -51,7 +51,7 @@ export default function FloatingText({
             fontSize: isShield ? "1.5rem" : isHeal ? "2rem" : "1.8rem",
           }}
         >
-          {isHeal ? `+${amount}` : isShield ? "BLOCKED" : `-${amount}`}
+          {isHeal ? `+${amount}` : isShield ? "" : `-${amount}`}
         </div>
       </Html>
     </group>

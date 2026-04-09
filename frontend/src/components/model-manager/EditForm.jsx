@@ -317,20 +317,22 @@ export default function EditForm({
               />
             </div>
 
-            <div>
-              <label className={labelCls}>Gun Tip Offset</label>
-              <input
-                type="number"
-                step="0.05"
-                min="-5"
-                max="10"
-                className={inputCls}
-                value={local.gunTipOffset}
-                onChange={(e) =>
-                  setLocal((p) => ({ ...p, gunTipOffset: e.target.value }))
-                }
-              />
-            </div>
+            {!isBoss && (
+              <div>
+                <label className={labelCls}>Gun Tip Offset</label>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="-5"
+                  max="10"
+                  className={inputCls}
+                  value={local.gunTipOffset}
+                  onChange={(e) =>
+                    setLocal((p) => ({ ...p, gunTipOffset: e.target.value }))
+                  }
+                />
+              </div>
+            )}
 
             <div>
               <label className={labelCls}>Rotation Y (°)</label>
@@ -347,60 +349,66 @@ export default function EditForm({
               />
             </div>
 
-            <div>
-              <label className={labelCls}>Bullet Color</label>
-              <div className="flex gap-1.5 items-center">
-                <input
-                  type="color"
-                  value={local.bulletColor}
-                  onChange={(e) =>
-                    setLocal((p) => ({ ...p, bulletColor: e.target.value }))
-                  }
-                  className="w-[34px] h-[28px] border-0 rounded cursor-pointer bg-transparent p-0 shrink-0"
-                />
-                <input
-                  className={`${inputCls} flex-1`}
-                  value={local.bulletColor}
-                  onChange={(e) =>
-                    setLocal((p) => ({ ...p, bulletColor: e.target.value }))
-                  }
-                />
+            {!isBoss && (
+              <div>
+                <label className={labelCls}>Bullet Color</label>
+                <div className="flex gap-1.5 items-center">
+                  <input
+                    type="color"
+                    value={local.bulletColor}
+                    onChange={(e) =>
+                      setLocal((p) => ({ ...p, bulletColor: e.target.value }))
+                    }
+                    className="w-[34px] h-[28px] border-0 rounded cursor-pointer bg-transparent p-0 shrink-0"
+                  />
+                  <input
+                    className={`${inputCls} flex-1`}
+                    value={local.bulletColor}
+                    onChange={(e) =>
+                      setLocal((p) => ({ ...p, bulletColor: e.target.value }))
+                    }
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className={labelCls}>Damage</label>
-              <select
-                className={inputCls}
-                value={local.damage}
-                onChange={(e) =>
-                  setLocal((p) => ({ ...p, damage: Number(e.target.value) }))
-                }
-              >
-                {DAMAGE_OPTIONS.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {!isBoss && (
+              <div>
+                <label className={labelCls}>Damage</label>
+                <select
+                  className={inputCls}
+                  value={local.damage}
+                  onChange={(e) =>
+                    setLocal((p) => ({ ...p, damage: Number(e.target.value) }))
+                  }
+                >
+                  {DAMAGE_OPTIONS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
-            <div>
-              <label className={labelCls}>Fire Rate</label>
-              <select
-                className={inputCls}
-                value={local.fireRate}
-                onChange={(e) =>
-                  setLocal((p) => ({ ...p, fireRate: Number(e.target.value) }))
-                }
-              >
-                {FIRE_RATE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {!isBoss && (
+              <div>
+                <label className={labelCls}>Fire Rate</label>
+                <select
+                  className={inputCls}
+                  value={local.fireRate}
+                  onChange={(e) =>
+                    setLocal((p) => ({ ...p, fireRate: Number(e.target.value) }))
+                  }
+                >
+                  {FIRE_RATE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {!isBoss && (
               <div>
@@ -465,6 +473,21 @@ export default function EditForm({
                   }
                   accentColor="#4ade80"
                 />
+                <div className="mt-2 flex items-center gap-2">
+                  <label className={`${labelCls} mb-0 shrink-0`}>Hồi máu (%)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    max="100"
+                    className={`${inputCls} w-20`}
+                    value={local.healAmount ?? 3}
+                    onChange={(e) =>
+                      setLocal((p) => ({ ...p, healAmount: Number(e.target.value) }))
+                    }
+                  />
+                  <span className="text-[0.58rem] text-green-400/50">% HP mỗi lần</span>
+                </div>
               </div>
 
               <div>
@@ -484,6 +507,21 @@ export default function EditForm({
                   }
                   accentColor="#00f5ff"
                 />
+                <div className="mt-2 flex items-center gap-2">
+                  <label className={`${labelCls} mb-0 shrink-0`}>Thời gian (s)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    max="60"
+                    className={`${inputCls} w-20`}
+                    value={local.shieldDuration ?? 5}
+                    onChange={(e) =>
+                      setLocal((p) => ({ ...p, shieldDuration: Number(e.target.value) }))
+                    }
+                  />
+                  <span className="text-[0.58rem] text-cyan-400/50">giây mỗi lần</span>
+                </div>
               </div>
 
               <div>
@@ -541,6 +579,21 @@ export default function EditForm({
                   }
                   accentColor="#facc15"
                 />
+                <div className="mt-2 flex items-center gap-2">
+                  <label className={`${labelCls} mb-0 shrink-0`}>Số ship bị huỷ</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="999"
+                    className={`${inputCls} w-20`}
+                    value={local.nuclearKillCount ?? 0}
+                    onChange={(e) =>
+                      setLocal((p) => ({ ...p, nuclearKillCount: Number(e.target.value) }))
+                    }
+                  />
+                  <span className="text-[0.58rem] text-yellow-400/50">0 = huỷ tất cả</span>
+                </div>
               </div>
             </>
           )}

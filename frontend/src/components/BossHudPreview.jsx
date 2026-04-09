@@ -26,7 +26,7 @@ export default function BossHudPreview({ size = 40 }) {
     <Canvas
       className="block"
       style={{ width: size, height: size }}
-      camera={{ position: [0, 0.15, 3.4], fov: 38 }}
+      camera={{ position: [0, 0.15, 3.4], fov: 18 }}
       gl={{ alpha: true, antialias: true }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
     >

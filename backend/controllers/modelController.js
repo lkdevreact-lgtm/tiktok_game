@@ -151,6 +151,9 @@ export function uploadModel(req, res) {
     laserGifts:   [],
     missileGifts: [],
     nuclearGifts: [],
+    healAmount:       parseInt(req.body.healAmount)       || 3,
+    shieldDuration:   parseInt(req.body.shieldDuration)   || 5,
+    nuclearKillCount: parseInt(req.body.nuclearKillCount) || 0,
     builtIn:      false,
     active:       true,
     uploadedAt:   new Date().toISOString(),
@@ -202,6 +205,7 @@ export function updateModel(req, res) {
     "label", "emoji", "iconUrl", "role", "scale", "gunTipOffset",
     "rotationY", "bulletColor", "damage", "fireRate", "maxShots", "gifts", "active",
     "healGifts", "shieldGifts", "laserGifts", "missileGifts", "nuclearGifts",
+    "healAmount", "shieldDuration", "nuclearKillCount",
   ];
   allowed.forEach((key) => {
     if (req.body[key] !== undefined) db[idx][key] = req.body[key];
