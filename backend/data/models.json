@@ -10,13 +10,13 @@
     "rotationY": 45,
     "bulletColor": "#f00f0f",
     "builtIn": true,
-    "active": true,
+    "active": false,
     "damage": 1,
     "fireRate": 1,
     "gifts": [
       5655
     ],
-    "updatedAt": "2026-04-08T01:36:51.791Z",
+    "updatedAt": "2026-04-09T01:06:28.135Z",
     "iconUrl": "/images/icons/icon_1775532263967_avatar.jpg",
     "healGifts": [],
     "shieldGifts": [],
@@ -60,12 +60,16 @@
     "damage": 5,
     "fireRate": 0.3,
     "gifts": [
-      13651
+      13651,
+      5655
     ],
-    "updatedAt": "2026-04-07T10:25:39.798Z",
+    "updatedAt": "2026-04-09T01:06:38.345Z",
     "healGifts": [],
     "shieldGifts": [],
-    "maxShots": 5
+    "maxShots": 5,
+    "laserGifts": [],
+    "missileGifts": [],
+    "nuclearGifts": []
   },
   {
     "id": "spaceship_boss",
