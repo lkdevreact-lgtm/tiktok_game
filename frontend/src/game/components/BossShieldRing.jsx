@@ -2,8 +2,9 @@ import { useRef, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html, useGLTF } from "@react-three/drei";
 import { useGame } from "../../hooks/useGame";
+import { assetUrl } from "../../utils/constant";
 
-useGLTF.preload("/models/shield.glb");
+useGLTF.preload(assetUrl("/models/shield.glb"));
 
 export default function BossShieldRing({
   bossRef,
@@ -16,7 +17,7 @@ export default function BossShieldRing({
   const groupRef = useRef();
   const [msLeft, setMsLeft] = useState(0);
 
-  const { scene: shieldScene } = useGLTF("/models/shield.glb");
+  const { scene: shieldScene } = useGLTF(assetUrl("/models/shield.glb"));
 
   // Countdown based on shieldEndTime
   useEffect(() => {

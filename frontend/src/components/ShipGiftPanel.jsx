@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useModels } from "../hooks/useModels";
 import { useGifts } from "../hooks/useGifts";
-import { IMAGES } from "../utils/constant";
+import { IMAGES, assetUrl } from "../utils/constant";
 
 const LS_KEY = "shipGiftPanelPos";
 
@@ -186,7 +186,7 @@ export default function ShipGiftPanel() {
                   <p>x1</p>
                   <div className="flex items-center gap-2">
                     <img
-                      src={row.ship.iconUrl || IMAGES.SHIP_USER}
+                      src={row.ship.iconUrl ? assetUrl(row.ship.iconUrl) : IMAGES.SHIP_USER}
                       alt={row.ship.label}
                       className="w-7 h-7 rounded-md object-cover shrink-0"
                       style={{ border: "1px solid rgba(255,255,255,0.15)" }}

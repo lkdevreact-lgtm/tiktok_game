@@ -7,16 +7,17 @@ import { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useModels } from "./useModels";
+import { assetUrl } from "../utils/constant";
 
-useGLTF.preload("/models/spaceship_1.glb");
-useGLTF.preload("/models/spaceship_2.glb");
-useGLTF.preload("/models/spaceship_3.glb");
+useGLTF.preload(assetUrl("/models/spaceship_1.glb"));
+useGLTF.preload(assetUrl("/models/spaceship_2.glb"));
+useGLTF.preload(assetUrl("/models/spaceship_3.glb"));
 
 try {
   const cached = JSON.parse(localStorage.getItem("modelsCache") || "[]");
   cached.forEach((m) => {
     if (!m.builtIn && m.path) {
-      useGLTF.clear(m.path);
+      useGLTF.clear(assetUrl(m.path));
     }
   });
 } catch (_) {console.log(_);
@@ -55,7 +56,7 @@ export function useShipModels() {
   const { allShipModels: shipModels } = useModels();
   const MAX_MODELS = 8;
   const urlSlots = Array.from({ length: MAX_MODELS }, (_, i) =>
-    shipModels[i]?.path ?? "/models/spaceship_1.glb"
+    assetUrl(shipModels[i]?.path ?? "/models/spaceship_1.glb")
   );
 
   const s0 = useGlbScene(urlSlots[0]);

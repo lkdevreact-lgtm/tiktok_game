@@ -7,7 +7,7 @@ import { createBullet, createExplosion, createExhaustFlare, createHealParticles,
 import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
-import { SETTINGS_GAME } from "../utils/constant";
+import { SETTINGS_GAME, assetUrl } from "../utils/constant";
 import { playAttackSound, playSpawnSound, playHiddenSound, getHealVolume } from "./audio";
 import ShipLabel from "./components/ShipLabel";
 import BossLabel from "./components/BossLabel";
@@ -1037,7 +1037,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       />
       <BossModel
         bossRef={bossRef}
-        url={activeBossModel?.path ?? "/models/spaceship_boss.glb"}
+        url={assetUrl(activeBossModel?.path ?? "/models/spaceship_boss.glb")}
         scale={activeBossModel?.scale ?? 4.5}
       />
       <BossLabel bossRef={bossRef} />

@@ -1,11 +1,12 @@
 import { Suspense, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
+import { assetUrl } from "../utils/constant";
 
-useGLTF.preload("/models/spaceship_boss.glb");
+useGLTF.preload(assetUrl("/models/spaceship_boss.glb"));
 
 function BossMini() {
-  const { scene } = useGLTF("/models/spaceship_boss.glb");
+  const { scene } = useGLTF(assetUrl("/models/spaceship_boss.glb"));
   const model = useMemo(() => {
     const c = scene.clone(true);
     c.traverse((child) => {

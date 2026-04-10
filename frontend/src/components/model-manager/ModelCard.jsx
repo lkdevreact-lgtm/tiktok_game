@@ -3,7 +3,7 @@ import RoleBadge from "../ui/RoleBadge";
 import ToggleSwitch from "../ui/ToggleSwitch";
 import EditForm from "./EditForm";
 import { FaEdit, FaCamera } from "react-icons/fa";
-import { API_URL, IMAGES } from "../../utils/constant";
+import { API_URL, IMAGES, assetUrl } from "../../utils/constant";
 import { FIRE_RATE_OPTIONS } from "../ui/styles";
 import { useGifts } from "../../hooks/useGifts";
 
@@ -15,7 +15,7 @@ function ModelAvatar({ iconUrl, isBoss, modelId, onIconUploaded, active }) {
   const [uploading, setUploading] = useState(false);
   const [hovered, setHovered] = useState(false);
 
-  const src = iconUrl || (isBoss ? IMAGES.SHIP_BOSS : IMAGES.SHIP_USER);
+  const src = (iconUrl ? assetUrl(iconUrl) : null) || (isBoss ? IMAGES.SHIP_BOSS : IMAGES.SHIP_USER);
 
   const handleUpload = async (e) => {
     const f = e.target.files?.[0];
@@ -412,7 +412,7 @@ export default function ModelCard({
           onSave={handleSave}
           onClose={() => setShowEditModal(false)}
           isBoss={isBoss}
-          modelPath={model.path}
+          modelPath={assetUrl(model.path)}
         />
       )}
     </div>

@@ -1,8 +1,9 @@
 import { useRef, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { assetUrl } from "../utils/constant";
 
-useGLTF.preload("/models/spaceship_boss.glb");
+useGLTF.preload(assetUrl("/models/spaceship_boss.glb"));
 
 /**
  * BossModel — load boss GLB động theo url prop
@@ -13,7 +14,7 @@ useGLTF.preload("/models/spaceship_boss.glb");
 export default function BossModel({
   bossRef: externalRef,
   scale = 4.5,
-  url = "/models/spaceship_boss.glb",
+  url = assetUrl("/models/spaceship_boss.glb"),
 }) {
   const { scene: gltfScene } = useGLTF(url);
   const groupRef = useRef();

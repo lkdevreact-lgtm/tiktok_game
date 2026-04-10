@@ -16,6 +16,18 @@ export const MODELS_DB  = join(__dirname, "../data/models.json");
 // Đảm bảo thư mục icons tồn tại
 if (!existsSync(ICONS_DIR)) mkdirSync(ICONS_DIR, { recursive: true });
 
+// ── Unique filename helper ─────────────────────────────────────
+function uniqueName(dir, name) {
+  const safe = name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  if (!existsSync(join(dir, safe))) return safe;
+  const dot = safe.lastIndexOf(".");
+  const base = dot > 0 ? safe.slice(0, dot) : safe;
+  const ext  = dot > 0 ? safe.slice(dot) : "";
+  let i = 1;
+  while (existsSync(join(dir, `${base}_${i}${ext}`))) i++;
+  return `${base}_${i}${ext}`;
+}
+
 // ── JSON DB helpers ────────────────────────────────────────────
 export function readDB() {
   try {
@@ -34,8 +46,7 @@ export function writeDB(data) {
 const glbStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, MODELS_DIR),
   filename: (_req, file, cb) => {
-    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    cb(null, `custom_${Date.now()}_${safe}`);
+    cb(null, uniqueName(MODELS_DIR, file.originalname));
   },
 });
 
@@ -52,9 +63,7 @@ export const upload = multer({
 const iconStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, ICONS_DIR),
   filename: (_req, file, cb) => {
-    const ext  = file.originalname.split(".").pop().toLowerCase();
-    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    cb(null, `icon_${Date.now()}_${safe}`);
+    cb(null, uniqueName(ICONS_DIR, file.originalname));
   },
 });
 
@@ -76,9 +85,8 @@ export const uploadModelWithIcon = multer({
       else cb(null, ICONS_DIR);
     },
     filename: (_req, file, cb) => {
-      const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const prefix = file.fieldname === "file" ? "custom" : "icon";
-      cb(null, `${prefix}_${Date.now()}_${safe}`);
+      const dir = file.fieldname === "file" ? MODELS_DIR : ICONS_DIR;
+      cb(null, uniqueName(dir, file.originalname));
     },
   }),
   limits: { fileSize: 150 * 1024 * 1024 },
