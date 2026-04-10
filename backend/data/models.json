@@ -16,11 +16,18 @@
     "gifts": [
       5655
     ],
-    "updatedAt": "2026-04-09T01:06:28.135Z",
+    "updatedAt": "2026-04-10T02:41:18.920Z",
     "iconUrl": "/images/icons/icon_1775532263967_avatar.jpg",
     "healGifts": [],
     "shieldGifts": [],
-    "maxShots": 10
+    "maxShots": 10,
+    "triggerCode": "111",
+    "laserGifts": [],
+    "missileGifts": [],
+    "nuclearGifts": [],
+    "healAmount": 3,
+    "shieldDuration": 5,
+    "nuclearKillCount": 0
   },
   {
     "id": "spaceship_2",
@@ -33,17 +40,18 @@
     "rotationY": -100,
     "bulletColor": "#0011ff",
     "builtIn": true,
-    "active": true,
+    "active": false,
     "damage": 3,
     "fireRate": 0.5,
     "gifts": [
       7934
     ],
-    "updatedAt": "2026-04-07T10:24:51.157Z",
+    "updatedAt": "2026-04-10T02:37:01.024Z",
     "iconUrl": "/images/icons/icon_1775532290904_avatar.jpg",
     "healGifts": [],
     "shieldGifts": [],
-    "maxShots": 5
+    "maxShots": 5,
+    "triggerCode": "222"
   },
   {
     "id": "spaceship_3",
@@ -67,9 +75,7 @@
     "healGifts": [],
     "shieldGifts": [],
     "maxShots": 5,
-    "laserGifts": [],
-    "missileGifts": [],
-    "nuclearGifts": []
+    "triggerCode": "333"
   },
   {
     "id": "spaceship_boss",
@@ -87,10 +93,10 @@
     "fireRate": 1,
     "gifts": [],
     "healGifts": [
-      10961
+      6064
     ],
     "shieldGifts": [
-      5827
+      57800
     ],
     "weapons": {
       "laser": {
@@ -106,15 +112,20 @@
         "damagePercent": 10
       }
     },
-    "updatedAt": "2026-04-08T04:35:13.426Z",
+    "updatedAt": "2026-04-10T07:14:42.097Z",
     "maxShots": 20,
-    "laserGifts": [],
+    "laserGifts": [
+      15231
+    ],
     "missileGifts": [
-      5655
+      19438
     ],
     "nuclearGifts": [
       15232
-    ]
+    ],
+    "healAmount": 5,
+    "shieldDuration": 10,
+    "nuclearKillCount": 2
   },
   {
     "id": "space_ship_big",
@@ -158,17 +169,26 @@
     "path": "/models/custom_1775465375358_space_ship_5.glb",
     "scale": 0.001,
     "gunTipOffset": 0.7,
-    "rotationY": 40,
+    "rotationY": 80,
     "bulletColor": "#f31212",
-    "damage": 1,
+    "damage": 3,
     "fireRate": 1,
-    "gifts": [],
+    "gifts": [
+      9498
+    ],
     "builtIn": false,
     "active": true,
     "uploadedAt": "2026-04-06T08:49:35.366Z",
-    "updatedAt": "2026-04-07T10:25:35.022Z",
+    "updatedAt": "2026-04-10T03:44:01.728Z",
     "healGifts": [],
     "shieldGifts": [],
-    "maxShots": 5
+    "maxShots": 10,
+    "triggerCode": "444",
+    "laserGifts": [],
+    "missileGifts": [],
+    "nuclearGifts": [],
+    "healAmount": 3,
+    "shieldDuration": 5,
+    "nuclearKillCount": 0
   }
 ]

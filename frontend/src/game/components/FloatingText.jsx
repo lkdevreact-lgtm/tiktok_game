@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 
@@ -17,7 +17,11 @@ export default function FloatingText({
   // Kích thước chữ
   const isHeal = type === "heal";
   const isShield = type === "shield";
-  const scale = isShield ? 1.2 : isHeal ? 1.5 : 1.0 + Math.random() * 0.5;
+  const scale = useMemo(
+    () => (isShield ? 1.2 : isHeal ? 1.5 : 1.0 + Math.random() * 0.5),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [id]
+  );
 
   useFrame((_, delta) => {
     if (groupRef.current) {
@@ -51,7 +55,7 @@ export default function FloatingText({
             fontSize: isShield ? "1.5rem" : isHeal ? "2rem" : "1.8rem",
           }}
         >
-          {isHeal ? `+${amount}` : isShield ? "BLOCKED" : `-${amount}`}
+          {isHeal ? `+${amount}` : isShield ? "" : `-${amount}`}
         </div>
       </Html>
     </group>

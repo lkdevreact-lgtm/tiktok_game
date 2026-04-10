@@ -22,7 +22,6 @@ export default function BossLabel({ bossRef }) {
     <group ref={groupRef}>
       <Html
         center
-        distanceFactor={10}
         occlude={false}
         zIndexRange={[9, 9]}
         style={{ pointerEvents: "none", userSelect: "none" }}

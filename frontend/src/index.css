@@ -19,6 +19,10 @@
   --color-purple: #bf00ff;
   --color-gold: #ffaa00;
   --color-primary: #02f2ea;
+  --color-panel: rgba(5, 15, 30, 0.85);
+  --color-border: rgba(0, 245, 255, 0.2);
+  --color-danger: #ff3366;
+  --color-success: #00ff88;
 }
 
 html,

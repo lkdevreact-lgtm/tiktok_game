@@ -2,8 +2,7 @@ import { useState, useRef, useMemo } from "react";
 import RoleBadge from "../ui/RoleBadge";
 import ToggleSwitch from "../ui/ToggleSwitch";
 import EditForm from "./EditForm";
-import { FaEdit, FaCamera, FaCube } from "react-icons/fa";
-import { IoClose } from "react-icons/io5";
+import { FaEdit, FaCamera } from "react-icons/fa";
 import { API_URL, IMAGES } from "../../utils/constant";
 import { FIRE_RATE_OPTIONS } from "../ui/styles";
 import { useGifts } from "../../hooks/useGifts";
@@ -76,64 +75,6 @@ function ModelAvatar({ iconUrl, isBoss, modelId, onIconUploaded, active }) {
   );
 }
 
-function ReplaceGLBButton({ modelId, onReplaced }) {
-  const inputRef = useRef();
-  const [uploading, setUploading] = useState(false);
-
-  const handleUpload = async (e) => {
-    const f = e.target.files?.[0];
-    if (!f || !modelId) return;
-    if (!f.name.toLowerCase().endsWith(".glb")) {
-      alert("Chỉ hỗ trợ file .glb");
-      return;
-    }
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", f);
-      const res = await fetch(`${API_URL}/api/models/${modelId}/glb`, {
-        method: "POST",
-        body: fd,
-      });
-      const data = await res.json();
-      if (res.ok && data.model) onReplaced?.(data.model);
-    } catch {
-      /* ignore */
-    } finally {
-      setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
-    }
-  };
-
-  return (
-    <>
-      <button
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-        title="Thay file 3D (.glb)"
-        className={`
-          ${actionBtn}
-          border-[rgba(167,139,250,0.3)] text-[#a78bfa]
-          ${uploading ? "bg-[rgba(167,139,250,0.18)]" : "bg-[rgba(167,139,250,0.08)] hover:bg-[rgba(167,139,250,0.18)]"}
-        `}
-      >
-        {uploading ? (
-          <span className="text-[10px] text-[#a78bfa]">⏳</span>
-        ) : (
-          <FaCube size={13} color="#a78bfa" />
-        )}
-      </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".glb"
-        onChange={handleUpload}
-        className="hidden"
-      />
-    </>
-  );
-}
-
 function fireRateLabel(v) {
   const found = FIRE_RATE_OPTIONS.find((o) => o.value === v);
   return found ? found.label.split(" ")[0] : `${v}`;
@@ -147,7 +88,7 @@ export default function ModelCard({
   onToggleShip,
   onSetActiveBoss,
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [local, setLocal] = useState({
     label: model.label,
     scale: model.scale,
@@ -164,6 +105,9 @@ export default function ModelCard({
     laserGifts: model.laserGifts || [],
     missileGifts: model.missileGifts || [],
     nuclearGifts: model.nuclearGifts || [],
+    healAmount: model.healAmount ?? 3,
+    shieldDuration: model.shieldDuration ?? 5,
+    nuclearKillCount: model.nuclearKillCount ?? 0,
   });
 
   const isBoss = model.role === "boss";
@@ -182,8 +126,8 @@ export default function ModelCard({
   const resolveGifts = (ids = []) =>
     ids.map((id) => giftMap[String(id)]).filter(Boolean);
 
-  const handleSave = () => {
-    onUpdate?.(model.id, {
+  const handleSave = async (pendingGlbFile) => {
+    const changes = {
       label: local.label,
       scale: parseFloat(local.scale),
       gunTipOffset: parseFloat(local.gunTipOffset),
@@ -198,8 +142,33 @@ export default function ModelCard({
       laserGifts: local.laserGifts,
       missileGifts: local.missileGifts,
       nuclearGifts: local.nuclearGifts,
-    });
-    setExpanded(false);
+      healAmount: Number(local.healAmount),
+      shieldDuration: Number(local.shieldDuration),
+      nuclearKillCount: Number(local.nuclearKillCount),
+    };
+
+    // If there's a pending GLB file, upload it first
+    if (pendingGlbFile) {
+      try {
+        const fd = new FormData();
+        fd.append("file", pendingGlbFile);
+        const res = await fetch(`${API_URL}/api/models/${model.id}/glb`, {
+          method: "POST",
+          body: fd,
+        });
+        const data = await res.json();
+        if (res.ok && data.model) {
+          changes.path = data.model.path;
+          changes.filename = data.model.filename;
+          changes.builtIn = false;
+        }
+      } catch {
+        /* ignore glb upload error */
+      }
+    }
+
+    onUpdate?.(model.id, changes);
+    setShowEditModal(false);
   };
 
   return (
@@ -267,27 +236,51 @@ export default function ModelCard({
                 </div>
               )}
             </div>
-            <div className="flex items-center text-xs gap-3 mt-3">
+            <div className="flex items-center text-xs gap-3 mt-3 flex-wrap">
               <div className="flex items-center gap-1 bg-amber-500/30 p-1 rounded-md border border-amber-500">
                 <p>Scale:</p>
                 <span>{model.scale}</span>
               </div>
-              <div className="flex items-center gap-1 p-1 bg-red-500/30 rounded-md border border-red-500">
-                <p>Dame:</p>
-                <span>{model.damage ?? 1}</span>
-              </div>
-              <div className="flex items-center gap-1 p-1 bg-green-500/30 rounded-md border border-green-500">
-                <p>Rate:</p>
-                <span>{fireRateLabel(model.fireRate) ?? 1}</span>
-              </div>
+              {!isBoss && (
+                <>
+                  <div className="flex items-center gap-1 p-1 bg-red-500/30 rounded-md border border-red-500">
+                    <p>Dame:</p>
+                    <span>{model.damage ?? 1}</span>
+                  </div>
+                  <div className="flex items-center gap-1 p-1 bg-green-500/30 rounded-md border border-green-500">
+                    <p>Rate:</p>
+                    <span>{fireRateLabel(model.fireRate) ?? 1}</span>
+                  </div>
+                </>
+              )}
               <div className="flex items-center gap-1 p-1 bg-blue-500/30 rounded-md border border-blue-500">
                 <p>Rotate:</p>
                 <span>{model.rotationY}</span>
               </div>
-              <div className="flex items-center gap-1 p-1 bg-white/30 rounded-md border border-white">
-                <p>Color bullet:</p>
-                <span className="font-semibold" style={{ color }}>{color}</span>
-              </div>
+              {!isBoss && (
+                <div className="flex items-center gap-1 p-1 bg-white/30 rounded-md border border-white">
+                  <p>Color bullet:</p>
+                  <span className="font-semibold" style={{ color }}>{color}</span>
+                </div>
+              )}
+              {isBoss && (
+                <>
+                  <div className="flex items-center gap-1 p-1 bg-green-500/30 rounded-md border border-green-500">
+                    <p>💚 Heal:</p>
+                    <span>{model.healAmount ?? 3}%</span>
+                  </div>
+                  <div className="flex items-center gap-1 p-1 bg-cyan-500/30 rounded-md border border-cyan-500">
+                    <p>🛡️ Shield:</p>
+                    <span>{model.shieldDuration ?? 5}s</span>
+                  </div>
+                  {(model.nuclearKillCount ?? 0) > 0 && (
+                    <div className="flex items-center gap-1 p-1 bg-yellow-500/30 rounded-md border border-yellow-500">
+                      <p>☢️ Nuke Kill:</p>
+                      <span>{model.nuclearKillCount}</span>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Ship: danh sách tên quà kích hoạt */}
@@ -388,28 +381,12 @@ export default function ModelCard({
           <div className="flex items-center gap-3 shrink-0">
             {/* Edit */}
             <button
-              onClick={() => setExpanded((v) => !v)}
+              onClick={() => setShowEditModal(true)}
               title="Sửa thông số"
-              className={`${actionBtn} border-[rgba(0,245,255,0.3)] text-cyan-1 ${expanded ? "bg-[rgba(0,245,255,0.18)]" : "bg-[rgba(0,245,255,0.08)] hover:bg-[rgba(0,245,255,0.18)]"}`}
+              className={`${actionBtn} border-[rgba(0,245,255,0.3)] text-cyan-1 bg-[rgba(0,245,255,0.08)] hover:bg-[rgba(0,245,255,0.18)]`}
             >
-              {expanded ? (
-                <IoClose size={17} className="text-cyan-1" />
-              ) : (
-                <FaEdit size={13} className="text-cyan-1" />
-              )}
+              <FaEdit size={13} className="text-cyan-1" />
             </button>
-
-            {/* Replace GLB */}
-            <ReplaceGLBButton
-              modelId={model.id}
-              onReplaced={(updated) =>
-                onUpdate?.(model.id, {
-                  path: updated.path,
-                  filename: updated.filename,
-                  builtIn: false,
-                })
-              }
-            />
 
             {/* Delete */}
             {onDelete && (
@@ -428,12 +405,14 @@ export default function ModelCard({
         </div>
       </div>
 
-      {expanded && (
+      {showEditModal && (
         <EditForm
           local={local}
           setLocal={setLocal}
           onSave={handleSave}
+          onClose={() => setShowEditModal(false)}
           isBoss={isBoss}
+          modelPath={model.path}
         />
       )}
     </div>

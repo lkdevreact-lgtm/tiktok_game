@@ -8,7 +8,7 @@ import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
 import { SETTINGS_GAME } from "../utils/constant";
-import { playAttackSound, playSpawnSound, playHiddenSound } from "./audio";
+import { playAttackSound, playSpawnSound, playHiddenSound, getHealVolume } from "./audio";
 import ShipLabel from "./components/ShipLabel";
 import BossLabel from "./components/BossLabel";
 import BossShieldRing from "./components/BossShieldRing";
@@ -25,6 +25,10 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
   useEffect(() => {
     shipModelsRef.current = shipModels;
   }, [shipModels]);
+  const activeBossRef = useRef(activeBossModel);
+  useEffect(() => {
+    activeBossRef.current = activeBossModel;
+  }, [activeBossModel]);
 
   // ── Refs game state (sync, không trigger re-render) ──────────
   const bossRef = useRef(null);
@@ -50,7 +54,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
   const bossShieldEndRef = useRef(0); // timestamp kết thúc shield (ms)
   const healCooldownRef = useRef(false); // chống spam heal
   const healAudio = useRef(new Audio("/sound/heal_sound.mp3"));
-  healAudio.current.volume = 0.5;
+  healAudio.current.volume = getHealVolume();
   const NUM_Y_SLOTS = 10;
   const Y_RANGE = 8; // tổng chiều cao an toàn (~±2.2)
   const spawnSlotRef = useRef(0);
@@ -203,11 +207,12 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         healCooldownRef.current = false;
       }, 500);
 
-      const HEAL_AMOUNT = 3; // +3% HP mỗi lần
+      const HEAL_AMOUNT = activeBossRef.current?.healAmount ?? 3; // % HP mỗi lần, config từ UI
       bossHpRef.current = Math.min(100, bossHpRef.current + HEAL_AMOUNT);
       setBossHp(Math.round(bossHpRef.current * 10) / 10);
 
       // Phát sound hồi máu
+      healAudio.current.volume = getHealVolume();
       healAudio.current.currentTime = 0;
       healAudio.current.play().catch(() => { });
 
@@ -223,7 +228,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       explosionsRef.current.push(...healExps);
 
       // Heal Float Number
-      showDamageRef.current?.("3", bossPos.clone(), "heal", "#00ff66");
+      showDamageRef.current?.(String(HEAL_AMOUNT), bossPos.clone(), "heal", "#00ff66");
 
       // Khôi phục material cũ (nếu lỡ đang flash đỏ trúng đạn)
       if (bossOrigMatsRef.current && bossFlashStateRef.current !== "none") {
@@ -236,28 +241,21 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onBossHeal]);
 
-  // ── Boss Shield (cộng dồn thời gian) ───────────────────────
+  // ── Boss Shield (5s cố định mỗi lần, reset timer nếu gift mới) ──
   const [shieldEndTime, setShieldEndTime] = useState(0); // timestamp ms
 
   useEffect(() => {
     if (!onBossShield) return;
     onBossShield(() => {
-      const ADD_MS = 5000; // +5 giây mỗi lần
-      const MAX_MS = 30000; // tối đa 30 giây
-      const now = Date.now();
-
-      // Tính thời gian còn lại hiện tại, cộng thêm 5s và giới hạn 30s
-      const remaining = bossShieldActiveRef.current
-        ? Math.max(0, bossShieldEndRef.current - now)
-        : 0;
-      const newDuration = Math.min(remaining + ADD_MS, MAX_MS);
-      const newEnd = now + newDuration;
+      const DURATION_MS = (activeBossRef.current?.shieldDuration ?? 5) * 1000;
+      const newEnd = Date.now() + DURATION_MS;
 
       bossShieldActiveRef.current = true;
       bossShieldEndRef.current = newEnd;
       setBossShield(true);
       setShieldEndTime(newEnd);
 
+      // Reset timer mỗi lần (không cộng dồn)
       if (bossShieldTimerRef.current) clearTimeout(bossShieldTimerRef.current);
       bossShieldTimerRef.current = setTimeout(() => {
         bossShieldActiveRef.current = false;
@@ -265,7 +263,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         setBossShield(false);
         setShieldEndTime(0);
         bossShieldTimerRef.current = null;
-      }, newDuration);
+      }, DURATION_MS);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onBossShield]);
@@ -278,19 +276,19 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         const target = shipsRef.current[Math.floor(Math.random() * shipsRef.current.length)];
         const bossPos = new THREE.Vector3();
         bossRef.current.getWorldPosition(bossPos);
-        
+
         // Bắt đầu tụ tia (800ms)
         const gunPos = bossPos.clone().add(new THREE.Vector3(2.5, 0, 0));
         const charge = createLaserCharge(gunPos, 0xff0000);
         scene.add(charge.group);
         const chargeObj = { ...charge, life: 0.8 };
-        
+
         // Quản lý charge trong loop để nó scale up
         bossLasersRef.current.push({ ...chargeObj, type: "charge" });
 
         setTimeout(() => {
           if (!target.aliveRef.current) return;
-          
+
           const laser = createBossLaser(gunPos, target.mesh.position, 0xff0000);
           scene.add(laser.group);
           bossLasersRef.current.push({ ...laser, type: "beam" });
@@ -329,12 +327,25 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         const nuke = createNukeExplosion(bossPos);
         nuke.forEach(p => scene.add(p.mesh));
         nukeExplosionsRef.current.push(...nuke);
-        // Tiêu diệt TẤT CẢ tàu trong tầm 10 đơn vị
-        shipsRef.current.forEach(s => {
-           if (s.mesh.position.distanceTo(bossPos) < 15) {
-               destroyShip(s.id);
-           }
-        });
+
+        // Lấy số ship cần huỷ từ config (0 = tất cả)
+        const killCount = activeBossRef.current?.nuclearKillCount ?? 0;
+
+        // Lọc tàu: trong tầm nổ (toàn map) + chưa đang dissolving + đã bay vào xong
+        const inRange = shipsRef.current.filter(
+          s => !s.dissolving && s.flyInProgress >= 1
+        );
+
+        console.log("[Nuclear] killCount config:", killCount, "| ships in range:", inRange.length, "| total ships:", shipsRef.current.length);
+
+        if (killCount <= 0 || killCount >= inRange.length) {
+          // Huỷ tất cả trong tầm
+          inRange.forEach(s => destroyShip(s.id));
+        } else {
+          // Huỷ ngẫu nhiên đúng killCount con
+          const shuffled = [...inRange].sort(() => Math.random() - 0.5);
+          shuffled.slice(0, killCount).forEach(s => destroyShip(s.id));
+        }
         playAttackSound();
       });
     }
@@ -387,6 +398,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
   useEffect(() => {
     if (bossRef.current && !bossInitializedRef.current) {
       bossRef.current.position.set(SETTINGS_GAME.BOSS_START_X, 0, 0);
+
       bossRef.current.rotation.y = Math.PI / 2;
       bossInitializedRef.current = true;
 
@@ -604,15 +616,10 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       }
 
 
-      // 1. Cập nhật phase cho 3 trục độc lập
-      ship.orbitPhaseX += delta * ship.orbitSpeedX;
-      ship.orbitPhaseY += delta * ship.orbitSpeedY;
-      ship.orbitPhaseZ += delta * ship.orbitSpeedZ;
-
-      // 2. Chuyển động Orbital cơ sở
-      const orbitalX = ship.baseX + Math.sin(ship.orbitPhaseX) * ship.orbitRadiusX;
-      const orbitalY = ship.baseY + Math.sin(ship.orbitPhaseY) * ship.orbitRadiusY;
-      const orbitalZ = ship.baseZ + Math.sin(ship.orbitPhaseZ) * ship.orbitRadiusZ;
+      // Tàu đứng cố định — không lắc lư orbital
+      const orbitalX = ship.baseX;
+      const orbitalY = ship.baseY;
+      const orbitalZ = ship.baseZ;
 
       // 3. Deluxe Slide Recoil (Phase 1: Slide Back, Phase 2: Slide Forward)
       if (ship.recoilTarget > 0) {
@@ -635,8 +642,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       // Vị trí cuối = Orbital + Recoil offset
       ship.mesh.position.copy(tmpVec1.current).addScaledVector(tmpVec2.current, ship.recoil);
 
-      // 5. Banking effect
-      ship.mesh.rotation.z = Math.sin(ship.orbitPhaseX) * 0.18;
+      // 5. Banking effect (tắt — tàu đứng yên)
+      ship.mesh.rotation.z = 0;
 
       // 6. Smart Engine Pulse & Emissive Fix + Exhaust Flares Animation
       if (ship.mesh) {
@@ -819,6 +826,15 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     bossBox.expandByScalar(0.12);
     const deadBullets = new Set();
 
+    // Shield collision sphere (khớp với vị trí & scale của BossShieldRing)
+    // shieldOffset = [3.5, -0.8, 0], shieldScale = 0.5 → radius ≈ 2.4 world units
+    const SHIELD_OFFSET = new THREE.Vector3(3.5, -0.8, 0);
+    const SHIELD_RADIUS = 1.5;
+    const shieldCenter = boss.position.clone().add(SHIELD_OFFSET);
+    const shieldSphere = bossShieldActiveRef.current
+      ? new THREE.Sphere(shieldCenter, SHIELD_RADIUS)
+      : null;
+
     bulletsRef.current.forEach((bullet, idx) => {
       bullet.mesh.position.add(bullet.velocity);
 
@@ -827,85 +843,94 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         return;
       }
 
-      if (bossBox.containsPoint(bullet.mesh.position)) {
-        // Nếu boss đang có khiên: đạn nổ nhưng không gây sát thương
-        if (!bossShieldActiveRef.current) {
-          bossHpRef.current = Math.max(0, bossHpRef.current - bullet.damage);
-          setBossHp(Math.round(bossHpRef.current * 10) / 10);
+      // Khi khiên active → mọi đạn chạm shield sphere HOẶC boss body đều bị BLOCKED
+      // (tránh tình trạng đạn từ góc trên/dưới vòng qua shield sphere nhưng vẫn trúng boss)
+      const hitShield = bossShieldActiveRef.current && (
+        (shieldSphere?.containsPoint(bullet.mesh.position) ?? false) ||
+        bossBox.containsPoint(bullet.mesh.position)
+      );
+      // Khi không có khiên → kiểm tra boss body bình thường
+      const hitBoss = !bossShieldActiveRef.current && bossBox.containsPoint(bullet.mesh.position);
 
-          showDamageRef.current?.(
-            Math.round(bullet.damage * 100),
-            bullet.mesh.position.clone(),
-            "damage",
-            getBulletColor(bullet.ownerType)
-          );
-        } else {
-          showDamageRef.current?.(
-            "BLOCKED",
-            bullet.mesh.position.clone(),
-            "shield",
-            "#00f5ff"
-          );
-        }
+      if (hitShield) {
+        // Đạn trúng KHIÊN → nổ tại khiên, không gây sát thương boss
+        showDamageRef.current?.(
+          "",
+          bullet.mesh.position.clone(),
+          "shield",
+          "#00f5ff"
+        );
+
+        const exps = createExplosion(bullet.mesh.position.clone(), "#00f5ff");
+        exps.forEach(({ mesh }) => scene.add(mesh));
+        explosionsRef.current.push(...exps);
+
+        deadBullets.add(idx);
+      } else if (hitBoss) {
+        // Đạn trúng BOSS (không có khiên) → gây sát thương
+        bossHpRef.current = Math.max(0, bossHpRef.current - bullet.damage);
+        setBossHp(Math.round(bossHpRef.current * 10) / 10);
+
+        showDamageRef.current?.(
+          Math.round(bullet.damage * 100),
+          bullet.mesh.position.clone(),
+          "damage",
+          getBulletColor(bullet.ownerType)
+        );
 
         const exps = createExplosion(
           bullet.mesh.position.clone(),
-          bossShieldActiveRef.current
-            ? "#00f5ff"
-            : getBulletColor(bullet.ownerType)
+          getBulletColor(bullet.ownerType)
         );
         exps.forEach(({ mesh }) => scene.add(mesh));
         explosionsRef.current.push(...exps);
 
         deadBullets.add(idx);
 
-        // Flash đỏ chỉ khi không có khiên
-        if (!bossShieldActiveRef.current) {
-          // Lưu materials gốc 1 lần duy nhất (không dùng material hiện tại vì có thể đang flash)
-          if (!bossOrigMatsRef.current) {
-            const saved = [];
-            boss.traverse((child) => {
-              if (child.isMesh)
-                saved.push({ mesh: child, mat: child.material.clone() });
-            });
-            bossOrigMatsRef.current = saved;
-          }
-
-          // Clear timeout flash xanh để không bị conflict
-          if (bossGreenFlashRef.current)
-            clearTimeout(bossGreenFlashRef.current);
-          if (bossFlashTimeoutRef.current)
-            clearTimeout(bossFlashTimeoutRef.current);
-
-          // Áp flash đỏ
-          bossFlashStateRef.current = "red";
+        // Flash đỏ khi boss bị trúng đạn
+        if (!bossOrigMatsRef.current) {
+          const saved = [];
           boss.traverse((child) => {
-            if (child.isMesh) {
-              child.material = new THREE.MeshBasicMaterial({
-                color: 0xff1111,
-                transparent: true,
-                opacity: 0.25,
-              });
-            }
+            if (child.isMesh)
+              saved.push({ mesh: child, mat: child.material.clone() });
           });
+          bossOrigMatsRef.current = saved;
+        }
 
-          bossFlashTimeoutRef.current = setTimeout(() => {
-            // Chỉ restore nếu flash state vẫn là đỏ (không bị override bởi flash xanh)
-            if (bossFlashStateRef.current === "red") {
-              bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
-                if (mesh) mesh.material = mat.clone();
-              });
-              bossFlashStateRef.current = "none";
-            }
-            bossFlashTimeoutRef.current = null;
-          }, 150);
+        // Clear timeout flash xanh để không bị conflict
+        if (bossGreenFlashRef.current)
+          clearTimeout(bossGreenFlashRef.current);
+        if (bossFlashTimeoutRef.current)
+          clearTimeout(bossFlashTimeoutRef.current);
 
-          if (bossHpRef.current <= 0) {
-            statusRef.current = "win";
-            gameActiveRef.current = false;
-            setGameStatus("win");
-            prevGameStatus.current = "win";
+        // Áp flash đỏ
+        bossFlashStateRef.current = "red";
+        boss.traverse((child) => {
+          if (child.isMesh) {
+            child.material = new THREE.MeshBasicMaterial({
+              color: 0xff1111,
+              transparent: true,
+              opacity: 0.25,
+            });
           }
+        });
+
+        bossFlashTimeoutRef.current = setTimeout(() => {
+          // Chỉ restore nếu flash state vẫn là đỏ (không bị override bởi flash xanh)
+          if (bossFlashStateRef.current === "red") {
+            bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
+              if (mesh) mesh.material = mat.clone();
+            });
+            bossFlashStateRef.current = "none";
+          }
+          bossFlashTimeoutRef.current = null;
+        }, 150);
+
+        if (bossHpRef.current <= 0) {
+          statusRef.current = "win";
+          gameActiveRef.current = false;
+          setGameStatus("win");
+          prevGameStatus.current = "win";
         }
       }
     });
@@ -1016,7 +1041,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         scale={activeBossModel?.scale ?? 4.5}
       />
       <BossLabel bossRef={bossRef} />
-      <BossShieldRing bossRef={bossRef} shieldEndTime={shieldEndTime} />
+      <BossShieldRing bossRef={bossRef} shieldEndTime={shieldEndTime} shieldDuration={activeBossModel?.shieldDuration ?? 5} />
       <DamageManager onRegister={(fn) => { showDamageRef.current = fn; }} />
 
       {/* Render labels bằng Html đính vào scene position của từng tàu */}

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { GameProvider } from "./store/gameStore";
 import { ModelProvider } from "./store/modelStore";
 import { GiftProvider } from "./store/giftStore";
+import { TTSProvider } from "./store/ttsStore";
 import { useGame } from "./hooks/useGame";
 import ConnectForm from "./components/ConnectForm";
 import GameCanvas from "./components/GameCanvas";
@@ -35,9 +36,11 @@ export default function App() {
   return (
     <ModelProvider>
       <GiftProvider>
-        <GameProvider>
-          <AppInner />
-        </GameProvider>
+        <TTSProvider>
+          <GameProvider>
+            <AppInner />
+          </GameProvider>
+        </TTSProvider>
       </GiftProvider>
     </ModelProvider>
   );

@@ -5,6 +5,9 @@ import { useGifts } from "../hooks/useGifts";
 const BOSS_GIFT_SECTIONS = [
   { key: "healGifts", label: "Hồi Máu", icon: "💚" },
   { key: "shieldGifts", label: "Khiên", icon: "🛡️" },
+  { key: "laserGifts", label: "Laser", icon: "🔴" },
+  { key: "missileGifts", label: "Missile", icon: "🚀" },
+  { key: "nuclearGifts", label: "Ultimate", icon: "☢️" },
 ];
 
 const LS_KEY = "bossGiftPanelPos";
@@ -103,34 +106,39 @@ export default function BossGiftPanel() {
           <span className="text-red-500 text-xl font-semibold truncate">
             Team Boss
           </span>
-          <p className="text-[10px] text-center px-3 text-white/40">Mỗi phần quà tương ứng sẽ giúp boss thêm sức mạnh</p>
+          <p className="text-[10px] text-center px-3 text-white/40">
+            Mỗi phần quà tương ứng sẽ giúp boss thêm sức mạnh
+          </p>
         </div>
         <div className="flex flex-col gap-2 p-2 rounded-b-xl">
           {sections.map(({ key, label, icon, gifts }, sIdx) => (
             <div key={key}>
-              <span className=" text-base font-semibold flex items-center gap-1 mb-1 mb-2">
-                {icon} {label}
-              </span>
-
-              <div className="flex flex-col gap-3 px-2">
-                {gifts.map((g) => (
-                  <div key={g.giftId} className="flex items-center gap-1.5">
-                    {g.image ? (
-                      <img
-                        src={g.image}
-                        alt={g.giftName}
-                        className="w-5 h-5 rounded object-contain shrink-0"
-                      />
-                    ) : (
-                      <span className="text-base shrink-0">🎁</span>
-                    )}
-                    <span className="text-sm font-semibold truncate">
-                      {g.giftName}
-                    </span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <div className="flex flex-col gap-3 px-2">
+                    {gifts.map((g) => (
+                      <div key={g.giftId} className="flex items-center gap-1.5">
+                        {g.image ? (
+                          <img
+                            src={g.image}
+                            alt={g.giftName}
+                            className="w-7 h-7 rounded object-contain shrink-0"
+                          />
+                        ) : (
+                          <span className="text-base shrink-0">🎁</span>
+                        )}
+                        {/* <span className="text-sm font-semibold truncate">
+                        {g.giftName}
+                      </span> */}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                  <span>=</span>
+                </div>
+                <span className=" text-base font-semibold flex items-center gap-1">
+                  {icon} {label}
+                </span>
               </div>
-
               {sIdx < sections.length - 1 && (
                 <div className="border-t border-white/[0.06] mt-2" />
               )}

@@ -44,7 +44,6 @@ export default function ShipLabel({
     <group ref={groupRef}>
       <Html
         center
-        distanceFactor={8}
         occlude={false}
         zIndexRange={[10, 10]}
         style={{ pointerEvents: "none", userSelect: "none" }}

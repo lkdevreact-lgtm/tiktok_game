@@ -51,8 +51,8 @@ export default function ConnectForm() {
       <div className="
         relative w-[420px] flex flex-col gap-6 overflow-hidden rounded-xl
         px-9 py-10
-        bg-[var(--color-panel)] backdrop-blur-2xl
-        border border-[var(--color-border)]
+        bg-panel backdrop-blur-2xl
+        border border-border
         shadow-[0_24px_80px_rgba(0,0,0,0.7)]
       ">
         <h1 className="text-center text-4xl font-bold text-shadow-2xs text-shadow-cyan-300">
@@ -79,7 +79,7 @@ export default function ConnectForm() {
             autoFocus
             className="
               rounded-lg px-4 py-3 text-base outline-none text-white
-              bg-[rgba(0,245,255,0.05)] border border-[var(--color-border)]
+              bg-[rgba(0,245,255,0.05)] border border-border
               font-[var(--font-ui)]
               transition-all duration-200
               focus:border-cyan-400 focus:shadow-[0_0_0_3px_rgba(0,245,255,0.1),0_0_20px_rgba(0,245,255,0.15)]
@@ -92,7 +92,7 @@ export default function ConnectForm() {
         {error && (
           <div className="
             text-[0.8rem] text-center px-3 py-2 rounded-md
-            text-[var(--color-danger)]
+            text-danger
             bg-[rgba(255,51,102,0.1)]
             border border-[rgba(255,51,102,0.3)]
           ">
@@ -107,7 +107,6 @@ export default function ConnectForm() {
           className="
             rounded-lg py-3.5 text-black font-bold text-[0.9rem] uppercase tracking-widest
             bg-gradient-to-r from-cyan-400 to-[#0088aa]
-            font-[var(--font-game)]
             cursor-pointer transition-all duration-150
             hover:shadow-[0_8px_30px_rgba(0,245,255,0.4)] hover:-translate-y-0.5
             disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none

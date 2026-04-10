@@ -19,7 +19,8 @@ export default function BossModel({
   const groupRef = useRef();
 
   useEffect(() => {
-    if (!groupRef.current) return;
+    const group = groupRef.current;
+    if (!group) return;
 
     const cloned = gltfScene.clone(true);
     cloned.name = "boss_model";
@@ -31,12 +32,12 @@ export default function BossModel({
       }
     });
 
-    groupRef.current.add(cloned);
+    group.add(cloned);
 
-    if (externalRef) externalRef.current = groupRef.current;
+    if (externalRef) externalRef.current = group;
 
     return () => {
-      groupRef.current?.remove(cloned);
+      group.remove(cloned);
     };
   }, [gltfScene, externalRef, scale]);
 
