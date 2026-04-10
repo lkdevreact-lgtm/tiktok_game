@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useGame } from "../hooks/useGame";
 import SidebarSetting from "./SidebarSetting";
 import ModelManagerPanel from "./ModelManagerPanel";
+import TriggerPanel from "./TriggerPanel";
 
 export default function Navbar() {
   const { shipCount, username, gameStatus, wins, losses } = useGame();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [modelsOpen, setModelsOpen] = useState(false);
+  const [triggerOpen, setTriggerOpen] = useState(false);
 
   const statusLabel =
     gameStatus === "playing"
@@ -73,6 +75,21 @@ export default function Navbar() {
         </button>
 
         <button
+          id="btn-open-trigger"
+          onClick={() => setTriggerOpen(true)}
+          title="Trigger Panel"
+          className="
+            flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[0.68rem]
+            tracking-[0.08em] uppercase whitespace-nowrap cursor-pointer border
+            bg-[rgba(250,204,21,0.1)] border-[rgba(250,204,21,0.35)] text-yellow-400
+            transition-all duration-150
+            hover:bg-[rgba(250,204,21,0.2)] hover:shadow-[0_0_14px_rgba(250,204,21,0.25)]
+          "
+        >
+          🎯 Trigger
+        </button>
+
+        <button
           id="btn-open-settings"
           onClick={() => setSettingsOpen(true)}
           title="Gift Settings"
@@ -95,6 +112,10 @@ export default function Navbar() {
       <ModelManagerPanel
         isOpen={modelsOpen}
         onClose={() => setModelsOpen(false)}
+      />
+      <TriggerPanel
+        isOpen={triggerOpen}
+        onClose={() => setTriggerOpen(false)}
       />
     </>
   );

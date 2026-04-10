@@ -34,6 +34,21 @@ export function ModelProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
+  // ── Triggers state ─────────────────────────────────────────────
+  const [triggers, setTriggers] = useState(() => ls.get("triggersCache", []));
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/triggers`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setTriggers(data);
+          ls.set("triggersCache", data);
+        }
+      })
+      .catch(() => { /* giữ cache */ });
+  }, []);
+
   // ── Helper cập nhật local state + cache ─────────────────────
   const _setAndCache = (updater) => {
     setModels((prev) => {
@@ -84,6 +99,38 @@ export function ModelProvider({ children }) {
   (activeBossModel?.nuclearGifts || []).forEach((id) => {
     bossNuclearGiftMap[String(id)] = true;
   });
+
+  // ── Trigger maps (computed from triggers array) ────────────────
+  // Comment trigger: { [code]: { shipId, model } }
+  const commentTriggerMap = {};
+  // Tap trigger: [{ quantity, shipId, model }]
+  const tapTriggers = [];
+
+  const allModelsById = {};
+  models.forEach((m) => { allModelsById[m.id] = m; });
+
+  triggers.forEach((t) => {
+    const model = allModelsById[t.shipId];
+    if (!model) return;
+    if (t.type === "comment" && t.content) {
+      commentTriggerMap[t.content.trim()] = { shipId: t.shipId, model };
+    } else if (t.type === "tap" && t.quantity > 0) {
+      tapTriggers.push({ quantity: t.quantity, shipId: t.shipId, model });
+    }
+  });
+
+  // ── Save triggers → PUT API + local ────────────────────────────
+  const saveTriggersFn = useCallback(async (newTriggers) => {
+    setTriggers(newTriggers);
+    ls.set("triggersCache", newTriggers);
+    try {
+      await fetch(`${API_URL}/api/triggers`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTriggers),
+      });
+    } catch { /* ignore offline */ }
+  }, []);
 
   // ── Add model ────────────────────────────────────────────────
   const addModel = useCallback((model) => {
@@ -164,6 +211,10 @@ export function ModelProvider({ children }) {
         activeBossModel,
         activeBossId,
         giftModelMap,
+        commentTriggerMap,
+        tapTriggers,
+        triggers,
+        saveTriggers: saveTriggersFn,
         bossHealGiftMap,
         bossShieldGiftMap,
         bossLaserGiftMap,

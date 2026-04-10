@@ -12,6 +12,7 @@ import {
   upload,
 } from "../controllers/modelController.js";
 import { getGifts, updateGift } from "../controllers/giftController.js";
+import { getTriggers, saveTriggers } from "../controllers/triggerController.js";
 
 const router = express.Router();
 
@@ -40,6 +41,10 @@ router.post("/models/:id/glb",  upload.single("file"), replaceModelGLB);
 router.post("/models/:id/icon", uploadIcon.single("iconImage"), uploadModelIcon);
 router.put("/models/:id", updateModel);
 router.delete("/models/:id", deleteModel);
+
+// ── Triggers ──────────────────────────────────────────────────
+router.get("/triggers", getTriggers);
+router.put("/triggers", saveTriggers);
 
 export default router;
 

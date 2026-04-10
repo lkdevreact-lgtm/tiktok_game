@@ -16,11 +16,18 @@
     "gifts": [
       5655
     ],
-    "updatedAt": "2026-04-08T01:36:51.791Z",
+    "updatedAt": "2026-04-10T02:41:18.920Z",
     "iconUrl": "/images/icons/icon_1775532263967_avatar.jpg",
     "healGifts": [],
     "shieldGifts": [],
-    "maxShots": 10
+    "maxShots": 10,
+    "triggerCode": "111",
+    "laserGifts": [],
+    "missileGifts": [],
+    "nuclearGifts": [],
+    "healAmount": 3,
+    "shieldDuration": 5,
+    "nuclearKillCount": 0
   },
   {
     "id": "spaceship_2",
@@ -33,17 +40,18 @@
     "rotationY": -100,
     "bulletColor": "#0011ff",
     "builtIn": true,
-    "active": true,
+    "active": false,
     "damage": 3,
     "fireRate": 0.5,
     "gifts": [
       7934
     ],
-    "updatedAt": "2026-04-07T10:24:51.157Z",
+    "updatedAt": "2026-04-10T02:37:01.024Z",
     "iconUrl": "/images/icons/icon_1775532290904_avatar.jpg",
     "healGifts": [],
     "shieldGifts": [],
-    "maxShots": 5
+    "maxShots": 5,
+    "triggerCode": "222"
   },
   {
     "id": "spaceship_3",
@@ -65,7 +73,8 @@
     "updatedAt": "2026-04-07T10:25:39.798Z",
     "healGifts": [],
     "shieldGifts": [],
-    "maxShots": 5
+    "maxShots": 5,
+    "triggerCode": "333"
   },
   {
     "id": "spaceship_boss",
@@ -168,6 +177,7 @@
     "updatedAt": "2026-04-07T10:25:35.022Z",
     "healGifts": [],
     "shieldGifts": [],
-    "maxShots": 5
+    "maxShots": 5,
+    "triggerCode": "444"
   }
 ]

@@ -14,6 +14,8 @@ export default function GameCanvas() {
     useGame();
   const {
     giftModelMap,
+    commentTriggerMap,
+    tapTriggers,
     bossHealGiftMap,
     bossShieldGiftMap,
     bossLaserGiftMap,
@@ -30,6 +32,13 @@ export default function GameCanvas() {
   const bossLaserGiftMapRef = useRef(bossLaserGiftMap);
   const bossMissileGiftMapRef = useRef(bossMissileGiftMap);
   const bossNuclearGiftMapRef = useRef(bossNuclearGiftMap);
+  const commentTriggerMapRef = useRef(commentTriggerMap);
+  const tapTriggersRef = useRef(tapTriggers);
+
+  // Tổng like tích lũy trong phiên (reset khi reconnect)
+  const likeAccumulatorRef = useRef(0);
+  // Theo dõi đã spawn bao nhiêu con ở mỗi mốc tap trigger
+  const tapSpawnedCountRef = useRef({});
 
   const bossLaserTriggerRef = useRef(null);
   const bossMissileTriggerRef = useRef(null);
@@ -53,6 +62,14 @@ export default function GameCanvas() {
   useEffect(() => {
     bossNuclearGiftMapRef.current = bossNuclearGiftMap;
   }, [bossNuclearGiftMap]);
+  useEffect(() => {
+    commentTriggerMapRef.current = commentTriggerMap;
+  }, [commentTriggerMap]);
+  useEffect(() => {
+    tapTriggersRef.current = tapTriggers;
+    // Reset spawned counts khi triggers thay đổi (user save mới)
+    tapSpawnedCountRef.current = {};
+  }, [tapTriggers]);
 
   const handleGiftSpawn = useCallback((fn) => {
     spawnShipRef.current = fn;
@@ -183,6 +200,91 @@ export default function GameCanvas() {
     return () => {
       delete window.__simulateGift;
     };
+  }, [addNotification]);
+
+  // ── Listen for TikTok comments (comment trigger) ─────────────
+  // Ship spawned by comment → hiển thị avatar + tên user bình thường
+  useEffect(() => {
+    const handleChat = (data) => {
+      const comment = (data.comment || "").trim();
+      if (!comment) return;
+
+      // Kiểm tra xem comment có khớp trigger code không
+      const entry = commentTriggerMapRef.current[comment];
+      if (!entry) return;
+
+      const { model } = entry;
+      const userName = data.nickname || data.uniqueId || "Viewer";
+      const userAvatar = data.avatarUrl || "";
+
+      addNotification({
+        user: userName,
+        giftName: `CMT: "${comment}"`,
+        imgUrl: null,
+        type: "trigger",
+      });
+
+      spawnShipRef.current?.({
+        type: model.id,
+        damage: model.damage ?? 1,
+        fireRate: model.fireRate ?? 1.0,
+        maxShots: model.maxShots ?? 20,
+        nickname: userName,       // Hiển thị tên user thật
+        avatarUrl: userAvatar,    // Hiển thị avatar user thật
+      });
+    };
+
+    socket.on("chat_received", handleChat);
+    return () => socket.off("chat_received", handleChat);
+  }, [addNotification]);
+
+  // ── Listen for TikTok likes (tap trigger) ────────────────────
+  // Ship spawned by tap → KHÔNG có avatar + tên (vì là tổng tim tích lũy)
+  useEffect(() => {
+    const handleLike = (data) => {
+      const totalLikes = data.totalLikeCount || 0;
+      likeAccumulatorRef.current = totalLikes;
+
+      // Duyệt qua tất cả tap triggers
+      const currentTriggers = tapTriggersRef.current;
+      currentTriggers.forEach((t) => {
+        const { quantity, model } = t;
+        if (!quantity || quantity <= 0) return;
+
+        // Tính số lần đã đạt ngưỡng
+        const totalSpawns = Math.floor(totalLikes / quantity);
+        const key = t.shipId + "_" + quantity;
+        const alreadySpawned = tapSpawnedCountRef.current[key] || 0;
+
+        if (totalSpawns > alreadySpawned) {
+          const newSpawns = totalSpawns - alreadySpawned;
+          tapSpawnedCountRef.current[key] = totalSpawns;
+
+          for (let i = 0; i < Math.min(newSpawns, 5); i++) {
+            setTimeout(() => {
+              addNotification({
+                user: "❤️ Tap",
+                giftName: `${totalLikes} tim`,
+                imgUrl: null,
+                type: "trigger",
+              });
+
+              spawnShipRef.current?.({
+                type: model.id,
+                damage: model.damage ?? 1,
+                fireRate: model.fireRate ?? 1.0,
+                maxShots: model.maxShots ?? 20,
+                nickname: "",     // KHÔNG hiển thị tên
+                avatarUrl: "",    // KHÔNG hiển thị avatar
+              });
+            }, i * 200);
+          }
+        }
+      });
+    };
+
+    socket.on("like_received", handleLike);
+    return () => socket.off("like_received", handleLike);
   }, [addNotification]);
 
   const handleReset = () => {

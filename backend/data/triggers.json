@@ -1,0 +1,20 @@
+[
+  {
+    "id": "trigger_1",
+    "type": "comment",
+    "content": "111",
+    "shipId": "spaceship_1"
+  },
+  {
+    "id": "trigger_2",
+    "type": "tap",
+    "content": "222",
+    "shipId": "spaceship_2"
+  },
+  {
+    "id": "trigger_3",
+    "type": "tap",
+    "quantity": 100,
+    "shipId": "custom_1775465375358_space_ship_5"
+  }
+]

@@ -205,7 +205,7 @@ export function updateModel(req, res) {
     "label", "emoji", "iconUrl", "role", "scale", "gunTipOffset",
     "rotationY", "bulletColor", "damage", "fireRate", "maxShots", "gifts", "active",
     "healGifts", "shieldGifts", "laserGifts", "missileGifts", "nuclearGifts",
-    "healAmount", "shieldDuration", "nuclearKillCount",
+    "healAmount", "shieldDuration", "nuclearKillCount", "triggerCode",
   ];
   allowed.forEach((key) => {
     if (req.body[key] !== undefined) db[idx][key] = req.body[key];

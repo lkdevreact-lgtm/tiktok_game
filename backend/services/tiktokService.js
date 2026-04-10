@@ -43,6 +43,28 @@ export async function connectTikTok(username, socketId, io) {
     io.to(socketId).emit("gift_received", giftData);
   });
 
+  tiktok.on("chat", (data) => {
+    const chatData = {
+      comment: data.comment || "",
+      userId: data.userId,
+      uniqueId: data.uniqueId,
+      nickname: data.nickname,
+      avatarUrl: data.profilePictureUrl || null,
+    };
+    io.to(socketId).emit("chat_received", chatData);
+  });
+
+  tiktok.on("like", (data) => {
+    const likeData = {
+      likeCount: data.likeCount || 1,         // số like lần này
+      totalLikeCount: data.totalLikeCount || 0, // tổng like session
+      userId: data.userId,
+      uniqueId: data.uniqueId,
+      nickname: data.nickname,
+    };
+    io.to(socketId).emit("like_received", likeData);
+  });
+
   tiktok.on("disconnected", () => {
     console.log(`📡 TikTok disconnected for socket ${socketId}`);
     io.to(socketId).emit("tiktok_disconnected", {});
