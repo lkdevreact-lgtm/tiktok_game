@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useTTS } from "../../hooks/useTTS";
 import ToggleSwitch from "../ui/ToggleSwitch";
 
@@ -11,15 +11,18 @@ export default function FiboTTS() {
   const { config, setConfig, voices, loadingVoices, fetchVoices, speak } = useTTS();
 
   // ── Local draft state — only saved on "Save Changes" ──────
+  const configKey = JSON.stringify(config);
   const [draft, setDraft] = useState({ ...config });
+  const [prevConfigKey, setPrevConfigKey] = useState(configKey);
   const [feedback, setFeedback] = useState(null);
   const [testText, setTestText] = useState("Xin chào, đây là bài test giọng nói.");
   const [testing, setTesting] = useState(false);
 
   // Sync draft when config changes externally (e.g. on mount)
-  useEffect(() => {
+  if (configKey !== prevConfigKey) {
+    setPrevConfigKey(configKey);
     setDraft({ ...config });
-  }, [config]);
+  }
 
   // Helper to update draft fields
   const updateDraft = useCallback((key, value) => {

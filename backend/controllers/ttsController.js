@@ -134,7 +134,6 @@ export async function ttsVoices(req, res) {
       headers: { "ngrok-skip-browser-warning": "1" },
     });
     const data = await r.json();
-    console.log("[TTS] Voices:", data);
     res.json(data);
   } catch (err) {
     console.error("[TTS] Voices error:", err.message);

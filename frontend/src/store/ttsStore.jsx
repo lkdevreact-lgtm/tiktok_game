@@ -1,5 +1,6 @@
-import { createContext, useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { API_URL } from "../utils/constant";
+import { TTSContext } from "./ttsContext";
 
 const LS_KEY = "ttsConfig";
 
@@ -24,8 +25,6 @@ function loadConfig() {
   } catch { /* ignore */ }
   return { ...DEFAULT_CONFIG };
 }
-
-export const TTSContext = createContext(null);
 
 export function TTSProvider({ children }) {
   const [config, setConfigState] = useState(loadConfig);
@@ -78,7 +77,7 @@ export function TTSProvider({ children }) {
     playingRef.current = true;
 
     const { text, cfg } = queueRef.current.shift();
-    const url = cfg.apiUrl.replace(/\/$/, "");
+    cfg.apiUrl.replace(/\/$/, "");
 
     try {
       const res = await fetch(`${API_URL}/api/tts/speak`, {

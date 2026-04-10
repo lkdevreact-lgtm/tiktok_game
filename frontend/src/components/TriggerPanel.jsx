@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useModels } from "../hooks/useModels";
 
 export default function TriggerPanel({ isOpen, onClose }) {
@@ -9,14 +9,18 @@ export default function TriggerPanel({ isOpen, onClose }) {
   const [localTriggers, setLocalTriggers] = useState([]);
   const [feedback, setFeedback] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [prevSyncKey, setPrevSyncKey] = useState(null);
 
-  // Sync store → local khi mở
-  useEffect(() => {
-    if (isOpen) {
-      setLocalTriggers(triggers.map((t) => ({ ...t })));
-      setFeedback(null);
-    }
-  }, [isOpen, triggers]);
+  // Sync store → local khi mở (render-time sync)
+  const syncKey = isOpen ? JSON.stringify(triggers) : null;
+  if (isOpen && syncKey !== prevSyncKey) {
+    setPrevSyncKey(syncKey);
+    setLocalTriggers(triggers.map((t) => ({ ...t })));
+    setFeedback(null);
+  }
+  if (!isOpen && prevSyncKey !== null) {
+    setPrevSyncKey(null);
+  }
 
   // ── Thêm trigger mới ──────────────────────────────────────────
   const addTrigger = () => {
