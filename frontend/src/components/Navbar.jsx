@@ -3,15 +3,18 @@ import { useGame } from "../hooks/useGame";
 import SidebarSetting from "./SidebarSetting";
 import ModelManagerPanel from "./ModelManagerPanel";
 import TriggerPanel from "./TriggerPanel";
+import PanelTextToSpeech from "./TextToSpeech/PanelTextToSpeech";
 import { SiOpen3D } from "react-icons/si";
 import { IoIosGift } from "react-icons/io";
 import { IoMdSettings } from "react-icons/io";
+import { BsSoundwave } from "react-icons/bs";
 
 export default function Navbar() {
   const { shipCount, username, gameStatus, wins, losses } = useGame();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [modelsOpen, setModelsOpen] = useState(false);
   const [triggerOpen, setTriggerOpen] = useState(false);
+  const [tts, setTts] = useState(false);
 
   const MenuNav = [
     {
@@ -31,6 +34,12 @@ export default function Navbar() {
       label: "Gift",
       icon: <IoIosGift size={20} />,
       onClick: () => setSettingsOpen(true),
+    },
+    {
+      id: "tts",
+      label: "TextToSpeech",
+      icon: <BsSoundwave size={20} />,
+      onClick: () => setTts(true),
     },
   ];
 
@@ -103,6 +112,10 @@ export default function Navbar() {
       <TriggerPanel
         isOpen={triggerOpen}
         onClose={() => setTriggerOpen(false)}
+      />
+      <PanelTextToSpeech
+        isOpen={tts}
+        onClose={() => setTts(false)}
       />
     </>
   );

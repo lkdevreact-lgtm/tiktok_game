@@ -113,29 +113,31 @@ export default function BossGiftPanel() {
         <div className="flex flex-col gap-2 p-2 rounded-b-xl">
           {sections.map(({ key, label, icon, gifts }, sIdx) => (
             <div key={key}>
-              <div className="flex items-center gap-2">
-                <span className=" text-base font-semibold flex items-center gap-1">
-                  {icon} {label}:
-                </span>
-
-                <div className="flex flex-col gap-3 px-2">
-                  {gifts.map((g) => (
-                    <div key={g.giftId} className="flex items-center gap-1.5">
-                      {g.image ? (
-                        <img
-                          src={g.image}
-                          alt={g.giftName}
-                          className="w-7 h-7 rounded object-contain shrink-0"
-                        />
-                      ) : (
-                        <span className="text-base shrink-0">🎁</span>
-                      )}
-                      {/* <span className="text-sm font-semibold truncate">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <div className="flex flex-col gap-3 px-2">
+                    {gifts.map((g) => (
+                      <div key={g.giftId} className="flex items-center gap-1.5">
+                        {g.image ? (
+                          <img
+                            src={g.image}
+                            alt={g.giftName}
+                            className="w-7 h-7 rounded object-contain shrink-0"
+                          />
+                        ) : (
+                          <span className="text-base shrink-0">🎁</span>
+                        )}
+                        {/* <span className="text-sm font-semibold truncate">
                         {g.giftName}
                       </span> */}
-                    </div>
-                  ))}
+                      </div>
+                    ))}
+                  </div>
+                  <span>=</span>
                 </div>
+                <span className=" text-base font-semibold flex items-center gap-1">
+                  {icon} {label}
+                </span>
               </div>
               {sIdx < sections.length - 1 && (
                 <div className="border-t border-white/[0.06] mt-2" />

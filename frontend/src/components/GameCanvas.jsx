@@ -5,6 +5,7 @@ import GameScene from "../game/GameScene";
 import Navbar from "./Navbar";
 import socket from "../socket/socketClient";
 import { useModels } from "../hooks/useModels";
+import { useTTS } from "../hooks/useTTS";
 import { IMAGES } from "../utils/constant";
 import BossGiftPanel from "./BossGiftPanel";
 import ShipGiftPanel from "./ShipGiftPanel";
@@ -181,6 +182,35 @@ export default function GameCanvas() {
     socket.on("gift_received", handleGift);
     return () => socket.off("gift_received", handleGift);
   }, [addNotification]);
+
+  // ── TTS: speak on gift & member join ─────────────────────────
+  const { speakWelcome, speakGift } = useTTS();
+  const speakWelcomeRef = useRef(speakWelcome);
+  const speakGiftRef = useRef(speakGift);
+  useEffect(() => { speakWelcomeRef.current = speakWelcome; }, [speakWelcome]);
+  useEffect(() => { speakGiftRef.current = speakGift; }, [speakGift]);
+
+  // TTS for gifts
+  useEffect(() => {
+    const handleGiftTTS = (data) => {
+      const name = data.nickname || data.uniqueId || "Viewer";
+      const count = data.repeatCount || 1;
+      const gift = data.giftName || "quà";
+      speakGiftRef.current?.(name, count, gift);
+    };
+    socket.on("gift_received", handleGiftTTS);
+    return () => socket.off("gift_received", handleGiftTTS);
+  }, []);
+
+  // TTS for member join
+  useEffect(() => {
+    const handleMemberJoin = (data) => {
+      const name = data.nickname || data.uniqueId || "Viewer";
+      speakWelcomeRef.current?.(name);
+    };
+    socket.on("member_join", handleMemberJoin);
+    return () => socket.off("member_join", handleMemberJoin);
+  }, []);
 
   useEffect(() => {
     window.__simulateGift = (giftId = 5655) => {

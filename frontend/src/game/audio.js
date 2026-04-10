@@ -18,7 +18,7 @@ export function playAttackSound() {
 const SPAWN_POOL_SIZE = 10;
 const spawnPool = Array.from({ length: SPAWN_POOL_SIZE }, () => {
   const a = new Audio("/sound/start_sound.mp3");
-  a.volume = 0.6;
+  a.volume = 0.4;
   return a;
 });
 let spawnPoolIdx = 0;

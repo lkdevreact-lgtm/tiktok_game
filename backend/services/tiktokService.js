@@ -74,6 +74,17 @@ export async function connectTikTok(username, socketId, io) {
     io.to(socketId).emit("like_received", likeData);
   });
 
+  tiktok.on("member", (data) => {
+    const memberData = {
+      userId: data.userId,
+      uniqueId: data.uniqueId,
+      nickname: data.nickname,
+      avatarUrl: data.profilePictureUrl || null,
+    };
+    console.log(`👤 Member joined: @${memberData.uniqueId}`);
+    io.to(socketId).emit("member_join", memberData);
+  });
+
   tiktok.on("disconnected", () => {
     console.log(`📡 TikTok disconnected for socket ${socketId}`);
     io.to(socketId).emit("tiktok_disconnected", {});

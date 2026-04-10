@@ -13,6 +13,7 @@ import {
 } from "../controllers/modelController.js";
 import { getGifts, updateGift } from "../controllers/giftController.js";
 import { getTriggers, saveTriggers } from "../controllers/triggerController.js";
+import { ttsSpeak, ttsTestFormats, ttsVoices } from "../controllers/ttsController.js";
 
 const router = express.Router();
 
@@ -45,6 +46,11 @@ router.delete("/models/:id", deleteModel);
 // ── Triggers ──────────────────────────────────────────────────
 router.get("/triggers", getTriggers);
 router.put("/triggers", saveTriggers);
+
+// ── TTS Proxy ─────────────────────────────────────────────────
+router.post("/tts/speak", ttsSpeak);
+router.post("/tts/test-formats", ttsTestFormats);
+router.get("/tts/voices", ttsVoices);
 
 export default router;
 
