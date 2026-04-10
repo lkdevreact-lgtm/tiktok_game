@@ -111,10 +111,14 @@
         "damagePercent": 10
       }
     },
-    "updatedAt": "2026-04-10T02:46:32.373Z",
+    "updatedAt": "2026-04-10T07:14:42.097Z",
     "maxShots": 20,
-    "laserGifts": [],
-    "missileGifts": [],
+    "laserGifts": [
+      15231
+    ],
+    "missileGifts": [
+      19438
+    ],
     "nuclearGifts": [
       15232
     ],
@@ -166,7 +170,7 @@
     "gunTipOffset": 0.7,
     "rotationY": 80,
     "bulletColor": "#f31212",
-    "damage": 1,
+    "damage": 3,
     "fireRate": 1,
     "gifts": [
       9498
@@ -174,7 +178,7 @@
     "builtIn": false,
     "active": true,
     "uploadedAt": "2026-04-06T08:49:35.366Z",
-    "updatedAt": "2026-04-10T02:58:23.153Z",
+    "updatedAt": "2026-04-10T03:44:01.728Z",
     "healGifts": [],
     "shieldGifts": [],
     "maxShots": 10,

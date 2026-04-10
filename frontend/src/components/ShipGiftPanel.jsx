@@ -16,7 +16,7 @@ function loadPos(fallback) {
 }
 
 export default function ShipGiftPanel() {
-  const { shipModels } = useModels();
+  const { shipModels, triggers, allShipModels } = useModels();
   const { gifts: allGifts } = useGifts();
 
   // ── Gift lookup map ──────────────────────────────────────────
@@ -28,18 +28,44 @@ export default function ShipGiftPanel() {
     return map;
   }, [allGifts]);
 
-  const shipsWithGifts = useMemo(
-    () =>
-      (shipModels || [])
-        .map((ship) => ({
-          ship,
-          gifts: (ship.gifts || [])
-            .map((id) => giftMap[String(id)])
-            .filter(Boolean),
-        }))
-        .filter(({ gifts }) => gifts.length > 0),
-    [shipModels, giftMap],
-  );
+  // ── Ship lookup map ──────────────────────────────────────────
+  const shipMap = useMemo(() => {
+    const map = {};
+    (allShipModels || []).forEach((s) => {
+      map[s.id] = s;
+    });
+    return map;
+  }, [allShipModels]);
+
+  // ── Build flat rows: each gift-ship combo + each trigger = 1 row ──
+  const rows = useMemo(() => {
+    const result = [];
+
+    // 1) Gift rows: ship with gifts
+    (shipModels || []).forEach((ship) => {
+      const gifts = (ship.gifts || [])
+        .map((id) => giftMap[String(id)])
+        .filter(Boolean);
+      if (gifts.length > 0) {
+        result.push({ type: "gift", ship, gifts, key: `gift_${ship.id}` });
+      }
+    });
+
+    // 2) Trigger rows: each trigger is its own row
+    (triggers || []).forEach((t) => {
+      if (!t.shipId) return;
+      const ship = shipMap[t.shipId];
+      if (!ship) return;
+      result.push({
+        type: "trigger",
+        ship,
+        trigger: t,
+        key: `trigger_${t.id}`,
+      });
+    });
+
+    return result;
+  }, [shipModels, giftMap, triggers, shipMap]);
 
   // ── Drag state ───────────────────────────────────────────────
   const [pos, setPos] = useState(() =>
@@ -86,7 +112,7 @@ export default function ShipGiftPanel() {
     e.preventDefault();
   };
 
-  if (!shipsWithGifts.length) return null;
+  if (!rows.length) return null;
 
   return (
     <div
@@ -94,7 +120,7 @@ export default function ShipGiftPanel() {
       className="absolute z-[20] select-none animate-fade-in"
       style={{ left: pos.x, top: pos.y, width: 145 }}
     >
-      <div className="border border-white/20 w-64 max-w-sm bg-white/20 backdrop-blur-md rounded-md">
+      <div className="border border-white/20 w-64 max-w-md bg-white/20 backdrop-blur-md rounded-md">
         <div
           onMouseDown={onDragStart}
           onTouchStart={onDragStart}
@@ -109,39 +135,70 @@ export default function ShipGiftPanel() {
         </div>
 
         <div className="flex flex-col gap-3 pointer-events-none p-2">
-          {shipsWithGifts.map(({ ship, gifts }, idx) => (
-            <div key={ship.id} className="flex items-center gap-3">
-              <div className="flex flex-col gap-1 pl-0.5">
-                {gifts.map((g) => (
-                  <div key={g.giftId} className="flex items-center gap-1.5">
-                    {g.image ? (
-                      <img
-                        src={g.image}
-                        alt={g.giftName}
-                        className="w-6 h-6 rounded object-contain shrink-0"
-                      />
+          {rows.map((row, idx) => (
+            <div key={row.key}>
+              <div className="flex items-center gap-3">
+                {/* Left side: gift icons or trigger icon */}
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-1 pl-0.5">
+                    {row.type === "gift" ? (
+                      row.gifts.map((g) => (
+                        <div
+                          key={g.giftId}
+                          className="flex items-center gap-1.5"
+                        >
+                          {g.image ? (
+                            <img
+                              src={g.image}
+                              alt={g.giftName}
+                              className="w-6 h-6 rounded object-contain shrink-0"
+                            />
+                          ) : (
+                            <span className="text-sm shrink-0">🎁</span>
+                          )}
+                        </div>
+                      ))
                     ) : (
-                      <span className="text-sm shrink-0">🎁</span>
+                      <div className="flex items-center gap-1 text-sm px-1 py-0.5 rounded">
+                        {row.trigger.type === "comment" ? (
+                          <>
+                            <span>Comment:</span>
+                            <span className="text-yellow-300 font-medium truncate max-w-[60px]">
+                              "{row.trigger.content}"
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-yellow-300 font-medium">
+                              {row.trigger.quantity}
+                            </span>
+                            <span>❤️</span>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-1">
-                <p>x1</p>
-                <div className="flex items-center gap-2">
-                  <img
-                    src={ship.iconUrl || IMAGES.SHIP_USER}
-                    alt={ship.label}
-                    className="w-7 h-7 rounded-md object-cover shrink-0"
-                    style={{ border: "1px solid rgba(255,255,255,0.15)" }}
-                  />
-                  <span className="text-sm font-semibold text-white/85 truncate">
-                    {ship.label}
-                  </span>
+                  <p>=</p>
+                </div>
+
+                {/* Right side: x1 → ship icon + name */}
+                <div className="flex items-center gap-1">
+                  <p>x1</p>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={row.ship.iconUrl || IMAGES.SHIP_USER}
+                      alt={row.ship.label}
+                      className="w-7 h-7 rounded-md object-cover shrink-0"
+                      style={{ border: "1px solid rgba(255,255,255,0.15)" }}
+                    />
+                    {/* <span className="text-sm font-semibold text-white/85 truncate">
+                      {row.ship.label}
+                    </span> */}
+                  </div>
                 </div>
               </div>
 
-              {idx < shipsWithGifts.length - 1 && (
+              {idx < rows.length - 1 && (
                 <div className="border-t border-white/[0.06] mt-2" />
               )}
             </div>
