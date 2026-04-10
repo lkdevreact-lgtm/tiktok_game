@@ -16,6 +16,6 @@ export const SETTINGS_GAME = {
   MAX_SHIPS: 60,
   BOSS_START_X: -11,
   BOSS_END_X: 5.2,
-  BOSS_SPEED: 0.05,
+  BOSS_SPEED: 0.005,
   BULLET_SPEED: 0.2,
 };

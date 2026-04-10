@@ -12,7 +12,14 @@ import ShipGiftPanel from "./ShipGiftPanel";
 export default function GameCanvas() {
   const { gameStatus, setBossHp, notifications, addNotification, resetGame } =
     useGame();
-  const { giftModelMap, bossHealGiftMap, bossShieldGiftMap, bossLaserGiftMap, bossMissileGiftMap, bossNuclearGiftMap } = useModels();
+  const {
+    giftModelMap,
+    bossHealGiftMap,
+    bossShieldGiftMap,
+    bossLaserGiftMap,
+    bossMissileGiftMap,
+    bossNuclearGiftMap,
+  } = useModels();
 
   const spawnShipRef = useRef(null);
   const bossHealRef = useRef(null);
@@ -89,22 +96,42 @@ export default function GameCanvas() {
         return;
       }
       if (bossShieldGiftMapRef.current[String(giftId)]) {
-        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "shield" });
+        addNotification({
+          user: nickname || uniqueId || "Viewer",
+          giftName,
+          imgUrl,
+          type: "shield",
+        });
         bossShieldRef.current?.();
         return;
       }
       if (bossLaserGiftMapRef.current[String(giftId)]) {
-        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "attack" });
+        addNotification({
+          user: nickname || uniqueId || "Viewer",
+          giftName,
+          imgUrl,
+          type: "attack",
+        });
         bossLaserTriggerRef.current?.();
         return;
       }
       if (bossMissileGiftMapRef.current[String(giftId)]) {
-        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "attack" });
+        addNotification({
+          user: nickname || uniqueId || "Viewer",
+          giftName,
+          imgUrl,
+          type: "attack",
+        });
         bossMissileTriggerRef.current?.();
         return;
       }
       if (bossNuclearGiftMapRef.current[String(giftId)]) {
-        addNotification({ user: nickname || uniqueId || "Viewer", giftName, imgUrl, type: "attack" });
+        addNotification({
+          user: nickname || uniqueId || "Viewer",
+          giftName,
+          imgUrl,
+          type: "attack",
+        });
         bossNuclearTriggerRef.current?.();
         return;
       }
@@ -200,7 +227,8 @@ export default function GameCanvas() {
 
       <div className="flex-1 relative mt-14">
         <Canvas
-          camera={{ position: [0, 1.5, 8], fov: 55 }}
+          orthographic
+          camera={{ position: [0, 0, 10], zoom: 80 }}
           gl={{ antialias: true, alpha: false }}
           style={{ background: "#000" }}
         >
@@ -237,9 +265,7 @@ export default function GameCanvas() {
               ) : (
                 <span>🎁</span>
               )}
-              <span className="font-semibold text-cyan-1">
-                {n.user}
-              </span>
+              <span className="font-semibold text-cyan-1">{n.user}</span>
               <span className="text-white/60">sent</span>
               <span className="text-gold">{n.giftName}</span>
             </div>
@@ -247,7 +273,7 @@ export default function GameCanvas() {
         </div>
 
         {/* Dev Test Buttons */}
-        <div className="absolute bottom-5 right-[316px] flex gap-2 z-[15]">
+        <div className="absolute bottom-5 right-5 flex gap-2 z-[15]">
           <button
             id="btn-simulate-gift"
             onClick={handleSimulate}
@@ -257,7 +283,7 @@ export default function GameCanvas() {
               hover:bg-[rgba(0,245,255,0.22)]
             "
           >
-            🎁 Test Gift
+            Test Ship ( User )
           </button>
 
           <button
@@ -269,35 +295,35 @@ export default function GameCanvas() {
               hover:bg-[rgba(74,222,128,0.22)]
             "
           >
-            💚 Test Heal
+            Test Heal ( Boss )
           </button>
 
           <button
             onClick={() => bossShieldRef.current?.()}
             className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(0,245,255,0.06)] border border-[rgba(0,245,255,0.5)] text-cyan-400 hover:bg-[rgba(0,245,255,0.18)]"
           >
-            🛡️ Shield
+            Shield ( Boss )
           </button>
 
           <button
             onClick={() => bossLaserTriggerRef.current?.()}
             className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.35)] text-red-500 hover:bg-[rgba(239,68,68,0.22)]"
           >
-            🔴 Laser
+            Laser ( Boss )
           </button>
 
           <button
             onClick={() => bossMissileTriggerRef.current?.()}
             className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(251,146,60,0.12)] border border-[rgba(251,146,60,0.35)] text-orange-400 hover:bg-[rgba(251,146,60,0.22)]"
           >
-            🚀 Missile
+            Missile ( Boss )
           </button>
 
           <button
             onClick={() => bossNuclearTriggerRef.current?.()}
             className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(250,204,21,0.12)] border border-[rgba(250,204,21,0.35)] text-yellow-400 hover:bg-[rgba(250,204,21,0.22)]"
           >
-            ☢️ Nuclear
+            Ultimate ( Boss )
           </button>
         </div>
 
@@ -327,9 +353,18 @@ export default function GameCanvas() {
               onClick={handleReset}
               className="relative hover:scale-105 cursor-pointer transition-transform duration-300 ease-in-out"
             >
-              <img src={IMAGES.GAME_BUTTON} alt="" className="w-[60%] m-auto object-contain" />
-              <p className="absolute inset-0 top-5.5 flex items-center text-xl justify-center font-semibold text-white"
-                style={{ textShadow: "0 0 8px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.9)" }}>
+              <img
+                src={IMAGES.GAME_BUTTON}
+                alt=""
+                className="w-[60%] m-auto object-contain"
+              />
+              <p
+                className="absolute inset-0 top-5.5 flex items-center text-xl justify-center font-semibold text-white"
+                style={{
+                  textShadow:
+                    "0 0 8px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.9)",
+                }}
+              >
                 Play Again
               </p>
             </button>

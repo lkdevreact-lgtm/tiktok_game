@@ -9,7 +9,7 @@ export default function BossShieldRing({
   bossRef,
   shieldEndTime,
   shieldScale = 0.03,
-  shieldOffset = [-1.5, 0.8, 0],
+  shieldOffset = [-2.75, 0.6, 12],
 }) {
   const { bossShield } = useGame();
   const groupRef = useRef();
@@ -46,7 +46,7 @@ export default function BossShieldRing({
   return (
     <group ref={groupRef} scale={shieldScale}>
       {/* Render shield model as-is */}
-      <primitive object={shieldScene} rotation={[0,1,0]} scale={[1.6,0.5,2]}/>
+      <primitive object={shieldScene} rotation={[0,0,0]} scale={[2,0.8,2]}/>
 
       <Html
         center
