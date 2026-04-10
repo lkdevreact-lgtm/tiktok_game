@@ -1,5 +1,8 @@
 export const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8888";
 
+/** Prepend backend URL to asset paths (models, icons) so they load from the server */
+export const assetUrl = (path) => path ? `${API_URL}${path}` : path;
+
 export const ROUTE_URLS = {
   HOME: "/",
 };

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useModels } from "../hooks/useModels";
+import { assetUrl } from "../utils/constant";
 
 export default function TriggerPanel({ isOpen, onClose }) {
   const { allShipModels, triggers, saveTriggers } = useModels();
@@ -320,7 +321,7 @@ function TriggerCard({ trigger, index, activeShips, onUpdate, onRemove }) {
 
                   {/* Icon */}
                   {m.iconUrl ? (
-                    <img src={m.iconUrl} alt="" className="w-6 h-6 rounded object-cover" />
+                    <img src={assetUrl(m.iconUrl)} alt="" className="w-6 h-6 rounded object-cover" />
                   ) : (
                     <span className="text-base">{m.emoji || "🚀"}</span>
                   )}
