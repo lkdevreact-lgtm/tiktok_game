@@ -21,7 +21,7 @@ export default function Navbar() {
 
   const statusCls =
     gameStatus === "playing"
-      ? "text-[var(--color-success)]"
+      ? "text-success"
       : gameStatus === "win"
         ? "text-[#ffd700]"
         : "text-white/45";

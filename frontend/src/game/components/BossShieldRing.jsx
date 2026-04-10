@@ -8,6 +8,7 @@ useGLTF.preload("/models/shield.glb");
 export default function BossShieldRing({
   bossRef,
   shieldEndTime,
+  shieldDuration = 5,
   shieldScale = 0.03,
   shieldOffset = [-2.75, 0.6, 12],
 }) {
@@ -40,8 +41,9 @@ export default function BossShieldRing({
   if (!bossShield) return null;
 
   const secsLeft = Math.ceil(msLeft / 1000);
-  const pct = Math.min(1, Math.max(0, msLeft / 30000));
-  const isLow = pct < 0.3 && msLeft > 0;
+  const totalMs = shieldDuration * 1000;
+  const pct = Math.min(1, Math.max(0, msLeft / totalMs));
+  const isLow = secsLeft <= 2 && msLeft > 0;
 
   return (
     <group ref={groupRef} scale={shieldScale}>

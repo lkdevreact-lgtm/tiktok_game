@@ -229,8 +229,8 @@ export default function GameCanvas() {
         damage: model.damage ?? 1,
         fireRate: model.fireRate ?? 1.0,
         maxShots: model.maxShots ?? 20,
-        nickname: userName,       // Hiển thị tên user thật
-        avatarUrl: userAvatar,    // Hiển thị avatar user thật
+        nickname: userName, // Hiển thị tên user thật
+        avatarUrl: userAvatar, // Hiển thị avatar user thật
       });
     };
 
@@ -274,8 +274,8 @@ export default function GameCanvas() {
                 damage: model.damage ?? 1,
                 fireRate: model.fireRate ?? 1.0,
                 maxShots: model.maxShots ?? 20,
-                nickname: "",     // KHÔNG hiển thị tên
-                avatarUrl: "",    // KHÔNG hiển thị avatar
+                nickname: "", // KHÔNG hiển thị tên
+                avatarUrl: "", // KHÔNG hiển thị avatar
               });
             }, i * 200);
           }
@@ -353,9 +353,9 @@ export default function GameCanvas() {
             <div
               key={n.id}
               className="
-                flex items-center gap-2 px-[14px] py-2 rounded-[30px] text-[0.8rem]
+                flex items-center gap-2 px-3.5 py-2 rounded-[30px] text-[0.8rem]
                 animate-slide-in animate-fade-out
-                bg-[rgba(5,15,30,0.88)] border border-[var(--color-border)] backdrop-blur-sm
+                bg-[rgba(5,15,30,0.88)] border border-border] backdrop-blur-sm
               "
             >
               {n.imgUrl ? (
@@ -433,15 +433,9 @@ export default function GameCanvas() {
         {isOver && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 z-20 animate-fade-in bg-black/70 backdrop-blur-sm">
             <div
-              className={`text-5xl font-black animate-pulse-scale ${isWin ? "neon-success" : "neon-danger"}`}
-              style={{
-                color: isWin ? "var(--color-success)" : "var(--color-danger)",
-                textShadow: isWin
-                  ? "0 0 40px var(--color-success)"
-                  : "0 0 40px var(--color-danger)",
-              }}
+              className={`text-5xl font-black animate-pulse-scale ${isWin ? "neon-success text-success [text-shadow:0_0_40px_var(--color-success)]" : "neon-danger text-danger [text-shadow:0_0_40px_var(--color-danger)]"}`}
             >
-              {isWin ? "🏆 YOU WIN!" : "💀 GAME OVER"}
+              {isWin ? "YOU WIN!" : "GAME OVER"}
             </div>
 
             <div className="text-[0.9rem] text-center text-white/70 font-[var(--font-ui)]">

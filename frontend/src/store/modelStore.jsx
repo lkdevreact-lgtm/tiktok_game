@@ -100,6 +100,25 @@ export function ModelProvider({ children }) {
     bossNuclearGiftMap[String(id)] = true;
   });
 
+  // ── Gift usage map: { [giftId]: "Model Label (role)" } ─────
+  // Dùng để hiển thị trong GiftSelect quà nào đã được gán model nào
+  const giftUsageMap = {};
+  const GIFT_FIELDS = [
+    { field: "gifts",        suffix: "" },
+    { field: "healGifts",    suffix: " (Heal)" },
+    { field: "shieldGifts",  suffix: " (Shield)" },
+    { field: "laserGifts",   suffix: " (Laser)" },
+    { field: "missileGifts", suffix: " (Missile)" },
+    { field: "nuclearGifts", suffix: " (Nuclear)" },
+  ];
+  models.forEach((m) => {
+    GIFT_FIELDS.forEach(({ field, suffix }) => {
+      (m[field] || []).forEach((giftId) => {
+        giftUsageMap[String(giftId)] = `${m.label || m.id}${suffix}`;
+      });
+    });
+  });
+
   // ── Trigger maps (computed from triggers array) ────────────────
   // Comment trigger: { [code]: { shipId, model } }
   const commentTriggerMap = {};
@@ -211,6 +230,7 @@ export function ModelProvider({ children }) {
         activeBossModel,
         activeBossId,
         giftModelMap,
+        giftUsageMap,
         commentTriggerMap,
         tapTriggers,
         triggers,

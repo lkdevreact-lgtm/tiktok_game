@@ -92,10 +92,10 @@
     "fireRate": 1,
     "gifts": [],
     "healGifts": [
-      10961
+      6064
     ],
     "shieldGifts": [
-      5827
+      57800
     ],
     "weapons": {
       "laser": {
@@ -111,12 +111,10 @@
         "damagePercent": 10
       }
     },
-    "updatedAt": "2026-04-09T06:59:35.956Z",
+    "updatedAt": "2026-04-10T02:46:32.373Z",
     "maxShots": 20,
     "laserGifts": [],
-    "missileGifts": [
-      5655
-    ],
+    "missileGifts": [],
     "nuclearGifts": [
       15232
     ],
@@ -166,18 +164,26 @@
     "path": "/models/custom_1775465375358_space_ship_5.glb",
     "scale": 0.001,
     "gunTipOffset": 0.7,
-    "rotationY": 40,
+    "rotationY": 80,
     "bulletColor": "#f31212",
     "damage": 1,
     "fireRate": 1,
-    "gifts": [],
+    "gifts": [
+      9498
+    ],
     "builtIn": false,
     "active": true,
     "uploadedAt": "2026-04-06T08:49:35.366Z",
-    "updatedAt": "2026-04-07T10:25:35.022Z",
+    "updatedAt": "2026-04-10T02:58:23.153Z",
     "healGifts": [],
     "shieldGifts": [],
-    "maxShots": 5,
-    "triggerCode": "444"
+    "maxShots": 10,
+    "triggerCode": "444",
+    "laserGifts": [],
+    "missileGifts": [],
+    "nuclearGifts": [],
+    "healAmount": 3,
+    "shieldDuration": 5,
+    "nuclearKillCount": 0
   }
 ]

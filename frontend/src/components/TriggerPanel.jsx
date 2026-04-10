@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import { useModels } from "../hooks/useModels";
 
-/**
- * TriggerPanel — Sidebar panel cho phép cấu hình triggers:
- *  - Select kiểu trigger: Comment / Tap tap (tim)
- *  - Comment: nhập nội dung comment (code)
- *  - Tap tap: nhập số lượng tim
- *  - Chọn ship user tương ứng
- *  - Save change → lưu triggers.json qua API
- */
 export default function TriggerPanel({ isOpen, onClose }) {
   const { allShipModels, triggers, saveTriggers } = useModels();
   const activeShips = allShipModels.filter((m) => m.active);

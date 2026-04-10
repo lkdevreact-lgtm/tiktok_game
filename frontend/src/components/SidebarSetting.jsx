@@ -43,7 +43,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,245,255,0.15)]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[var(--color-success)] shadow-[0_0_8px_var(--color-success)] shrink-0 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_var(--color-success)] shrink-0 inline-block" />
             <span className="text-[0.7rem] uppercase tracking-[0.15em] text-cyan-1">
               Gift Config
             </span>
@@ -86,7 +86,7 @@ export default function SidebarSetting({ isOpen, onClose }) {
                 rounded-[10px] px-3 py-2 flex items-center gap-2.5
                 border transition-[border-color,background] duration-200
                 ${gift.active
-                  ? "bg-[rgba(0,245,255,0.05)] border-[rgba(0,245,255,0.2)] opacity-100"
+                  ? "bg-[rgba(0,245,255,0.05)] border-border opacity-100"
                   : "bg-white/[0.015] border-white/[0.06] opacity-55"
                 }
               `}

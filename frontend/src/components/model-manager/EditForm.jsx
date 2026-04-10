@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useMemo, Suspense } from "react";
 import { useGifts } from "../../hooks/useGifts";
+import { useModels } from "../../hooks/useModels";
 import { FIRE_RATE_OPTIONS, DAMAGE_OPTIONS } from "../ui/styles";
 import { FaCube } from "react-icons/fa";
 import { Canvas } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment } from "@react-three/drei";
+import { IMAGES } from "../../utils/constant";
 
 const inputCls =
   "w-full rounded-lg px-2.5 py-1.5 text-[0.72rem] bg-black/30 border border-white/10 text-[#e0e8ff] outline-none focus:border-cyan-400/50 transition-colors";
@@ -16,6 +18,8 @@ function GiftSelect({
   activeGifts = [],
   onChange,
   accentColor = "#00f5ff",
+  giftUsageMap = {},
+  currentSelected = [],
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -54,7 +58,7 @@ function GiftSelect({
       <div
         onClick={() => setOpen((v) => !v)}
         className={`
-          w-full min-h-[36px] rounded-lg px-2.5 py-1.5 text-[0.72rem] bg-black/30
+          w-full min-h-9 rounded-lg px-2.5 py-1.5 text-[0.72rem] bg-black/30
           border cursor-pointer transition-all duration-150 flex items-center gap-1.5 flex-wrap
           ${open ? "border-cyan-400/50 ring-1 ring-cyan-400/20" : "border-white/10 hover:border-white/20"}
         `}
@@ -65,7 +69,7 @@ function GiftSelect({
           selectedGifts.map((g) => (
             <span
               key={g.giftId}
-              className="flex items-center gap-1 text-[0.62rem] px-1.5 py-0.5 rounded-full border shrink-0"
+              className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border shrink-0"
               style={{
                 background: `${accentColor}14`,
                 borderColor: `${accentColor}40`,
@@ -85,7 +89,7 @@ function GiftSelect({
                   e.stopPropagation();
                   toggle(g.giftId);
                 }}
-                className="ml-0.5 text-[0.6rem] opacity-60 hover:opacity-100 cursor-pointer bg-transparent border-0 p-0"
+                className="ml-0.5 text-[10px] opacity-60 hover:opacity-100 cursor-pointer bg-transparent border-0 p-0"
                 style={{ color: accentColor }}
               >
                 ✕
@@ -95,7 +99,7 @@ function GiftSelect({
         )}
         {/* Arrow indicator */}
         <span
-          className={`ml-auto text-white/30 text-[0.6rem] shrink-0 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
+          className={`ml-auto text-white/30 text-[10px] shrink-0 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
         >
           ▼
         </span>
@@ -104,23 +108,31 @@ function GiftSelect({
       {/* Dropdown panel */}
       {open && (
         <div className="absolute z-50 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-[#0d1117] shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden animate-fade-in">
-          <div className="max-h-[180px] overflow-y-auto p-1.5 flex flex-col gap-0.5">
+          <div className="max-h-44 overflow-y-auto p-1.5 flex flex-col gap-0.5">
             {activeGifts.map((gift) => {
               const checked = selected.includes(Number(gift.giftId));
+              const usedBy = giftUsageMap[String(gift.giftId)];
+              // Gift đã dùng bởi model khác (không nằm trong currentSelected) → disabled
+              const isUsedByOther =
+                usedBy && !currentSelected.includes(Number(gift.giftId));
               return (
                 <div
                   key={gift.giftId}
-                  onClick={() => toggle(gift.giftId)}
+                  onClick={() => !isUsedByOther && toggle(gift.giftId)}
                   className={`
-                    flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded-md transition-all duration-100
+                    flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-100
                     ${
-                      checked
-                        ? "bg-[rgba(0,245,255,0.08)]"
-                        : "hover:bg-white/[0.04]"
+                      isUsedByOther
+                        ? "opacity-40 cursor-not-allowed"
+                        : checked
+                          ? "bg-[rgba(0,245,255,0.08)] cursor-pointer"
+                          : "hover:bg-white/[0.04] cursor-pointer"
                     }
                   `}
                   style={
-                    checked ? { background: `${accentColor}14` } : undefined
+                    checked && !isUsedByOther
+                      ? { background: `${accentColor}14` }
+                      : undefined
                   }
                 >
                   <div
@@ -158,14 +170,24 @@ function GiftSelect({
                   ) : (
                     <span className="text-base shrink-0">🎁</span>
                   )}
-                  <span
-                    className={`text-[0.7rem] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${checked ? "text-[#e0e8ff]" : "text-white/50"}`}
-                  >
-                    {gift.giftName}
-                  </span>
-                  <span className="text-[0.6rem] text-gold shrink-0">
-                    💎{gift.diamonds}
-                  </span>
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <span
+                      className={`text-xs overflow-hidden text-ellipsis whitespace-nowrap ${checked ? "text-[#e0e8ff]" : "text-white/50"}`}
+                    >
+                      {gift.giftName}
+                    </span>
+                    {isUsedByOther && (
+                      <span className="text-[8px] text-gold truncate">
+                        {usedBy}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-gold shrink-0">
+                      {gift.diamonds}
+                    </span>
+                    <img src={IMAGES.COIN} alt="Icon coin" className="w-3.5" />
+                  </div>
                 </div>
               );
             })}
@@ -176,7 +198,6 @@ function GiftSelect({
   );
 }
 
-/* ─── 3D Model Preview ──────────────────────────────────── */
 function PreviewModel({ url, scale = 1 }) {
   const { scene } = useGLTF(url);
   const cloned = useMemo(() => scene.clone(true), [scene]);
@@ -186,7 +207,7 @@ function PreviewModel({ url, scale = 1 }) {
 function ModelPreview3D({ url, scale }) {
   if (!url) return null;
   return (
-    <div className="w-full h-[180px] rounded-lg overflow-hidden border border-white/10 bg-black/40">
+    <div className="w-full h-44 rounded-lg overflow-hidden border border-white/10 bg-black/40">
       <Canvas camera={{ position: [0, 1.5, 3.5], fov: 45 }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 4, 5]} intensity={1} />
@@ -205,7 +226,6 @@ function ModelPreview3D({ url, scale }) {
   );
 }
 
-/* ─── Edit Modal (popup overlay) ──────────────────────────────── */
 export default function EditForm({
   local,
   setLocal,
@@ -215,6 +235,7 @@ export default function EditForm({
   modelPath,
 }) {
   const { activeGifts } = useGifts();
+  const { giftUsageMap } = useModels();
   const glbInputRef = useRef();
   const [pendingGlbFile, setPendingGlbFile] = useState(null);
 
@@ -398,7 +419,10 @@ export default function EditForm({
                   className={inputCls}
                   value={local.fireRate}
                   onChange={(e) =>
-                    setLocal((p) => ({ ...p, fireRate: Number(e.target.value) }))
+                    setLocal((p) => ({
+                      ...p,
+                      fireRate: Number(e.target.value),
+                    }))
                   }
                 >
                   {FIRE_RATE_OPTIONS.map((o) => (
@@ -449,6 +473,8 @@ export default function EditForm({
                 selected={local.gifts || []}
                 activeGifts={activeGifts}
                 onChange={(next) => setLocal((p) => ({ ...p, gifts: next }))}
+                giftUsageMap={giftUsageMap}
+                currentSelected={local.gifts || []}
               />
             </div>
           )}
@@ -472,9 +498,13 @@ export default function EditForm({
                     setLocal((p) => ({ ...p, healGifts: next }))
                   }
                   accentColor="#4ade80"
+                  giftUsageMap={giftUsageMap}
+                  currentSelected={local.healGifts || []}
                 />
                 <div className="mt-2 flex items-center gap-2">
-                  <label className={`${labelCls} mb-0 shrink-0`}>Hồi máu (%)</label>
+                  <label className={`${labelCls} mb-0 shrink-0`}>
+                    Hồi máu (%)
+                  </label>
                   <input
                     type="number"
                     step="1"
@@ -483,10 +513,15 @@ export default function EditForm({
                     className={`${inputCls} w-20`}
                     value={local.healAmount ?? 3}
                     onChange={(e) =>
-                      setLocal((p) => ({ ...p, healAmount: Number(e.target.value) }))
+                      setLocal((p) => ({
+                        ...p,
+                        healAmount: Number(e.target.value),
+                      }))
                     }
                   />
-                  <span className="text-[0.58rem] text-green-400/50">% HP mỗi lần</span>
+                  <span className="text-[0.58rem] text-green-400/50">
+                    % HP mỗi lần
+                  </span>
                 </div>
               </div>
 
@@ -506,9 +541,13 @@ export default function EditForm({
                     setLocal((p) => ({ ...p, shieldGifts: next }))
                   }
                   accentColor="#00f5ff"
+                  giftUsageMap={giftUsageMap}
+                  currentSelected={local.shieldGifts || []}
                 />
                 <div className="mt-2 flex items-center gap-2">
-                  <label className={`${labelCls} mb-0 shrink-0`}>Thời gian (s)</label>
+                  <label className={`${labelCls} mb-0 shrink-0`}>
+                    Thời gian (s)
+                  </label>
                   <input
                     type="number"
                     step="1"
@@ -517,10 +556,15 @@ export default function EditForm({
                     className={`${inputCls} w-20`}
                     value={local.shieldDuration ?? 5}
                     onChange={(e) =>
-                      setLocal((p) => ({ ...p, shieldDuration: Number(e.target.value) }))
+                      setLocal((p) => ({
+                        ...p,
+                        shieldDuration: Number(e.target.value),
+                      }))
                     }
                   />
-                  <span className="text-[0.58rem] text-cyan-400/50">giây mỗi lần</span>
+                  <span className="text-[0.58rem] text-cyan-400/50">
+                    giây mỗi lần
+                  </span>
                 </div>
               </div>
 
@@ -540,6 +584,8 @@ export default function EditForm({
                     setLocal((p) => ({ ...p, laserGifts: next }))
                   }
                   accentColor="#f87171"
+                  giftUsageMap={giftUsageMap}
+                  currentSelected={local.laserGifts || []}
                 />
               </div>
 
@@ -559,6 +605,8 @@ export default function EditForm({
                     setLocal((p) => ({ ...p, missileGifts: next }))
                   }
                   accentColor="#fb923c"
+                  giftUsageMap={giftUsageMap}
+                  currentSelected={local.missileGifts || []}
                 />
               </div>
 
@@ -578,9 +626,13 @@ export default function EditForm({
                     setLocal((p) => ({ ...p, nuclearGifts: next }))
                   }
                   accentColor="#facc15"
+                  giftUsageMap={giftUsageMap}
+                  currentSelected={local.nuclearGifts || []}
                 />
                 <div className="mt-2 flex items-center gap-2">
-                  <label className={`${labelCls} mb-0 shrink-0`}>Số ship bị huỷ</label>
+                  <label className={`${labelCls} mb-0 shrink-0`}>
+                    Số ship bị huỷ
+                  </label>
                   <input
                     type="number"
                     step="1"
@@ -589,10 +641,15 @@ export default function EditForm({
                     className={`${inputCls} w-20`}
                     value={local.nuclearKillCount ?? 0}
                     onChange={(e) =>
-                      setLocal((p) => ({ ...p, nuclearKillCount: Number(e.target.value) }))
+                      setLocal((p) => ({
+                        ...p,
+                        nuclearKillCount: Number(e.target.value),
+                      }))
                     }
                   />
-                  <span className="text-[0.58rem] text-yellow-400/50">0 = huỷ tất cả</span>
+                  <span className="text-[0.58rem] text-yellow-400/50">
+                    0 = huỷ tất cả
+                  </span>
                 </div>
               </div>
             </>

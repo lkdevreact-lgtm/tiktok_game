@@ -23,6 +23,15 @@ export async function connectTikTok(username, socketId, io) {
   connections.set(socketId, tiktok);
 
   tiktok.on("gift", (data) => {
+    // ── Streak filter ──────────────────────────────────────────
+    // Gift streakable (giftType 1, VD: Rose) gửi 2 event cho 1 lần tap:
+    //   Event 1: repeatEnd=false (streak bắt đầu)
+    //   Event 2: repeatEnd=true  (streak kết thúc)
+    // Chỉ xử lý event cuối (repeatEnd=true) để tránh gọi 2 lần.
+    if (data.giftType === 1 && !data.repeatEnd) {
+      return;
+    }
+
     const giftData = {
       giftId: data.giftId,
       giftName: data.giftName,
@@ -87,7 +96,7 @@ export async function disconnectTikTok(socketId) {
     try {
       const tiktok = connections.get(socketId);
       tiktok.disconnect();
-    } catch (_) {}
+    } catch (_) { }
     connections.delete(socketId);
   }
 }

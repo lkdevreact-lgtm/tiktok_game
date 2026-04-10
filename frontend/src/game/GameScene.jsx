@@ -240,28 +240,21 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onBossHeal]);
 
-  // ── Boss Shield (cộng dồn thời gian) ───────────────────────
+  // ── Boss Shield (5s cố định mỗi lần, reset timer nếu gift mới) ──
   const [shieldEndTime, setShieldEndTime] = useState(0); // timestamp ms
 
   useEffect(() => {
     if (!onBossShield) return;
     onBossShield(() => {
-      const ADD_MS = (activeBossRef.current?.shieldDuration ?? 5) * 1000; // config từ UI (giây → ms)
-      const MAX_MS = 30000; // tối đa 30 giây
-      const now = Date.now();
-
-      // Tính thời gian còn lại hiện tại, cộng thêm 5s và giới hạn 30s
-      const remaining = bossShieldActiveRef.current
-        ? Math.max(0, bossShieldEndRef.current - now)
-        : 0;
-      const newDuration = Math.min(remaining + ADD_MS, MAX_MS);
-      const newEnd = now + newDuration;
+      const DURATION_MS = (activeBossRef.current?.shieldDuration ?? 5) * 1000;
+      const newEnd = Date.now() + DURATION_MS;
 
       bossShieldActiveRef.current = true;
       bossShieldEndRef.current = newEnd;
       setBossShield(true);
       setShieldEndTime(newEnd);
 
+      // Reset timer mỗi lần (không cộng dồn)
       if (bossShieldTimerRef.current) clearTimeout(bossShieldTimerRef.current);
       bossShieldTimerRef.current = setTimeout(() => {
         bossShieldActiveRef.current = false;
@@ -269,7 +262,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         setBossShield(false);
         setShieldEndTime(0);
         bossShieldTimerRef.current = null;
-      }, newDuration);
+      }, DURATION_MS);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onBossShield]);
@@ -1047,7 +1040,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         scale={activeBossModel?.scale ?? 4.5}
       />
       <BossLabel bossRef={bossRef} />
-      <BossShieldRing bossRef={bossRef} shieldEndTime={shieldEndTime} />
+      <BossShieldRing bossRef={bossRef} shieldEndTime={shieldEndTime} shieldDuration={activeBossModel?.shieldDuration ?? 5} />
       <DamageManager onRegister={(fn) => { showDamageRef.current = fn; }} />
 
       {/* Render labels bằng Html đính vào scene position của từng tàu */}
