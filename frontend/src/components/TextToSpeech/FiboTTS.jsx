@@ -50,25 +50,25 @@ export default function FiboTTS() {
     <div className="flex flex-col gap-4">
       {/* API URL */}
       <div>
-        <label className={labelCls}>🔗 API URL</label>
+        <label className={labelCls}>API URL</label>
         <input
           className={inputCls}
           value={draft.apiUrl}
           onChange={(e) => updateDraft("apiUrl", e.target.value)}
-          placeholder="https://your-api.ngrok-free.dev"
+          placeholder="Api url..."
         />
         <button
           onClick={() => fetchVoices(draft.apiUrl)}
           disabled={loadingVoices}
           className="mt-1.5 text-[0.65rem] px-3 py-1 rounded-md bg-purple/15 border border-purple/30 text-purple cursor-pointer hover:bg-purple/25 transition-all disabled:opacity-50"
         >
-          {loadingVoices ? "Đang tải..." : "🔄 Tải danh sách voice"}
+          {loadingVoices ? "Đang tải..." : "Tải danh sách voice"}
         </button>
       </div>
 
       {/* Voice select */}
       <div>
-        <label className={labelCls}>🎙️ Voice</label>
+        <label className={labelCls}>Voice</label>
         <select
           className={inputCls}
           value={draft.voice}
@@ -88,7 +88,7 @@ export default function FiboTTS() {
 
       {/* Parameters grid */}
       <div>
-        <label className={`${labelCls} mb-2`}>⚙️ Parameters</label>
+        <label className={`${labelCls} mb-2`}>Settings parameter</label>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[0.58rem] text-white/30 mb-0.5 block">num_step</label>

@@ -18,51 +18,51 @@ export default function PanelTextToSpeech({ isOpen, onClose }) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, onClose]);
 
+  if (!isOpen) return null;
+
   return (
     <>
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`
-          fixed inset-0 z-[100] bg-black/55 backdrop-blur-xs
-          transition-opacity duration-300 ease-in-out
-          ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
-        `}
+        className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm"
+        style={{ animation: "fadeIn 0.15s ease" }}
       />
 
-      {/* Sliding Panel */}
-      <aside
+      {/* Centered Modal */}
+      <div
         ref={panelRef}
-        className={`
-          fixed top-0 right-0 bottom-0 w-[420px] max-w-[92vw] z-[101]
+        className="
+          fixed z-[201] top-1/2 left-1/2
+          w-[520px] max-w-[92vw] max-h-[85vh]
           flex flex-col
-          bg-[rgba(4,10,28,0.98)] border-l border-[rgba(139,92,246,0.2)] backdrop-blur-xl
-          transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-          ${isOpen
-            ? "translate-x-0 shadow-[-8px_0_40px_rgba(139,92,246,0.1)]"
-            : "translate-x-full shadow-none"
-          }
-        `}
-        style={{ fontFamily: "var(--font-ui), sans-serif" }}
+          rounded-2xl border border-[rgba(139,92,246,0.25)]
+          bg-[radial-gradient(circle_at_20%_20%,#1a1040,#020617)]
+          shadow-[0_24px_80px_rgba(0,0,0,0.7),0_0_40px_rgba(139,92,246,0.08)]
+          overflow-hidden
+        "
+        style={{
+          transform: "translate(-50%, -50%)",
+          animation: "modalIn 0.2s ease",
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(139,92,246,0.15)]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(139,92,246,0.15)] shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">🔊</span>
-            <span className="text-[0.85rem] font-bold tracking-[0.12em] uppercase text-purple">
+            <span className="text-lg font-bold tracking-[0.12em] uppercase text-purple">
               Text to Speech
             </span>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/5 text-lg cursor-pointer transition-all"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 text-lg cursor-pointer transition-all"
           >
             ✕
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-5 pt-3 pb-1">
+        <div className="flex gap-1 px-5 pt-3 pb-1 shrink-0">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -84,7 +84,18 @@ export default function PanelTextToSpeech({ isOpen, onClose }) {
         <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
           {activeTab === "fibo" && <FiboTTS />}
         </div>
-      </aside>
+      </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes modalIn {
+          from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+          to   { opacity: 1; transform: translate(-50%, -50%) scale(1);    }
+        }
+      `}</style>
     </>
   );
 }

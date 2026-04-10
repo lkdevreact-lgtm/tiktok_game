@@ -8,7 +8,7 @@ import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
 import { SETTINGS_GAME } from "../utils/constant";
-import { playAttackSound, playSpawnSound, playHiddenSound } from "./audio";
+import { playAttackSound, playSpawnSound, playHiddenSound, getHealVolume } from "./audio";
 import ShipLabel from "./components/ShipLabel";
 import BossLabel from "./components/BossLabel";
 import BossShieldRing from "./components/BossShieldRing";
@@ -54,7 +54,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
   const bossShieldEndRef = useRef(0); // timestamp kết thúc shield (ms)
   const healCooldownRef = useRef(false); // chống spam heal
   const healAudio = useRef(new Audio("/sound/heal_sound.mp3"));
-  healAudio.current.volume = 0.5;
+  healAudio.current.volume = getHealVolume();
   const NUM_Y_SLOTS = 10;
   const Y_RANGE = 8; // tổng chiều cao an toàn (~±2.2)
   const spawnSlotRef = useRef(0);
@@ -212,6 +212,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       setBossHp(Math.round(bossHpRef.current * 10) / 10);
 
       // Phát sound hồi máu
+      healAudio.current.volume = getHealVolume();
       healAudio.current.currentTime = 0;
       healAudio.current.play().catch(() => { });
 

@@ -4,10 +4,12 @@ import SidebarSetting from "./SidebarSetting";
 import ModelManagerPanel from "./ModelManagerPanel";
 import TriggerPanel from "./TriggerPanel";
 import PanelTextToSpeech from "./TextToSpeech/PanelTextToSpeech";
+import SoundSettingPanel from "./SoundSettingPanel";
 import { SiOpen3D } from "react-icons/si";
 import { IoIosGift } from "react-icons/io";
 import { IoMdSettings } from "react-icons/io";
 import { BsSoundwave } from "react-icons/bs";
+import { HiVolumeUp } from "react-icons/hi";
 
 export default function Navbar() {
   const { shipCount, username, gameStatus, wins, losses } = useGame();
@@ -15,6 +17,7 @@ export default function Navbar() {
   const [modelsOpen, setModelsOpen] = useState(false);
   const [triggerOpen, setTriggerOpen] = useState(false);
   const [tts, setTts] = useState(false);
+  const [soundOpen, setSoundOpen] = useState(false);
 
   const MenuNav = [
     {
@@ -40,6 +43,12 @@ export default function Navbar() {
       label: "TextToSpeech",
       icon: <BsSoundwave size={20} />,
       onClick: () => setTts(true),
+    },
+    {
+      id: "sound",
+      label: "Setting Sound",
+      icon: <HiVolumeUp size={20} />,
+      onClick: () => setSoundOpen(true),
     },
   ];
 
@@ -116,6 +125,10 @@ export default function Navbar() {
       <PanelTextToSpeech
         isOpen={tts}
         onClose={() => setTts(false)}
+      />
+      <SoundSettingPanel
+        isOpen={soundOpen}
+        onClose={() => setSoundOpen(false)}
       />
     </>
   );
