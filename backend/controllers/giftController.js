@@ -1,57 +1,64 @@
 /**
  * giftController.js
- * CRUD logic cho gifts (đọc/ghi gifts.json)
+ * CRUD logic cho gifts (Supabase)
  */
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import supabase from "../config/supabase.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const GIFTS_DB  = join(__dirname, "../data/gifts.json");
-
-function readGiftsDB() {
-  try {
-    if (!existsSync(GIFTS_DB)) return [];
-    return JSON.parse(readFileSync(GIFTS_DB, "utf8"));
-  } catch {
-    return [];
-  }
-}
-
-function writeGiftsDB(data) {
-  writeFileSync(GIFTS_DB, JSON.stringify(data, null, 2), "utf8");
+// ── Helpers: snake_case ↔ camelCase ────────────────────────────
+function rowToGift(r) {
+  return {
+    giftId:         r.gift_id,
+    giftName:       r.gift_name,
+    image:          r.image,
+    diamonds:       r.diamonds,
+    maxRepeatCount: r.max_repeat_count,
+    active:         r.active,
+  };
 }
 
 /**
  * GET /api/gifts
- * Trả về toàn bộ gifts
  */
-export function getGifts(req, res) {
+export async function getGifts(req, res) {
   try {
-    res.json(readGiftsDB());
-  } catch {
+    const { data, error } = await supabase
+      .from("gifts")
+      .select("*")
+      .order("diamonds", { ascending: true });
+
+    if (error) throw error;
+    res.json(data.map(rowToGift));
+  } catch (err) {
+    console.error("getGifts error:", err.message);
     res.status(500).json({ error: "Could not read gifts data" });
   }
 }
 
 /**
  * PUT /api/gifts/:giftId
- * Toggle active field của một gift → persist vào gifts.json
- * Body: { active: boolean }
+ * Toggle active field
  */
-export function updateGift(req, res) {
+export async function updateGift(req, res) {
   const giftId = parseInt(req.params.giftId);
   if (isNaN(giftId)) return res.status(400).json({ error: "Invalid giftId" });
 
-  const db  = readGiftsDB();
-  const idx = db.findIndex((g) => g.giftId === giftId);
-  if (idx === -1) return res.status(404).json({ error: "Gift not found" });
+  try {
+    const updates = {};
+    if (req.body.active !== undefined) updates.active = Boolean(req.body.active);
 
-  // Chỉ cho phép update active field
-  if (req.body.active !== undefined) {
-    db[idx].active = Boolean(req.body.active);
+    const { data, error } = await supabase
+      .from("gifts")
+      .update(updates)
+      .eq("gift_id", giftId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: "Gift not found" });
+
+    res.json(rowToGift(data));
+  } catch (err) {
+    console.error("updateGift error:", err.message);
+    res.status(500).json({ error: "Could not update gift" });
   }
-
-  writeGiftsDB(db);
-  res.json(db[idx]);
 }
