@@ -9,10 +9,13 @@ import { useTTS } from "../hooks/useTTS";
 import { IMAGES } from "../utils/constant";
 import BossGiftPanel from "./BossGiftPanel";
 import ShipGiftPanel from "./ShipGiftPanel";
+import LeaderboardPanel from "./LeaderboardPanel";
+import { usePanelSettings } from "../hooks/usePanelSettings";
 
 export default function GameCanvas() {
   const { gameStatus, setBossHp, notifications, addNotification, resetGame } =
     useGame();
+  const { settings } = usePanelSettings();
   const {
     giftModelMap,
     commentTriggerMap,
@@ -375,8 +378,9 @@ export default function GameCanvas() {
         </Canvas>
 
         {/* Gift info panels */}
-        <BossGiftPanel />
-        <ShipGiftPanel />
+        <BossGiftPanel visible={settings.showBossGiftPanel} />
+        <ShipGiftPanel visible={settings.showShipGiftPanel} />
+        <LeaderboardPanel visible={settings.showTopDonorsPanel} />
 
         <div className="absolute bottom-5 left-5 flex flex-col-reverse gap-2 pointer-events-none z-[15] max-h-60 overflow-hidden">
           {notifications.map((n) => (
