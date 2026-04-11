@@ -2,9 +2,17 @@ import { useEffect, useRef } from "react";
 import ToggleSwitch from "./ui/ToggleSwitch";
 import { useGifts } from "../hooks/useGifts";
 import { IMAGES } from "../utils/constant";
+import { usePanelSettings } from "../hooks/usePanelSettings";
+
+const PANEL_TOGGLES = [
+  { key: "showBossGiftPanel",  label: "Bảng quà Boss",      icon: "🔴" },
+  { key: "showShipGiftPanel",  label: "Bảng quà Ship User", icon: "🚀" },
+  { key: "showTopDonorsPanel", label: "Top tặng quà",     icon: "🏆" },
+];
 
 export default function SidebarSetting({ isOpen, onClose }) {
   const { gifts, toggleGiftActive } = useGifts();
+  const { settings, togglePanel } = usePanelSettings();
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -124,6 +132,50 @@ export default function SidebarSetting({ isOpen, onClose }) {
             </div>
           ))}
         </div>
+
+        {/* ── Panel Visibility Section ─────────────────────── */}
+        <div className="px-[18px] pt-4 pb-1 border-t border-[rgba(0,245,255,0.1)] mt-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.6)] shrink-0 inline-block" />
+            <span className="text-[0.7rem] uppercase tracking-[0.15em] text-purple-400">
+              Hiển thị bảng
+            </span>
+          </div>
+          <p className="text-[0.6rem] text-white/30 mb-3">
+            Bật/tắt các bảng nổi trên màn hình game
+          </p>
+          <div className="flex flex-col gap-2">
+            {PANEL_TOGGLES.map(({ key, label, icon }) => (
+              <div
+                key={key}
+                className={`
+                  rounded-[10px] px-3 py-2.5 flex items-center gap-2.5
+                  border transition-[border-color,background] duration-200
+                  ${
+                    settings[key]
+                      ? "bg-[rgba(168,85,247,0.08)] border-[rgba(168,85,247,0.3)]"
+                      : "bg-white/[0.015] border-white/[0.06] opacity-55"
+                  }
+                `}
+              >
+                <span className="text-lg shrink-0">{icon}</span>
+                <span
+                  className={`flex-1 text-[0.78rem] font-semibold ${
+                    settings[key] ? "text-[#e0e8ff]" : "text-white/45"
+                  }`}
+                >
+                  {label}
+                </span>
+                <ToggleSwitch
+                  value={settings[key]}
+                  onChange={() => togglePanel(key)}
+                  title={settings[key] ? "Ẩn panel" : "Hiện panel"}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="pb-4" />
       </aside>
     </>
   );

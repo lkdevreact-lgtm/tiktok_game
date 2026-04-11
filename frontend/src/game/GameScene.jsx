@@ -8,7 +8,7 @@ import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
 import { SETTINGS_GAME, assetUrl } from "../utils/constant";
-import { playAttackSound, playSpawnSound, playHiddenSound, getHealVolume } from "./audio";
+import { playAttackSound, playSpawnSound, playHiddenSound, getHealVolume, playSecuritySound } from "./audio";
 import ShipLabel from "./components/ShipLabel";
 import BossLabel from "./components/BossLabel";
 import BossShieldRing from "./components/BossShieldRing";
@@ -55,6 +55,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
   const healCooldownRef = useRef(false); // chống spam heal
   const healAudio = useRef(new Audio("/sound/heal_sound.mp3"));
   healAudio.current.volume = getHealVolume();
+  const securityAlertFiredRef = useRef(false); // chỉ play 1 lần mỗi ván
   const NUM_Y_SLOTS = 10;
   const Y_RANGE = 8; // tổng chiều cao an toàn (~±2.2)
   const spawnSlotRef = useRef(0);
@@ -518,6 +519,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     bossHpRef.current = 100;
     setBossHp(100);
     setShipCount(0);
+    securityAlertFiredRef.current = false; // reset cảnh báo cho ván mới
 
     // Spawn lại 2 ship đầu đang active
     const resetShips = shipModelsRef.current.slice(0, 2);
@@ -560,6 +562,12 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       setGameStatus("lose");
       prevGameStatus.current = "lose";
       return;
+    }
+
+    // Cảnh báo khi boss đi qua nửa màn hình (x ≥ 0)
+    if (boss.position.x >= 0 && !securityAlertFiredRef.current) {
+      securityAlertFiredRef.current = true;
+      playSecuritySound();
     }
 
     // Tàu: orbital flight + bắn + recoil + engine pulse

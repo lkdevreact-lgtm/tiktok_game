@@ -1,13 +1,21 @@
 import { WebcastPushConnection } from "tiktok-live-connector";
+import { saveUsername } from "../controllers/usernameController.js";
+import { recordDonation } from "../controllers/donationController.js";
 
 // Map of socketId -> TikTok connection
 const connections = new Map();
+// Map of socketId -> streamer username
+const streamerMap = new Map();
 
 export async function connectTikTok(username, socketId, io) {
   // Disconnect existing connection for this socket
   if (connections.has(socketId)) {
     await disconnectTikTok(socketId);
   }
+
+  // Lưu username vào bảng usernames
+  await saveUsername(username);
+  streamerMap.set(socketId, username);
 
   const tiktok = new WebcastPushConnection(username, {
     processInitialData: false,
@@ -47,6 +55,21 @@ export async function connectTikTok(username, socketId, io) {
     console.log(
       `🎁 Gift from @${giftData.uniqueId}: ${giftData.giftName} x${giftData.repeatCount}`
     );
+
+    // Ghi donation vào DB cho leaderboard
+    const streamerUsername = streamerMap.get(socketId);
+    if (streamerUsername) {
+      recordDonation({
+        streamerUsername,
+        viewerUniqueId: giftData.uniqueId,
+        viewerNickname: giftData.nickname,
+        viewerAvatar: giftData.avatarUrl,
+        giftId: giftData.giftId,
+        giftName: giftData.giftName,
+        diamonds: giftData.diamonds,
+        repeatCount: giftData.repeatCount,
+      });
+    }
 
     // Emit to specific socket
     io.to(socketId).emit("gift_received", giftData);
@@ -89,6 +112,7 @@ export async function connectTikTok(username, socketId, io) {
     console.log(`📡 TikTok disconnected for socket ${socketId}`);
     io.to(socketId).emit("tiktok_disconnected", {});
     connections.delete(socketId);
+    streamerMap.delete(socketId);
   });
 
   tiktok.on("error", (err) => {
@@ -109,5 +133,7 @@ export async function disconnectTikTok(socketId) {
       tiktok.disconnect();
     } catch (_) { }
     connections.delete(socketId);
+    streamerMap.delete(socketId);
   }
 }
+

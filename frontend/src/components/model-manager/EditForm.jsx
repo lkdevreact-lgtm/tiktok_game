@@ -198,13 +198,14 @@ function GiftSelect({
   );
 }
 
-function PreviewModel({ url, scale = 1 }) {
+function PreviewModel({ url, scale = 1, rotationY = 0 }) {
   const { scene } = useGLTF(url);
   const cloned = useMemo(() => scene.clone(true), [scene]);
-  return <primitive object={cloned} scale={scale} />;
+  const rad = (rotationY * Math.PI) / 180;
+  return <primitive object={cloned} scale={scale} rotation={[0, rad, 0]} />;
 }
 
-function ModelPreview3D({ url, scale }) {
+function ModelPreview3D({ url, scale, rotationY = 0 }) {
   if (!url) return null;
   return (
     <div className="w-full h-44 rounded-lg overflow-hidden border border-white/10 bg-black/40">
@@ -212,7 +213,7 @@ function ModelPreview3D({ url, scale }) {
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 4, 5]} intensity={1} />
         <Suspense fallback={null}>
-          <PreviewModel url={url} scale={scale} />
+          <PreviewModel url={url} scale={scale} rotationY={rotationY} />
           <Environment preset="city" />
         </Suspense>
         <OrbitControls
@@ -221,6 +222,36 @@ function ModelPreview3D({ url, scale }) {
           enableZoom={true}
           enablePan={false}
         />
+      </Canvas>
+    </div>
+  );
+}
+
+/* ─── Inline live preview ─────────────────────────────────────── */
+function RotationLivePreview({ url, scale = 1, rotationY = 0 }) {
+  if (!url) return null;
+  return (
+    <div className="w-full h-36 rounded-lg overflow-hidden border border-cyan-500/30 bg-black/50 relative">
+      {/* Label overlay */}
+      <div className="absolute top-1.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none">
+        <span className="text-[0.55rem] text-cyan-400/70 uppercase tracking-widest">
+          Live · {rotationY}°
+        </span>
+      </div>
+      {/* Axis hint overlay */}
+      <div className="absolute bottom-1.5 right-2 z-10 flex gap-2 pointer-events-none">
+        <span className="text-[0.5rem] text-white/20">Kéo để xoay · Scroll zoom</span>
+      </div>
+      <Canvas camera={{ position: [0, 0.8, 3.2], fov: 42 }}>
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[4, 5, 4]} intensity={1.2} />
+        <directionalLight position={[-4, 2, 2]} intensity={0.5} />
+        <Suspense fallback={null}>
+          <PreviewModel url={url} scale={scale} rotationY={rotationY} />
+          <Environment preset="city" />
+        </Suspense>
+        {/* No autoRotate — shows exact rotation facing */}
+        <OrbitControls enableZoom={true} enablePan={false} />
       </Canvas>
     </div>
   );
@@ -355,19 +386,42 @@ export default function EditForm({
               </div>
             )}
 
-            <div>
+            <div className="col-span-2">
               <label className={labelCls}>Rotation Y (°)</label>
-              <input
-                type="number"
-                step="5"
-                min="-360"
-                max="360"
-                className={inputCls}
-                value={local.rotationY}
-                onChange={(e) =>
-                  setLocal((p) => ({ ...p, rotationY: e.target.value }))
-                }
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  step="5"
+                  min="-360"
+                  max="360"
+                  className={inputCls}
+                  value={local.rotationY}
+                  onChange={(e) =>
+                    setLocal((p) => ({ ...p, rotationY: e.target.value }))
+                  }
+                />
+                <input
+                  type="range"
+                  min="-360"
+                  max="360"
+                  step="5"
+                  value={local.rotationY}
+                  onChange={(e) =>
+                    setLocal((p) => ({ ...p, rotationY: e.target.value }))
+                  }
+                  className="flex-1 accent-cyan-400 cursor-pointer"
+                />
+              </div>
+              {/* Inline live rotation preview */}
+              {previewUrl && (
+                <div className="mt-2">
+                  <RotationLivePreview
+                    url={previewUrl}
+                    scale={parseFloat(local.scale) || 1}
+                    rotationY={parseFloat(local.rotationY) || 0}
+                  />
+                </div>
+              )}
             </div>
 
             {!isBoss && (
@@ -686,10 +740,11 @@ export default function EditForm({
           {/* 3D Model Preview */}
           {previewUrl && (
             <div className="mt-1">
-              <label className={`${labelCls} mb-1.5`}>Preview 3D</label>
+              <label className={`${labelCls} mb-1.5`}>Preview 3D (Auto-rotate)</label>
               <ModelPreview3D
                 url={previewUrl}
                 scale={parseFloat(local.scale) || 1}
+                rotationY={parseFloat(local.rotationY) || 0}
               />
             </div>
           )}

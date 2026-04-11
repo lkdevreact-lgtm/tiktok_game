@@ -3,6 +3,7 @@ import { GameProvider } from "./store/gameStore";
 import { ModelProvider } from "./store/modelStore";
 import { GiftProvider } from "./store/giftStore";
 import { TTSProvider } from "./store/ttsStore";
+import { PanelSettingsProvider } from "./store/panelSettingsStore";
 import { useGame } from "./hooks/useGame";
 import ConnectForm from "./components/ConnectForm";
 import GameCanvas from "./components/GameCanvas";
@@ -34,14 +35,16 @@ function AppInner() {
 
 export default function App() {
   return (
-    <ModelProvider>
-      <GiftProvider>
-        <TTSProvider>
-          <GameProvider>
-            <AppInner />
-          </GameProvider>
-        </TTSProvider>
-      </GiftProvider>
-    </ModelProvider>
+    <PanelSettingsProvider>
+      <ModelProvider>
+        <GiftProvider>
+          <TTSProvider>
+            <GameProvider>
+              <AppInner />
+            </GameProvider>
+          </TTSProvider>
+        </GiftProvider>
+      </ModelProvider>
+    </PanelSettingsProvider>
   );
 }

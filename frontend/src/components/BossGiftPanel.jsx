@@ -22,7 +22,7 @@ function loadPos(fallback) {
   return fallback;
 }
 
-export default function BossGiftPanel() {
+export default function BossGiftPanel({ visible = true }) {
   const { activeBossModel } = useModels();
   const { gifts: allGifts } = useGifts();
 
@@ -89,7 +89,7 @@ export default function BossGiftPanel() {
     e.preventDefault();
   };
 
-  if (!sections.length) return null;
+  if (!visible || !sections.length) return null;
 
   return (
     <div

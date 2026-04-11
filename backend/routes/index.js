@@ -14,6 +14,9 @@ import {
 import { getGifts, updateGift } from "../controllers/giftController.js";
 import { getTriggers, saveTriggers } from "../controllers/triggerController.js";
 import { ttsSpeak, ttsTestFormats, ttsVoices } from "../controllers/ttsController.js";
+import { getUsernames } from "../controllers/usernameController.js";
+import { getLeaderboard } from "../controllers/donationController.js";
+import { getUserSettings, saveUserSettings } from "../controllers/userSettingsController.js";
 
 const router = express.Router();
 
@@ -51,6 +54,16 @@ router.put("/triggers", saveTriggers);
 router.post("/tts/speak", ttsSpeak);
 router.post("/tts/test-formats", ttsTestFormats);
 router.get("/tts/voices", ttsVoices);
+
+// ── Usernames ─────────────────────────────────────────────────
+router.get("/usernames", getUsernames);
+
+// ── Leaderboard ───────────────────────────────────────────────
+router.get("/leaderboard/:username", getLeaderboard);
+
+// ── User Settings ─────────────────────────────────────────────
+router.get("/user-settings/:username", getUserSettings);
+router.put("/user-settings/:username", saveUserSettings);
 
 export default router;
 

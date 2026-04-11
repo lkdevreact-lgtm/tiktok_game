@@ -1,43 +1,67 @@
 /**
  * triggerController.js
- * CRUD cho triggers (đọc/ghi triggers.json)
+ * CRUD cho triggers (Supabase)
  */
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import supabase from "../config/supabase.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-export const TRIGGERS_DB = join(__dirname, "../data/triggers.json");
-
-function readTriggers() {
-  try {
-    if (!existsSync(TRIGGERS_DB)) return [];
-    return JSON.parse(readFileSync(TRIGGERS_DB, "utf8"));
-  } catch {
-    return [];
-  }
+function rowToTrigger(r) {
+  return {
+    id:       r.id,
+    type:     r.type,
+    content:  r.content,
+    shipId:   r.ship_id,
+    quantity: r.quantity,
+  };
 }
 
-function writeTriggers(data) {
-  writeFileSync(TRIGGERS_DB, JSON.stringify(data, null, 2), "utf8");
+function triggerToRow(t) {
+  return {
+    id:       t.id,
+    type:     t.type,
+    content:  t.content || null,
+    ship_id:  t.shipId || null,
+    quantity: t.quantity ?? 1,
+  };
 }
 
 /**
  * GET /api/triggers
  */
-export function getTriggers(req, res) {
-  res.json(readTriggers());
+export async function getTriggers(req, res) {
+  try {
+    const { data, error } = await supabase.from("triggers").select("*");
+    if (error) throw error;
+    res.json(data.map(rowToTrigger));
+  } catch (err) {
+    console.error("getTriggers error:", err.message);
+    res.status(500).json({ error: "Could not read triggers" });
+  }
 }
 
 /**
  * PUT /api/triggers
- * Body: array of trigger objects
+ * Body: array of trigger objects → replace all triggers
  */
-export function saveTriggers(req, res) {
+export async function saveTriggers(req, res) {
   const triggers = req.body;
   if (!Array.isArray(triggers)) {
     return res.status(400).json({ error: "Body must be an array of triggers" });
   }
-  writeTriggers(triggers);
-  res.json({ ok: true, triggers });
+
+  try {
+    // Delete all existing triggers
+    await supabase.from("triggers").delete().neq("id", "");
+
+    // Insert new ones
+    if (triggers.length > 0) {
+      const rows = triggers.map(triggerToRow);
+      const { error } = await supabase.from("triggers").upsert(rows, { onConflict: "id" });
+      if (error) throw error;
+    }
+
+    res.json({ ok: true, triggers });
+  } catch (err) {
+    console.error("saveTriggers error:", err.message);
+    res.status(500).json({ error: "Could not save triggers" });
+  }
 }

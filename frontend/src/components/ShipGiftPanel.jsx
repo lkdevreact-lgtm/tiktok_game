@@ -15,7 +15,7 @@ function loadPos(fallback) {
   return fallback;
 }
 
-export default function ShipGiftPanel() {
+export default function ShipGiftPanel({ visible = true }) {
   const { shipModels, triggers, allShipModels } = useModels();
   const { gifts: allGifts } = useGifts();
 
@@ -112,7 +112,7 @@ export default function ShipGiftPanel() {
     e.preventDefault();
   };
 
-  if (!rows.length) return null;
+  if (!visible || !rows.length) return null;
 
   return (
     <div

@@ -82,3 +82,12 @@ export function playHiddenSound() {
 export function getHealVolume() {
   return volumes.heal;
 }
+
+// ── Security Alert Sound (boss passes midscreen) ─────────────────
+const securityAudio = new Audio("/sound/sound_security.mp3");
+securityAudio.volume = 0.85;
+
+export function playSecuritySound() {
+  securityAudio.currentTime = 0;
+  securityAudio.play().catch(() => {});
+}
