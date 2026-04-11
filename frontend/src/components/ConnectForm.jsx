@@ -1,16 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGame } from "../hooks/useGame";
+import { useModels } from "../hooks/useModels";
 import socket from "../socket/socketClient";
 import { API_URL } from "../utils/constant";
 
 export default function ConnectForm() {
   const { setConnected, setUsername, setGameStatus } = useGame();
+  const { loadUserSettings } = useModels();
   const [input,   setInput]   = useState("");
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
+  const [usernames, setUsernames] = useState([]);
 
-  const handleConnect = async () => {
-    const name = input.trim().replace("@", "");
+  // Fetch danh sách username đã connect trước đó
+  useEffect(() => {
+    fetch(`${API_URL}/api/usernames`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setUsernames(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleConnect = async (overrideName) => {
+    const name = (overrideName || input).trim().replace("@", "");
     if (!name) { setError("Please enter a TikTok username"); return; }
 
     setLoading(true);
@@ -31,6 +44,9 @@ export default function ConnectForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Connection failed");
 
+      // Load user settings nếu có
+      loadUserSettings(data.userSettings || null, name);
+
       setUsername(name);
       setConnected(true);
       setGameStatus("playing");
@@ -42,6 +58,13 @@ export default function ConnectForm() {
   };
 
   const handleKeyDown = (e) => { if (e.key === "Enter") handleConnect(); };
+
+  // Lọc username theo input
+  const filtered = input.trim()
+    ? usernames.filter((u) =>
+        u.username.toLowerCase().includes(input.trim().toLowerCase())
+      )
+    : usernames;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[radial-gradient(ellipse_at_center,#020d1e_0%,#000_100%)]">
@@ -88,6 +111,37 @@ export default function ConnectForm() {
           />
         </div>
 
+        {/* Username history */}
+        {filtered.length > 0 && (
+          <div className="flex flex-col gap-1.5 -mt-3 max-h-[140px] overflow-y-auto">
+            <span className="text-[0.6rem] text-white/30 uppercase tracking-widest">
+              📋 Đã kết nối trước đó
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {filtered.slice(0, 10).map((u) => (
+                <button
+                  key={u.username}
+                  onClick={() => {
+                    setInput(u.username);
+                    handleConnect(u.username);
+                  }}
+                  disabled={loading}
+                  className="
+                    px-3 py-1.5 rounded-full text-[0.75rem] cursor-pointer
+                    bg-[rgba(0,245,255,0.06)] border border-[rgba(0,245,255,0.2)]
+                    text-cyan-400/80 hover:text-cyan-300 hover:bg-[rgba(0,245,255,0.12)]
+                    hover:border-cyan-400/40 hover:shadow-[0_0_12px_rgba(0,245,255,0.1)]
+                    transition-all duration-200
+                    disabled:opacity-40 disabled:cursor-not-allowed
+                  "
+                >
+                  @{u.username}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <div className="
@@ -102,7 +156,7 @@ export default function ConnectForm() {
 
         <button
           id="btn-connect-live"
-          onClick={handleConnect}
+          onClick={() => handleConnect()}
           disabled={loading}
           className="
             rounded-lg py-3.5 text-black font-bold text-[0.9rem] uppercase tracking-widest

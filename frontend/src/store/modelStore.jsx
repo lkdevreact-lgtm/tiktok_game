@@ -1,5 +1,5 @@
 
-import { createContext, useState, useCallback, useEffect } from "react";
+import { createContext, useState, useCallback, useEffect, useRef } from "react";
 import { API_URL } from "../utils/constant";
 
 
@@ -14,6 +14,9 @@ export { ModelContext };
 export function ModelProvider({ children }) {
   const [models,  setModels]  = useState(() => ls.get("modelsCache", []));
   const [loading, setLoading] = useState(true);
+  const [connectedUsername, setConnectedUsername] = useState(null);
+  const saveTimerRef = useRef(null);
+  const connectedUsernameRef = useRef(null);
 
   // activeBossId vẫn localStorage (runtime preference, không cần persist json)
   const [activeBossId, setActiveBossIdState] = useState(
@@ -56,6 +59,33 @@ export function ModelProvider({ children }) {
       ls.set("modelsCache", next);
       return next;
     });
+  };
+
+  // ── Auto-save helper (uses ref so it can be called from useCallback) ──
+  const _autoSaveSettings = () => {
+    const uname = connectedUsernameRef.current;
+    if (!uname) return;
+
+    const currentModels = ls.get("modelsCache", []);
+    const modelStates = {};
+    currentModels.forEach((m) => {
+      modelStates[m.id] = { active: m.active };
+    });
+
+    const payload = {
+      activeBossId: ls.get("activeBossId", null),
+      triggers: ls.get("triggersCache", []),
+      modelStates,
+    };
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      fetch(`${API_URL}/api/user-settings/${encodeURIComponent(uname)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+    }, 2000);
   };
 
   // ── Computed views ────────────────────────────────────────────
@@ -149,6 +179,8 @@ export function ModelProvider({ children }) {
         body: JSON.stringify(newTriggers),
       });
     } catch { /* ignore offline */ }
+    // Auto-save user settings
+    setTimeout(() => _autoSaveSettings(), 100);
   }, []);
 
   // ── Add model ────────────────────────────────────────────────
@@ -203,12 +235,16 @@ export function ModelProvider({ children }) {
 
       return next;
     });
+    // Auto-save user settings
+    setTimeout(() => _autoSaveSettings(), 100);
   }, []);
 
   // ── Active boss ──────────────────────────────────────────────
   const setActiveBoss = useCallback((id) => {
     setActiveBossIdState(id);
     ls.set("activeBossId", id);
+    // Auto-save user settings
+    setTimeout(() => _autoSaveSettings(), 100);
   }, []);
 
   // ── Refresh từ server ────────────────────────────────────────
@@ -217,6 +253,45 @@ export function ModelProvider({ children }) {
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) { setModels(data); ls.set("modelsCache", data); } })
       .catch(() => {});
+  }, []);
+
+  // ── Load user settings (from connect response) ──────────────
+  const loadUserSettings = useCallback((settings, username) => {
+    setConnectedUsername(username);
+    connectedUsernameRef.current = username;
+    if (!settings) return;
+
+    // Apply active boss
+    if (settings.activeBossId) {
+      setActiveBossIdState(settings.activeBossId);
+      ls.set("activeBossId", settings.activeBossId);
+    }
+
+    // Apply triggers
+    if (Array.isArray(settings.triggers) && settings.triggers.length > 0) {
+      setTriggers(settings.triggers);
+      ls.set("triggersCache", settings.triggers);
+    }
+
+    // Apply model active states
+    if (settings.modelStates && Object.keys(settings.modelStates).length > 0) {
+      setModels((prev) => {
+        const next = prev.map((m) => {
+          if (settings.modelStates[m.id] !== undefined) {
+            return { ...m, active: settings.modelStates[m.id].active };
+          }
+          return m;
+        });
+        ls.set("modelsCache", next);
+        return next;
+      });
+    }
+  }, []);
+
+  // ── Save user settings (public, debounced) ──────────────────
+  const saveUserSettings = useCallback((username) => {
+    if (username) connectedUsernameRef.current = username;
+    _autoSaveSettings();
   }, []);
 
   return (
@@ -246,6 +321,9 @@ export function ModelProvider({ children }) {
         toggleShipActive,
         setActiveBoss,
         refreshModels,
+        loadUserSettings,
+        saveUserSettings,
+        connectedUsername,
       }}
     >
       {children}

@@ -5,11 +5,13 @@ import ModelManagerPanel from "./ModelManagerPanel";
 import TriggerPanel from "./TriggerPanel";
 import PanelTextToSpeech from "./TextToSpeech/PanelTextToSpeech";
 import SoundSettingPanel from "./SoundSettingPanel";
+import LeaderboardPanel from "./LeaderboardPanel";
 import { SiOpen3D } from "react-icons/si";
 import { IoIosGift } from "react-icons/io";
 import { IoMdSettings } from "react-icons/io";
 import { BsSoundwave } from "react-icons/bs";
 import { HiVolumeUp } from "react-icons/hi";
+import { FaTrophy } from "react-icons/fa";
 
 export default function Navbar() {
   const { shipCount, username, gameStatus, wins, losses } = useGame();
@@ -18,6 +20,7 @@ export default function Navbar() {
   const [triggerOpen, setTriggerOpen] = useState(false);
   const [tts, setTts] = useState(false);
   const [soundOpen, setSoundOpen] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
 
   const MenuNav = [
     {
@@ -49,6 +52,12 @@ export default function Navbar() {
       label: "Setting Sound",
       icon: <HiVolumeUp size={20} />,
       onClick: () => setSoundOpen(true),
+    },
+    {
+      id: "leaderboard",
+      label: "Leaderboard",
+      icon: <FaTrophy size={18} />,
+      onClick: () => setLeaderboardOpen(true),
     },
   ];
 
@@ -129,6 +138,10 @@ export default function Navbar() {
       <SoundSettingPanel
         isOpen={soundOpen}
         onClose={() => setSoundOpen(false)}
+      />
+      <LeaderboardPanel
+        isOpen={leaderboardOpen}
+        onClose={() => setLeaderboardOpen(false)}
       />
     </>
   );

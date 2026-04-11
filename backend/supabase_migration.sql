@@ -55,7 +55,52 @@ CREATE TABLE IF NOT EXISTS triggers (
   quantity  INTEGER DEFAULT 1
 );
 
+-- ============================================================
+-- 5. USERNAMES TABLE — lưu lịch sử username đã connect
+-- ============================================================
+CREATE TABLE IF NOT EXISTS usernames (
+  id            SERIAL PRIMARY KEY,
+  username      TEXT NOT NULL UNIQUE,
+  connected_at  TIMESTAMPTZ DEFAULT now(),
+  last_seen     TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 6. DONATIONS TABLE — lưu từng lần donate gift (cho leaderboard)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS donations (
+  id                 SERIAL PRIMARY KEY,
+  streamer_username  TEXT NOT NULL,       -- username của streamer (host live)
+  viewer_unique_id   TEXT NOT NULL,       -- uniqueId người donate
+  viewer_nickname    TEXT,                -- nickname hiển thị
+  viewer_avatar      TEXT,                -- URL avatar
+  gift_id            INTEGER,
+  gift_name          TEXT,
+  diamonds           INTEGER DEFAULT 0,
+  repeat_count       INTEGER DEFAULT 1,
+  total_diamonds     INTEGER DEFAULT 0,   -- diamonds * repeat_count
+  donated_at         TIMESTAMPTZ DEFAULT now()
+);
+
+-- Index cho leaderboard query nhanh
+CREATE INDEX IF NOT EXISTS idx_donations_streamer ON donations(streamer_username);
+CREATE INDEX IF NOT EXISTS idx_donations_viewer   ON donations(viewer_unique_id);
+
+-- ============================================================
+-- 7. USER_SETTINGS TABLE — lưu settings per username
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_settings (
+  username       TEXT PRIMARY KEY,
+  active_boss_id TEXT,                   -- ID boss đang active
+  triggers       JSONB DEFAULT '[]',     -- mảng trigger settings
+  model_states   JSONB DEFAULT '{}',     -- { [modelId]: { active: bool } }
+  updated_at     TIMESTAMPTZ DEFAULT now()
+);
+
 -- 4. Disable RLS (vì dùng service_role key ở backend)
-ALTER TABLE gifts    DISABLE ROW LEVEL SECURITY;
-ALTER TABLE models   DISABLE ROW LEVEL SECURITY;
-ALTER TABLE triggers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE gifts         DISABLE ROW LEVEL SECURITY;
+ALTER TABLE models        DISABLE ROW LEVEL SECURITY;
+ALTER TABLE triggers      DISABLE ROW LEVEL SECURITY;
+ALTER TABLE usernames     DISABLE ROW LEVEL SECURITY;
+ALTER TABLE donations     DISABLE ROW LEVEL SECURITY;
+ALTER TABLE user_settings DISABLE ROW LEVEL SECURITY;
