@@ -513,13 +513,13 @@ export function createBossMissile(startPos) {
   return { 
     group, 
     velocity: new THREE.Vector3(), 
-    life: 3.0, 
+    life: 5.0, 
     type: "missile",
     update: (delta, targetPos) => {
         if (!targetPos) return;
-        // Logic hướng tên lửa về phía mục tiêu
+        // Logic hướng tên lửa về phía mục tiêu (tốc độ 10 unit/s đảm bảo tới được)
         const dir = targetPos.clone().sub(group.position).normalize();
-        group.position.add(dir.multiplyScalar(delta * 5)); // Tốc độ tên lửa
+        group.position.add(dir.multiplyScalar(delta * 10));
         group.lookAt(targetPos);
     }
   };
@@ -594,6 +594,53 @@ export function createLaserCharge(position, color = 0xff0000) {
   group.add(glow);
 
   return { group, core, glow, life: 0.8, maxLife: 0.8 };
+}
+
+// ── Nuclear Charge-up (Tích tụ năng lượng trước khi nổ) ──
+export function createNukeCharge(position) {
+  const meshes = [];
+
+  // Lõi tích tụ (cầu đỏ/vàng nhấp nháy)
+  const coreGeo = new THREE.SphereGeometry(0.6, 32, 32);
+  const coreMat = new THREE.MeshBasicMaterial({
+    color: 0xff4400,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  core.position.copy(position);
+  meshes.push(core);
+
+  // Vòng xung năng lượng ngoài (glow lớn hơn)
+  const glowGeo = new THREE.SphereGeometry(1.0, 32, 32);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: 0xffaa00,
+    transparent: true,
+    opacity: 0.25,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const glow = new THREE.Mesh(glowGeo, glowMat);
+  glow.position.copy(position);
+  meshes.push(glow);
+
+  // Vòng torus xung (tích tụ năng lượng)
+  const ringGeo = new THREE.TorusGeometry(0.8, 0.06, 16, 100);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0xffff00,
+    transparent: true,
+    opacity: 0.7,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.position.copy(position);
+  ring.rotation.x = Math.PI / 2;
+  meshes.push(ring);
+
+  return { meshes };
 }
 
 // ── Nuclear Explosion (Vụ nổ hạt nhân diện rộng) ──
