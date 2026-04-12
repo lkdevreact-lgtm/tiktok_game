@@ -1,0 +1,31 @@
+{
+  "name": "tiktok-game-app",
+  "version": "1.0.0",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.tiktok.game",
+    "productName": "TikTokGame",
+    "directories": {
+      "output": "dist"
+    },
+
+    "win": {
+      "target": "nsis"
+    },
+
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.entertainment"
+    }
+  }
+}
