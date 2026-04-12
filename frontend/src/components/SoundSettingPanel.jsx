@@ -88,7 +88,7 @@ export default function SoundSettingPanel({ isOpen, onClose }) {
         <div className="flex flex-col gap-4 p-5">
           {/* Group: Ship */}
           <div className="text-[0.65rem] font-bold uppercase tracking-widest text-white/30 mb-1">
-            🚀 Ship / Game
+            Ship ( User )
           </div>
           {SOUNDS.filter(s => s.group === "ship").map(({ key, label, file }) => (
             <div key={key}>
@@ -129,7 +129,7 @@ export default function SoundSettingPanel({ isOpen, onClose }) {
 
           {/* Group: Boss */}
           <div className="text-[0.65rem] font-bold uppercase tracking-widest text-white/30 mb-1">
-            👿 Boss Skills
+            Boss 
           </div>
           {SOUNDS.filter(s => s.group === "boss").map(({ key, label, file }) => (
             <div key={key}>
