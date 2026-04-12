@@ -46,8 +46,58 @@ export default function FiboTTS() {
     setTimeout(() => setTesting(false), 2000);
   };
 
+  // Toggle enabled trực tiếp (không cần Save)
+  const handleToggleEnabled = () => {
+    const next = !config.enabled;
+    setConfig({ enabled: next });
+    setDraft((p) => ({ ...p, enabled: next }));
+  };
+
   return (
     <div className="flex flex-col gap-4">
+
+      {/* ── Enable / Disable TTS Toggle ── */}
+      <div
+        onClick={handleToggleEnabled}
+        className="flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer select-none transition-all duration-300"
+        style={{
+          background: config.enabled
+            ? "linear-gradient(135deg, rgba(139,92,246,0.18), rgba(99,102,241,0.12))"
+            : "rgba(255,255,255,0.03)",
+          borderColor: config.enabled ? "rgba(139,92,246,0.5)" : "rgba(255,255,255,0.08)",
+          boxShadow: config.enabled ? "0 0 18px rgba(139,92,246,0.15)" : "none",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-xl">{config.enabled ? "🔊" : "🔇"}</span>
+          <div>
+            <div className="text-[0.8rem] font-bold text-white/90">
+              Text-to-Speech
+            </div>
+            <div className="text-[0.62rem] text-white/40">
+              {config.enabled ? "Đang hoạt động" : "Đã tắt"}
+            </div>
+          </div>
+        </div>
+
+        {/* Visual toggle pill */}
+        <div
+          className="relative w-12 h-6 rounded-full transition-all duration-300 shrink-0"
+          style={{
+            background: config.enabled
+              ? "linear-gradient(90deg, #8b5cf6, #6366f1)"
+              : "rgba(255,255,255,0.1)",
+          }}
+        >
+          <div
+            className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300"
+            style={{ left: config.enabled ? "calc(100% - 1.375rem)" : "0.125rem" }}
+          />
+        </div>
+      </div>
+
+      {/* Dim the rest when disabled */}
+      <div style={{ opacity: config.enabled ? 1 : 0.4, transition: "opacity 0.3s", pointerEvents: config.enabled ? "auto" : "none" }}>
       {/* API URL */}
       <div>
         <label className={labelCls}>API URL</label>
@@ -244,8 +294,9 @@ export default function FiboTTS() {
           {feedback.msg}
         </div>
       )}
+      </div>{/* end dim wrapper */}
 
-      {/* Save button */}
+      {/* Save button — always accessible */}
       <button
         onClick={handleSave}
         className={`

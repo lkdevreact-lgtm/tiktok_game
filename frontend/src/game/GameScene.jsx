@@ -183,6 +183,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     s.dissolveProgress = 0;
     // Đánh dấu dead để missile/laser biết target đã bị huỷ
     if (s.aliveRef) s.aliveRef.current = false;
+    // Phát tiếng ship biến mất (hidden) mỗi khi bị huỷ bởi bất kỳ nguồn nào
+    playHiddenSound();
     // Tạo portal ngay sau đuôi tàu để nó "bị hút" vào
     const portalPos = s.mesh.position.clone().add(new THREE.Vector3(1.2, 0, 0));
     const portal = createPortal(portalPos, 0xdc00ff);
@@ -873,10 +875,10 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     bossBox.expandByScalar(0.12);
     const deadBullets = new Set();
 
-    // Shield collision sphere (khớp với vị trí & scale của BossShieldRing)
-    // shieldOffset = [3.5, -0.8, 0], shieldScale = 0.5 → radius ≈ 2.4 world units
-    const SHIELD_OFFSET = new THREE.Vector3(3.5, -0.8, 0);
-    const SHIELD_RADIUS = 1.5;
+    // Shield collision sphere — khớp với vị trí lưỡi liềm mới (x+3.4, không lệch Y)
+    // Crescent có bán kính arc 2.4 → radius 2.6 để bao phủ
+    const SHIELD_OFFSET = new THREE.Vector3(3.4, 0, 0);
+    const SHIELD_RADIUS = 2.6;
     const shieldCenter = boss.position.clone().add(SHIELD_OFFSET);
     const shieldSphere = bossShieldActiveRef.current
       ? new THREE.Sphere(shieldCenter, SHIELD_RADIUS)
