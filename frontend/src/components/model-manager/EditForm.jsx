@@ -8,7 +8,7 @@ import { useGLTF, OrbitControls, Environment } from "@react-three/drei";
 import { IMAGES } from "../../utils/constant";
 
 const inputCls =
-  "w-full rounded-lg px-2.5 py-1.5 text-[0.72rem] bg-black/30 border border-white/10 text-[#e0e8ff] outline-none focus:border-cyan-400/50 transition-colors";
+  "w-full rounded-lg px-2.5 py-1.5 text-xs bg-black/30 border border-white/10 text-[#e0e8ff] outline-none focus:border-cyan-400/50 transition-colors";
 const labelCls =
   "block text-[0.62rem] uppercase tracking-widest text-white/40 mb-1";
 

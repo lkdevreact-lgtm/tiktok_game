@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { getVolumes, setVolumes } from "../game/audio";
 
 const SOUNDS = [
-  { key: "attack",       label: "Tiếng bắn",         icon: "💥", file: "sound_attack.mp3",   group: "ship" },
-  { key: "spawn",        label: "Ship xuất hiện",    icon: "🚀", file: "start_sound.mp3",   group: "ship" },
-  { key: "hidden",       label: "Ship biến mất",     icon: "👻", file: "sound_hidden.mp3",  group: "ship" },
-  { key: "heal",         label: "Hồi máu Boss",      icon: "💚", file: "heal_sound.mp3",    group: "ship" },
-  { key: "bossLaser",    label: "Boss — Laser",       icon: "⚡", file: "lazer_boss.MP3",    group: "boss" },
-  { key: "bossUltimate", label: "Boss — Ultimate",    icon: "💥", file: "ultimate_boss.MP3", group: "boss" },
+  { key: "attack", label: "Tiếng bắn", icon: "💥", file: "sound_attack.mp3", group: "ship" },
+  { key: "spawn", label: "Ship xuất hiện", icon: "🚀", file: "start_sound.mp3", group: "ship" },
+  { key: "hidden", label: "Ship biến mất", icon: "👻", file: "sound_hidden.mp3", group: "ship" },
+  { key: "heal", label: "Hồi máu Boss", icon: "💚", file: "heal_sound.mp3", group: "boss" },
+  { key: "bossLaser", label: "Boss — Laser", icon: "⚡", file: "lazer_boss.MP3", group: "boss" },
+  { key: "bossUltimate", label: "Boss — Ultimate", icon: "💥", file: "ultimate_boss.MP3", group: "boss" },
 ];
 
 export default function SoundSettingPanel({ isOpen, onClose }) {
@@ -38,7 +38,7 @@ export default function SoundSettingPanel({ isOpen, onClose }) {
     }
     const audio = new Audio(`/sound/${file}`);
     audio.volume = vols[key];
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
     setPreviewAudio(audio);
   };
 

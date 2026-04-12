@@ -10,7 +10,6 @@ const labelCls =
 export default function FiboTTS() {
   const { config, setConfig, voices, loadingVoices, fetchVoices, speak } = useTTS();
 
-  // ── Local draft state — only saved on "Save Changes" ──────
   const configKey = JSON.stringify(config);
   const [draft, setDraft] = useState({ ...config });
   const [prevConfigKey, setPrevConfigKey] = useState(configKey);
@@ -18,7 +17,6 @@ export default function FiboTTS() {
   const [testText, setTestText] = useState("Xin chào, đây là bài test giọng nói.");
   const [testing, setTesting] = useState(false);
 
-  // Sync draft when config changes externally (e.g. on mount)
   if (configKey !== prevConfigKey) {
     setPrevConfigKey(configKey);
     setDraft({ ...config });
@@ -32,7 +30,7 @@ export default function FiboTTS() {
   // ── Save handler — persist draft → store ───────────────────
   const handleSave = () => {
     setConfig(draft);
-    setFeedback({ type: "success", msg: "✅ Đã lưu thành công!" });
+    setFeedback({ type: "success", msg: "Đã lưu thành công!" });
     setTimeout(() => setFeedback(null), 2500);
   };
 
@@ -55,8 +53,6 @@ export default function FiboTTS() {
 
   return (
     <div className="flex flex-col gap-4">
-
-      {/* ── Enable / Disable TTS Toggle ── */}
       <div
         onClick={handleToggleEnabled}
         className="flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer select-none transition-all duration-300"
@@ -308,7 +304,7 @@ export default function FiboTTS() {
           }
         `}
       >
-        💾 Save Changes
+        Save Changes
       </button>
     </div>
   );
