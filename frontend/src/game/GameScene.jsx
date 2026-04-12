@@ -875,15 +875,6 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     bossBox.expandByScalar(0.12);
     const deadBullets = new Set();
 
-    // Shield collision sphere — khớp với vị trí lưỡi liềm mới (x+3.4, không lệch Y)
-    // Crescent có bán kính arc 2.4 → radius 2.6 để bao phủ
-    const SHIELD_OFFSET = new THREE.Vector3(3.4, 0, 0);
-    const SHIELD_RADIUS = 2.6;
-    const shieldCenter = boss.position.clone().add(SHIELD_OFFSET);
-    const shieldSphere = bossShieldActiveRef.current
-      ? new THREE.Sphere(shieldCenter, SHIELD_RADIUS)
-      : null;
-
     bulletsRef.current.forEach((bullet, idx) => {
       bullet.mesh.position.add(bullet.velocity);
 
@@ -892,12 +883,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         return;
       }
 
-      // Khi khiên active → mọi đạn chạm shield sphere HOẶC boss body đều bị BLOCKED
-      // (tránh tình trạng đạn từ góc trên/dưới vòng qua shield sphere nhưng vẫn trúng boss)
-      const hitShield = bossShieldActiveRef.current && (
-        (shieldSphere?.containsPoint(bullet.mesh.position) ?? false) ||
-        bossBox.containsPoint(bullet.mesh.position)
-      );
+      // Khi khiên active → đạn chỉ bị chặn khi thật sự chạm tới body boss
+      // (không dùng sphere riêng để tránh block đạn từ xa chưa tới khiên)
+      const hitShield = bossShieldActiveRef.current && bossBox.containsPoint(bullet.mesh.position);
       // Khi không có khiên → kiểm tra boss body bình thường
       const hitBoss = !bossShieldActiveRef.current && bossBox.containsPoint(bullet.mesh.position);
 
