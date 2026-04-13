@@ -95,8 +95,12 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         // Fly-in từ dưới lên
         FLY_IN_START = SHIP_BASE_Y - 10;
         mesh.position.set(x, FLY_IN_START, z);
-        // Hướng ship lên trên (về phía boss)
-        mesh.rotation.set(0, 0, -Math.PI / 2);
+        // Xoay tàu 90 độ quanh trục Z của thế giới (World Z = camera nhìn thẳng)
+        // Điều này giúp lật phần mũi tàu từ "hướng TRÁI" thành "hướng LÊN"
+        mesh.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 2);
+        
+        // Lật phi thuyền nằm ngửa ra (cuộn 90 độ quanh trục dọc Y) để nó không bị thấy phần hông (nghiêng)
+        mesh.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
         baseX = x;
         baseY = y;
         baseZ = z;
@@ -755,12 +759,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       // Vị trí cuối = Orbital + Recoil offset
       ship.mesh.position.copy(tmpVec1.current).addScaledVector(tmpVec2.current, ship.recoil);
 
-      // 5. Banking / Rotation — mobile giữ hướng lên trên, desktop thì bằng 0
-      if (ship.isMobileShip) {
-        ship.mesh.rotation.set(0, 0, -Math.PI / 2); // hướng lên phía boss (trên đầu)
-      } else {
-        ship.mesh.rotation.z = 0;
-      }
+      // 5. Banking effect (tắt — tàu đứng yên)
+      // Không ghi đè rotation.z ở đây nữa để giữ nguyên góc xoay chuẩn từ lúc spawn
 
       // 6. Smart Engine Pulse & Emissive Fix + Exhaust Flares Animation
       if (ship.mesh) {
