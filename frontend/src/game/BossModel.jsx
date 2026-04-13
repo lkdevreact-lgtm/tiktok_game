@@ -7,7 +7,7 @@ useGLTF.preload(assetUrl("/models/spaceship_boss.glb"));
 
 // Pre-load texture một lần duy nhất
 const bossTexture = new THREE.TextureLoader().load(
-  "/images/texture-pink.jpg",
+  "/images/text-1.jpg",
   (tex) => {
     tex.encoding = THREE.sRGBEncoding;
     tex.wrapS = THREE.RepeatWrapping;
