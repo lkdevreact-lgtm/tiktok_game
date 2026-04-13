@@ -419,7 +419,7 @@ export default function GameCanvas() {
     <div className="fixed inset-0 flex flex-col">
       <Navbar />
 
-      <div className="flex-1 relative mt-14">
+      <div className="flex-1 relative sm:mt-14">
         <Canvas
           orthographic
           camera={cameraProps}

@@ -35,7 +35,7 @@ export const SETTINGS_GAME_MOBILE = {
   BOSS_SPEED: 0.0004,   // chậm hơn chút vì khoảng cách nhỏ hơn
   BULLET_SPEED: 0.18,
   // Ship user spawn ở vùng dưới
-  SHIP_BASE_Y: -5,    // Y cố định phía dưới cho ship
+  SHIP_BASE_Y: -6,    // Y cố định phía dưới cho ship
   SHIP_X_RANGE: 6.0,    // tổng bề rộng theo X cho ship (~±3.0)
   NUM_X_SLOTS: 8,       // số slot ngang
   CAMERA_ZOOM: 55,      // zoom nhỏ hơn một chút để thấy toàn cảnh dọc
