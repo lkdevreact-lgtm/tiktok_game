@@ -155,23 +155,40 @@ export function ModelProvider({ children }) {
   });
 
   // ── Trigger maps (computed from triggers array) ────────────────
-  // Comment trigger: { [code]: { shipId, model } }
+  // Ship comment trigger: { [code]: { shipId, model } }
   const commentTriggerMap = {};
-  // Tap trigger: [{ quantity, shipId, model }]
+  // Ship tap trigger: [{ quantity, shipId, model }]
   const tapTriggers = [];
+  // Boss comment trigger: { [code]: bossSkill string }
+  const commentBossTriggerMap = {};
+  // Boss tap trigger: [{ quantity, bossSkill }]
+  const tapBossTriggers = [];
 
   const allModelsById = {};
   models.forEach((m) => { allModelsById[m.id] = m; });
 
   triggers.forEach((t) => {
-    // Support new modelId field OR legacy shipId for backward compat
-    const resolvedId = t.modelId || t.shipId;
-    const model = allModelsById[resolvedId];
-    if (!model) return;
-    if (t.type === "comment" && t.content) {
-      commentTriggerMap[t.content.trim()] = { shipId: resolvedId, model };
-    } else if (t.type === "tap" && t.quantity > 0) {
-      tapTriggers.push({ quantity: t.quantity, shipId: resolvedId, model });
+    const isBoss = t.target === "boss";
+
+    if (isBoss) {
+      // Boss skill trigger
+      const skill = t.bossSkill;
+      if (!skill) return;
+      if (t.type === "comment" && t.content) {
+        commentBossTriggerMap[t.content.trim()] = skill;
+      } else if (t.type === "tap" && t.quantity > 0) {
+        tapBossTriggers.push({ quantity: t.quantity, bossSkill: skill });
+      }
+    } else {
+      // Ship trigger (legacy + new)
+      const resolvedId = t.modelId || t.shipId;
+      const model = allModelsById[resolvedId];
+      if (!model) return;
+      if (t.type === "comment" && t.content) {
+        commentTriggerMap[t.content.trim()] = { shipId: resolvedId, model };
+      } else if (t.type === "tap" && t.quantity > 0) {
+        tapTriggers.push({ quantity: t.quantity, shipId: resolvedId, model });
+      }
     }
   });
 
@@ -315,6 +332,8 @@ export function ModelProvider({ children }) {
         giftUsageMap,
         commentTriggerMap,
         tapTriggers,
+        commentBossTriggerMap,
+        tapBossTriggers,
         triggers,
         saveTriggers: saveTriggersFn,
         bossHealGiftMap,

@@ -20,6 +20,8 @@ export default function GameCanvas() {
     giftModelMap,
     commentTriggerMap,
     tapTriggers,
+    commentBossTriggerMap,
+    tapBossTriggers,
     bossHealGiftMap,
     bossShieldGiftMap,
     bossLaserGiftMap,
@@ -38,11 +40,15 @@ export default function GameCanvas() {
   const bossNuclearGiftMapRef = useRef(bossNuclearGiftMap);
   const commentTriggerMapRef = useRef(commentTriggerMap);
   const tapTriggersRef = useRef(tapTriggers);
+  const commentBossTriggerMapRef = useRef(commentBossTriggerMap);
+  const tapBossTriggersRef = useRef(tapBossTriggers);
 
   // Tổng like tích lũy trong phiên (reset khi reconnect)
   const likeAccumulatorRef = useRef(0);
   // Theo dõi đã spawn bao nhiêu con ở mỗi mốc tap trigger
   const tapSpawnedCountRef = useRef({});
+  // Theo dõi boss skill tap trigger đã fire mỗi ngưỡng
+  const tapBossSpawnedCountRef = useRef({});
 
   const bossLaserTriggerRef = useRef(null);
   const bossMissileTriggerRef = useRef(null);
@@ -71,9 +77,15 @@ export default function GameCanvas() {
   }, [commentTriggerMap]);
   useEffect(() => {
     tapTriggersRef.current = tapTriggers;
-    // Reset spawned counts khi triggers thay đổi (user save mới)
     tapSpawnedCountRef.current = {};
   }, [tapTriggers]);
+  useEffect(() => {
+    commentBossTriggerMapRef.current = commentBossTriggerMap;
+  }, [commentBossTriggerMap]);
+  useEffect(() => {
+    tapBossTriggersRef.current = tapBossTriggers;
+    tapBossSpawnedCountRef.current = {};
+  }, [tapBossTriggers]);
 
   const handleGiftSpawn = useCallback((fn) => {
     spawnShipRef.current = fn;
