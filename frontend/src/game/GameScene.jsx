@@ -3,16 +3,17 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 import { useGame } from "../hooks/useGame";
-import { createBullet, createExplosion, createExhaustFlare, createHealParticles, createPortal, createBossLaser, createBossMissile, createNukeExplosion, createLaserCharge } from "./models";
+import { createBullet, createExplosion, createExhaustFlare, createHealParticles, createPortal, createBossLaser, createBossMissile, createNukeExplosion, createLaserCharge, createNukeCharge } from "./models";
 import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
 import { SETTINGS_GAME, assetUrl } from "../utils/constant";
-import { playAttackSound, playSpawnSound, playHiddenSound, getHealVolume, playSecuritySound } from "./audio";
+import { playAttackSound, playSpawnSound, playHiddenSound, getHealVolume, playSecuritySound, playBossLaserSound, playBossUltimateSound } from "./audio";
 import ShipLabel from "./components/ShipLabel";
 import BossLabel from "./components/BossLabel";
 import BossShieldRing from "./components/BossShieldRing";
 import DamageManager from "./components/DamageManager";
+import EarthBackground from "./components/EarthBackground";
 
 export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBossLaser, onBossMissile, onBossNuclear }) {
   const { scene } = useThree();
@@ -181,6 +182,10 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
 
     s.dissolving = true;
     s.dissolveProgress = 0;
+    // Đánh dấu dead để missile/laser biết target đã bị huỷ
+    if (s.aliveRef) s.aliveRef.current = false;
+    // Phát tiếng ship biến mất (hidden) mỗi khi bị huỷ bởi bất kỳ nguồn nào
+    playHiddenSound();
     // Tạo portal ngay sau đuôi tàu để nó "bị hút" vào
     const portalPos = s.mesh.position.clone().add(new THREE.Vector3(1.2, 0, 0));
     const portal = createPortal(portalPos, 0xdc00ff);
@@ -294,7 +299,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
           scene.add(laser.group);
           bossLasersRef.current.push({ ...laser, type: "beam" });
           destroyShip(target.id);
-          playAttackSound();
+          // Tiếng laser chỉ phát khi tia bắn ra (sau charge)
+          playBossLaserSound();
         }, 800);
       });
     }
@@ -323,31 +329,59 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     if (onBossNuclear) {
       onBossNuclear(() => {
         if (!bossRef.current) return;
+
+        // ── PHASE 1: CHARGE-UP (1.5s) ────────────────────────────
         const bossPos = new THREE.Vector3();
         bossRef.current.getWorldPosition(bossPos);
-        const nuke = createNukeExplosion(bossPos);
-        nuke.forEach(p => scene.add(p.mesh));
-        nukeExplosionsRef.current.push(...nuke);
 
-        // Lấy số ship cần huỷ từ config (0 = tất cả)
-        const killCount = activeBossRef.current?.nuclearKillCount ?? 0;
+        const charge = createNukeCharge(bossPos);
+        charge.meshes.forEach(m => scene.add(m));
+        nukeExplosionsRef.current.push(...charge.meshes.map(m => ({ mesh: m, type: "nuke_charge", life: 1.5, maxLife: 1.5 })));
 
-        // Lọc tàu: trong tầm nổ (toàn map) + chưa đang dissolving + đã bay vào xong
-        const inRange = shipsRef.current.filter(
-          s => !s.dissolving && s.flyInProgress >= 1
-        );
+        // Tiếng ultimate phát ngay khi bắt đầu tích tụ
+        playBossUltimateSound();
 
-        console.log("[Nuclear] killCount config:", killCount, "| ships in range:", inRange.length, "| total ships:", shipsRef.current.length);
+        // ── PHASE 2: EXPLOSION (sau 1.5s) ────────────────────────
+        setTimeout(() => {
+          if (!bossRef.current) return;
 
-        if (killCount <= 0 || killCount >= inRange.length) {
-          // Huỷ tất cả trong tầm
-          inRange.forEach(s => destroyShip(s.id));
-        } else {
-          // Huỷ ngẫu nhiên đúng killCount con
-          const shuffled = [...inRange].sort(() => Math.random() - 0.5);
-          shuffled.slice(0, killCount).forEach(s => destroyShip(s.id));
-        }
-        playAttackSound();
+          // Xoá charge khỏi scene
+          charge.meshes.forEach(m => scene.remove(m));
+
+          const explodePos = new THREE.Vector3();
+          bossRef.current.getWorldPosition(explodePos);
+
+          const nuke = createNukeExplosion(explodePos);
+          nuke.forEach(p => scene.add(p.mesh));
+          nukeExplosionsRef.current.push(...nuke);
+
+          // Lấy số ship cần huỷ từ config (0 = tất cả)
+          const killCount = activeBossRef.current?.nuclearKillCount ?? 0;
+
+          // Lọc tàu hợp lệ
+          const inRange = shipsRef.current.filter(
+            s => !s.dissolving && s.flyInProgress >= 1
+          );
+
+          // Chọn tàu bị ảnh hưởng
+          let targets;
+          if (killCount <= 0 || killCount >= inRange.length) {
+            targets = inRange;
+          } else {
+            targets = [...inRange].sort(() => Math.random() - 0.5).slice(0, killCount);
+          }
+
+          // ── Delay huỷ tàu theo khoảng cách (sóng lan với tốc độ 35 unit/s) ──
+          // nuke_wave scale 1 → 36 trong 1s → radius tương đương ~35 world units
+          const WAVE_SPEED = 35;
+          targets.forEach(s => {
+            const dist = explodePos.distanceTo(s.mesh.position);
+            const delay = (dist / WAVE_SPEED) * 1000; // ms
+            setTimeout(() => {
+              destroyShip(s.id);
+            }, delay);
+          });
+        }, 1500);
       });
     }
   }, [onBossNuclear, scene, destroyShip]);
@@ -706,14 +740,15 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     const deadMissiles = [];
     bossMissilesRef.current.forEach((m, idx) => {
       m.life -= delta;
-      if (m.life <= 0 || !m.targetShip.aliveRef.current) {
+      // Bỏ qua nếu hết thời gian HOẶC target đã bị huỷ bởi nguồn khác
+      if (m.life <= 0 || !m.targetShip.aliveRef.current || m.targetShip.dissolving) {
         deadMissiles.push(idx);
         scene.remove(m.group);
         return;
       }
       m.update(delta, m.targetShip.mesh.position);
-      // Va chạm tên lửa
-      if (m.group.position.distanceTo(m.targetShip.mesh.position) < 0.5) {
+      // Va chạm tên lửa — hitbox 0.8 để dễ chạm hơn
+      if (m.group.position.distanceTo(m.targetShip.mesh.position) < 0.8) {
         destroyShip(m.targetShip.id);
         deadMissiles.push(idx);
         scene.remove(m.group);
@@ -759,6 +794,13 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         } else if (n.type === "nuke_wave") {
           n.mesh.scale.setScalar(1 + t * 35);
           n.mesh.material.opacity = n.life * 0.5;
+        } else if (n.type === "nuke_charge") {
+          // Charge: pulse scale lớn dần theo thời gian tích tụ
+          const chargeProgress = 1.0 - (n.life / n.maxLife); // 0→1
+          const pulse = 1 + Math.sin(chargeProgress * Math.PI * 8) * 0.3 * chargeProgress;
+          const baseScale = 0.3 + chargeProgress * 2.5;
+          n.mesh.scale.setScalar(baseScale * pulse);
+          n.mesh.material.opacity = 0.4 + chargeProgress * 0.6;
         }
       }
     });
@@ -834,15 +876,6 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     bossBox.expandByScalar(0.12);
     const deadBullets = new Set();
 
-    // Shield collision sphere (khớp với vị trí & scale của BossShieldRing)
-    // shieldOffset = [3.5, -0.8, 0], shieldScale = 0.5 → radius ≈ 2.4 world units
-    const SHIELD_OFFSET = new THREE.Vector3(3.5, -0.8, 0);
-    const SHIELD_RADIUS = 1.5;
-    const shieldCenter = boss.position.clone().add(SHIELD_OFFSET);
-    const shieldSphere = bossShieldActiveRef.current
-      ? new THREE.Sphere(shieldCenter, SHIELD_RADIUS)
-      : null;
-
     bulletsRef.current.forEach((bullet, idx) => {
       bullet.mesh.position.add(bullet.velocity);
 
@@ -851,12 +884,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         return;
       }
 
-      // Khi khiên active → mọi đạn chạm shield sphere HOẶC boss body đều bị BLOCKED
-      // (tránh tình trạng đạn từ góc trên/dưới vòng qua shield sphere nhưng vẫn trúng boss)
-      const hitShield = bossShieldActiveRef.current && (
-        (shieldSphere?.containsPoint(bullet.mesh.position) ?? false) ||
-        bossBox.containsPoint(bullet.mesh.position)
-      );
+      // Khi khiên active → đạn chỉ bị chặn khi thật sự chạm tới body boss
+      // (không dùng sphere riêng để tránh block đạn từ xa chưa tới khiên)
+      const hitShield = bossShieldActiveRef.current && bossBox.containsPoint(bullet.mesh.position);
       // Khi không có khiên → kiểm tra boss body bình thường
       const hitBoss = !bossShieldActiveRef.current && bossBox.containsPoint(bullet.mesh.position);
 
@@ -1043,6 +1073,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         fade
         speed={1}
       />
+      <EarthBackground />
       <BossModel
         bossRef={bossRef}
         url={assetUrl(activeBossModel?.path ?? "/models/spaceship_boss.glb")}

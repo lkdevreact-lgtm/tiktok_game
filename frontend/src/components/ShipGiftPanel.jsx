@@ -167,6 +167,10 @@ export default function ShipGiftPanel({ visible = true }) {
                               "{row.trigger.content}"
                             </span>
                           </>
+                        ) : row.trigger.type === "follow" ? (
+                          <>
+                            <span className="text-yellow-300 font-medium">Follow</span>
+                          </>
                         ) : (
                           <>
                             <span className="text-yellow-300 font-medium">

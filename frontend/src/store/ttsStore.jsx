@@ -5,6 +5,7 @@ import { TTSContext } from "./ttsContext";
 const LS_KEY = "ttsConfig";
 
 const DEFAULT_CONFIG = {
+  enabled: true,
   apiUrl: "https://unoverlooked-soulfully-rayna.ngrok-free.dev",
   voice: "",
   numStep: 8,
@@ -128,6 +129,7 @@ export function TTSProvider({ children }) {
   // ── Enqueue TTS ─────────────────────────────────────────────
   const speak = useCallback((text) => {
     const cfg = loadConfig(); // always read latest config
+    if (!cfg.enabled) return;       // ← TắT: không nói gì
     if (!cfg.apiUrl || !cfg.voice || !text) return;
     queueRef.current.push({ text, cfg });
     playNext();

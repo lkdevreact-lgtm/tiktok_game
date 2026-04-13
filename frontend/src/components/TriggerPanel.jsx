@@ -68,113 +68,118 @@ export default function TriggerPanel({ isOpen, onClose }) {
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Panel */}
+      {/* Modal centered */}
       <div
         className="
-          fixed top-0 right-0 z-[101] h-full w-[420px] max-w-[92vw]
-          bg-[rgba(5,12,30,0.98)] border-l border-[rgba(250,204,21,0.2)]
-          backdrop-blur-xl shadow-[-8px_0_40px_rgba(250,204,21,0.08)]
-          flex flex-col overflow-hidden
+          fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none
         "
-        style={{
-          fontFamily: "var(--font-ui), sans-serif",
-          animation: "slideInRight 0.3s ease",
-        }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(250,204,21,0.15)]">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">🎯</span>
-            <span className="text-[0.85rem] font-bold tracking-[0.12em] uppercase text-yellow-400">
-              Trigger Settings
-            </span>
+        <div
+          className="
+            pointer-events-auto relative w-full max-w-[560px] max-h-[90vh]
+            bg-[rgba(5,12,30,0.98)] border border-[rgba(250,204,21,0.2)]
+            backdrop-blur-xl rounded-2xl shadow-[0_0_60px_rgba(250,204,21,0.08),0_24px_60px_rgba(0,0,0,0.6)]
+            flex flex-col overflow-hidden
+          "
+          style={{
+            fontFamily: "var(--font-ui), sans-serif",
+            animation: "modalPopIn 0.22s cubic-bezier(0.34,1.56,0.64,1) forwards",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(250,204,21,0.15)] flex-shrink-0">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">🎯</span>
+              <span className="text-[0.85rem] font-bold tracking-[0.12em] uppercase text-yellow-400">
+                Trigger Settings
+              </span>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/5 text-lg cursor-pointer transition-all"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/5 text-lg cursor-pointer transition-all"
-          >
-            ✕
-          </button>
-        </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {/* Trigger list */}
-          <div className="flex flex-col gap-4">
-            {localTriggers.length === 0 && (
-              <p className="text-[0.75rem] text-white/25 italic text-center py-6">
-                Chưa có trigger nào. Nhấn "+ Thêm Trigger" để bắt đầu.
-              </p>
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
+            <div className="flex flex-col gap-4">
+              {localTriggers.length === 0 && (
+                <p className="text-[0.75rem] text-white/25 italic text-center py-6">
+                  Chưa có trigger nào. Nhấn "+ Thêm Trigger" để bắt đầu.
+                </p>
+              )}
+
+              {localTriggers.map((trigger, idx) => (
+                <TriggerCard
+                  key={trigger.id}
+                  trigger={trigger}
+                  index={idx}
+                  activeShips={activeShips}
+                  onUpdate={updateTrigger}
+                  onRemove={removeTrigger}
+                />
+              ))}
+            </div>
+
+            {/* Add button */}
+            <button
+              onClick={addTrigger}
+              className="
+                mt-4 w-full py-2.5 rounded-lg text-[0.75rem] font-semibold uppercase tracking-wider
+                cursor-pointer border border-dashed border-yellow-400/25 text-yellow-400/60
+                hover:border-yellow-400/50 hover:text-yellow-400 hover:bg-yellow-400/5
+                transition-all duration-200
+              "
+            >
+              + Thêm Trigger
+            </button>
+          </div>
+
+          {/* Footer: Save + Feedback */}
+          <div className="px-5 py-4 border-t border-[rgba(250,204,21,0.15)] flex flex-col gap-2.5 flex-shrink-0">
+            {feedback && (
+              <div
+                className={`px-3 py-2 rounded-lg text-[0.75rem]
+                  ${feedback.type === "success"
+                    ? "bg-green-500/10 border border-green-500/30 text-green-400"
+                    : "bg-red-500/10 border border-red-500/30 text-red-400"
+                  }
+                `}
+              >
+                {feedback.msg}
+              </div>
             )}
 
-            {localTriggers.map((trigger, idx) => (
-              <TriggerCard
-                key={trigger.id}
-                trigger={trigger}
-                index={idx}
-                activeShips={activeShips}
-                onUpdate={updateTrigger}
-                onRemove={removeTrigger}
-              />
-            ))}
-          </div>
-
-          {/* Add button */}
-          <button
-            onClick={addTrigger}
-            className="
-              mt-4 w-full py-2.5 rounded-lg text-[0.75rem] font-semibold uppercase tracking-wider
-              cursor-pointer border border-dashed border-yellow-400/25 text-yellow-400/60
-              hover:border-yellow-400/50 hover:text-yellow-400 hover:bg-yellow-400/5
-              transition-all duration-200
-            "
-          >
-            + Thêm Trigger
-          </button>
-        </div>
-
-        {/* Footer: Save + Feedback */}
-        <div className="px-5 py-4 border-t border-[rgba(250,204,21,0.15)] flex flex-col gap-2.5">
-          {/* Feedback */}
-          {feedback && (
-            <div
-              className={`px-3 py-2 rounded-lg text-[0.75rem] animate-fade-in
-                ${feedback.type === "success"
-                  ? "bg-green-500/10 border border-green-500/30 text-green-400"
-                  : "bg-red-500/10 border border-red-500/30 text-red-400"
-                }
-              `}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="
+                w-full py-3 rounded-lg text-sm font-bold uppercase tracking-wider cursor-pointer
+                bg-gradient-to-r from-yellow-500/20 via-orange-500/20 to-yellow-500/20
+                border border-yellow-400/40 text-yellow-300
+                hover:from-yellow-500/30 hover:via-orange-500/30 hover:to-yellow-500/30
+                hover:shadow-[0_0_20px_rgba(250,204,21,0.15)]
+                active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
+                transition-all duration-200
+              "
             >
-              {feedback.msg}
-            </div>
-          )}
-
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="
-              w-full py-3 rounded-lg text-sm font-bold uppercase tracking-wider cursor-pointer
-              bg-gradient-to-r from-yellow-500/20 via-orange-500/20 to-yellow-500/20
-              border border-yellow-400/40 text-yellow-300
-              hover:from-yellow-500/30 hover:via-orange-500/30 hover:to-yellow-500/30
-              hover:shadow-[0_0_20px_rgba(250,204,21,0.15)]
-              active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
-              transition-all duration-200
-            "
-          >
-            {saving ? "Đang lưu..." : "💾 Save Changes"}
-          </button>
+              {saving ? "Đang lưu..." : "💾 Save Changes"}
+            </button>
+          </div>
         </div>
       </div>
 
       <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(100%); opacity: 0; }
-          to   { transform: translateX(0);    opacity: 1; }
+        @keyframes modalPopIn {
+          from { opacity: 0; transform: scale(0.92) translateY(12px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0);    }
         }
       `}</style>
     </>
@@ -185,6 +190,7 @@ export default function TriggerPanel({ isOpen, onClose }) {
 function TriggerCard({ trigger, index, activeShips, onUpdate, onRemove }) {
   const isComment = trigger.type === "comment";
   const isTap = trigger.type === "tap";
+  const isFollow = trigger.type === "follow";
 
   // Tìm model được chọn để hiển thị icon
   const selectedShip = activeShips.find((m) => m.id === trigger.shipId);
@@ -225,10 +231,13 @@ function TriggerCard({ trigger, index, activeShips, onUpdate, onRemove }) {
               "
             >
               <option value="comment" className="bg-[#0a1020] text-white">
-                💬 Comment (CMT)
+                Comment (CMT)
               </option>
               <option value="tap" className="bg-[#0a1020] text-white">
-                ❤️ Tap tap (Tim)
+                Tap tap (Tim)
+              </option>
+              <option value="follow" className="bg-[#0a1020] text-white">
+                Follow
               </option>
             </select>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none text-xs">
@@ -257,6 +266,14 @@ function TriggerCard({ trigger, index, activeShips, onUpdate, onRemove }) {
             />
             <p className="text-[0.6rem] text-white/20 mt-1">
               Khi viewer comment nội dung này sẽ spawn chiến cơ
+            </p>
+          </div>
+        )}
+
+        {isFollow && (
+          <div>
+            <p className="text-[0.6rem] text-white/20 mt-1">
+              Khi viewer follow sẽ spawn chiến cơ
             </p>
           </div>
         )}
@@ -352,6 +369,8 @@ function TriggerCard({ trigger, index, activeShips, onUpdate, onRemove }) {
             <span className="text-[0.65rem] text-yellow-400/70">
               {isComment
                 ? `Comment "${trigger.content || "..."}" → spawn "${selectedShip.label || selectedShip.id}"`
+                : isFollow
+                ? `Follow → spawn "${selectedShip.label || selectedShip.id}"`
                 : `Mỗi ${trigger.quantity || 50} tim → spawn "${selectedShip.label || selectedShip.id}"`
               }
             </span>

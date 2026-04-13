@@ -6,6 +6,8 @@ const DEFAULT_VOLUMES = {
   spawn: 0.4,
   hidden: 0.6,
   heal: 0.5,
+  bossLaser: 0.9,
+  bossUltimate: 1.0,
 };
 
 function loadVolumes() {
@@ -28,6 +30,8 @@ export function setVolumes(next) {
   attackPool.forEach((a) => { a.volume = volumes.attack; });
   spawnPool.forEach((a) => { a.volume = volumes.spawn; });
   hiddenPool.forEach((a) => { a.volume = volumes.hidden; });
+  bossLaserAudio.volume = volumes.bossLaser ?? 0.9;
+  bossUltimateAudio.volume = volumes.bossUltimate ?? 1.0;
 }
 
 // ── Attack Sound Pool ────────────────────────────────────────────
@@ -90,4 +94,22 @@ securityAudio.volume = 0.85;
 export function playSecuritySound() {
   securityAudio.currentTime = 0;
   securityAudio.play().catch(() => {});
+}
+
+// ── Boss Laser Sound ─────────────────────────────────────────────
+const bossLaserAudio = new Audio("/sound/lazer_boss.MP3");
+bossLaserAudio.volume = volumes.bossLaser ?? 0.9;
+
+export function playBossLaserSound() {
+  bossLaserAudio.currentTime = 0;
+  bossLaserAudio.play().catch(() => {});
+}
+
+// ── Boss Ultimate (Nuclear) Sound ───────────────────────────────
+const bossUltimateAudio = new Audio("/sound/ultimate_boss.MP3");
+bossUltimateAudio.volume = volumes.bossUltimate ?? 1.0;
+
+export function playBossUltimateSound() {
+  bossUltimateAudio.currentTime = 0;
+  bossUltimateAudio.play().catch(() => {});
 }

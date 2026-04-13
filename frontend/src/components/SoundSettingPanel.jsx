@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { getVolumes, setVolumes } from "../game/audio";
 
 const SOUNDS = [
-  { key: "attack", label: "Tiếng bắn", icon: "💥", file: "sound_attack.mp3" },
-  { key: "spawn", label: "Ship xuất hiện", icon: "🚀", file: "start_sound.mp3" },
-  { key: "hidden", label: "Ship biến mất", icon: "👻", file: "sound_hidden.mp3" },
-  { key: "heal", label: "Hồi máu Boss", icon: "💚", file: "heal_sound.mp3" },
+  { key: "attack", label: "Tiếng bắn", icon: "💥", file: "sound_attack.mp3", group: "ship" },
+  { key: "spawn", label: "Ship xuất hiện", icon: "🚀", file: "start_sound.mp3", group: "ship" },
+  { key: "hidden", label: "Ship biến mất", icon: "👻", file: "sound_hidden.mp3", group: "ship" },
+  { key: "heal", label: "Hồi máu Boss", icon: "💚", file: "heal_sound.mp3", group: "boss" },
+  { key: "bossLaser", label: "Boss — Laser", icon: "⚡", file: "lazer_boss.MP3", group: "boss" },
+  { key: "bossUltimate", label: "Boss — Ultimate", icon: "💥", file: "ultimate_boss.MP3", group: "boss" },
 ];
 
 export default function SoundSettingPanel({ isOpen, onClose }) {
@@ -36,7 +38,7 @@ export default function SoundSettingPanel({ isOpen, onClose }) {
     }
     const audio = new Audio(`/sound/${file}`);
     audio.volume = vols[key];
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
     setPreviewAudio(audio);
   };
 
@@ -84,7 +86,11 @@ export default function SoundSettingPanel({ isOpen, onClose }) {
 
         {/* Sound sliders */}
         <div className="flex flex-col gap-4 p-5">
-          {SOUNDS.map(({ key, label, file }) => (
+          {/* Group: Ship */}
+          <div className="text-[0.65rem] font-bold uppercase tracking-widest text-white/30 mb-1">
+            Ship ( User )
+          </div>
+          {SOUNDS.filter(s => s.group === "ship").map(({ key, label, file }) => (
             <div key={key}>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
@@ -113,6 +119,47 @@ export default function SoundSettingPanel({ isOpen, onClose }) {
                 className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
                 style={{
                   background: `linear-gradient(to right, #00f5ff ${vols[key] * 100}%, rgba(255,255,255,0.08) ${vols[key] * 100}%)`,
+                }}
+              />
+            </div>
+          ))}
+
+          {/* Separator */}
+          <div className="border-t border-white/10 my-1" />
+
+          {/* Group: Boss */}
+          <div className="text-[0.65rem] font-bold uppercase tracking-widest text-white/30 mb-1">
+            Boss 
+          </div>
+          {SOUNDS.filter(s => s.group === "boss").map(({ key, label, file }) => (
+            <div key={key}>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[0.75rem] font-semibold text-white/80">{label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[0.65rem] text-white/40 w-8 text-right">
+                    {Math.round(vols[key] * 100)}%
+                  </span>
+                  <button
+                    onClick={() => handlePreview(file, key)}
+                    className="text-[0.6rem] px-2 py-0.5 rounded bg-orange-400/10 border border-orange-400/25 text-orange-400/70 hover:text-orange-400 hover:bg-orange-400/20 cursor-pointer transition-all"
+                    title="Nghe thử"
+                  >
+                    ▶
+                  </button>
+                </div>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={vols[key]}
+                onChange={(e) => handleChange(key, parseFloat(e.target.value))}
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #fb923c ${vols[key] * 100}%, rgba(255,255,255,0.08) ${vols[key] * 100}%)`,
                 }}
               />
             </div>
