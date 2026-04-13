@@ -13,6 +13,7 @@ import ShipLabel from "./components/ShipLabel";
 import BossLabel from "./components/BossLabel";
 import BossShieldRing from "./components/BossShieldRing";
 import DamageManager from "./components/DamageManager";
+import EarthBackground from "./components/EarthBackground";
 
 export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBossLaser, onBossMissile, onBossNuclear }) {
   const { scene } = useThree();
@@ -1072,6 +1073,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         fade
         speed={1}
       />
+      <EarthBackground />
       <BossModel
         bossRef={bossRef}
         url={assetUrl(activeBossModel?.path ?? "/models/spaceship_boss.glb")}
