@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGame } from "../hooks/useGame";
+import { useIsMobile } from "../hooks/useIsMobile";
 import GameScene from "../game/GameScene";
 import Navbar from "./Navbar";
 import socket from "../socket/socketClient";
@@ -16,6 +17,7 @@ export default function GameCanvas() {
   const { gameStatus, setBossHp, notifications, addNotification, resetGame } =
     useGame();
   const { settings } = usePanelSettings();
+  const isMobile = useIsMobile(); // true khi viewport < 768px
   const {
     giftModelMap,
     commentTriggerMap,
@@ -408,6 +410,11 @@ export default function GameCanvas() {
   const isOver = gameStatus === "win" || gameStatus === "lose";
   const isWin = gameStatus === "win";
 
+  // Camera settings tùy theo layout
+  const cameraProps = isMobile
+    ? { position: [0, 0, 10], zoom: 52 }   // portrait: zoom out để thấy toàn cảnh dọc
+    : { position: [0, 0, 10], zoom: 80 };  // landscape: desktop default
+
   return (
     <div className="fixed inset-0 flex flex-col">
       <Navbar />
@@ -415,9 +422,10 @@ export default function GameCanvas() {
       <div className="flex-1 relative mt-14">
         <Canvas
           orthographic
-          camera={{ position: [0, 0, 10], zoom: 80 }}
+          camera={cameraProps}
           gl={{ antialias: true, alpha: false }}
           style={{ background: "#000" }}
+          key={isMobile ? "mobile" : "desktop"}  // remount canvas khi đổi mode
         >
           <GameScene
             onGiftSpawn={handleGiftSpawn}
@@ -426,6 +434,7 @@ export default function GameCanvas() {
             onBossLaser={handleBossLaserTrigger}
             onBossMissile={handleBossMissileTrigger}
             onBossNuclear={handleBossNuclearTrigger}
+            isMobile={isMobile}
           />
         </Canvas>
 

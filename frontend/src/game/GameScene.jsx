@@ -7,7 +7,7 @@ import { createBullet, createExplosion, createExhaustFlare, createHealParticles,
 import BossModel from "./BossModel";
 import { useShipModels } from "../hooks/useShipModels";
 import { useModels } from "../hooks/useModels";
-import { SETTINGS_GAME, assetUrl } from "../utils/constant";
+import { SETTINGS_GAME, SETTINGS_GAME_MOBILE, assetUrl } from "../utils/constant";
 import { playAttackSound, playSpawnSound, playHiddenSound, getHealVolume, playSecuritySound, playBossLaserSound, playBossUltimateSound } from "./audio";
 import ShipLabel from "./components/ShipLabel";
 import BossLabel from "./components/BossLabel";
@@ -15,7 +15,7 @@ import BossShieldRing from "./components/BossShieldRing";
 import DamageManager from "./components/DamageManager";
 import EarthBackground from "./components/EarthBackground";
 
-export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBossLaser, onBossMissile, onBossNuclear }) {
+export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBossLaser, onBossMissile, onBossNuclear, isMobile = false }) {
   const { scene } = useThree();
   const { setBossHp, setGameStatus, setShipCount, setBossShield, gameStatus } =
     useGame();
@@ -57,8 +57,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
   const healAudio = useRef(new Audio("/sound/heal_sound.mp3"));
   healAudio.current.volume = getHealVolume();
   const securityAlertFiredRef = useRef(false); // chỉ play 1 lần mỗi ván
+  // Desktop layout constants
   const NUM_Y_SLOTS = 10;
-  const Y_RANGE = 8; // tổng chiều cao an toàn (~±2.2)
+  const Y_RANGE = 8;
   const spawnSlotRef = useRef(0);
 
   const tmpVec1 = useRef(new THREE.Vector3());
@@ -70,9 +71,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
   // ── Spawn Ship ───────────────────────────────────────────────
   const spawnShip = useCallback(
     ({ type, damage, fireRate, nickname = "", avatarUrl = "", maxShots = 20 }) => {
-      if (shipsRef.current.length >= SETTINGS_GAME.MAX_SHIPS) {
+      const maxShipsLimit = isMobile ? SETTINGS_GAME_MOBILE.MAX_SHIPS : SETTINGS_GAME.MAX_SHIPS;
+      if (shipsRef.current.length >= maxShipsLimit) {
         const oldest = shipsRef.current.shift();
-        // Đánh dấu ship cũ là dead trước khi remove khỏi scene
         if (oldest.aliveRef) oldest.aliveRef.current = false;
         scene.remove(oldest.mesh);
         setShipLabels((prev) => prev.filter((l) => l.id !== oldest.id));
@@ -80,15 +81,39 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
 
       const mesh = cloneShipMesh(type);
 
-      // Slot-based Y: chia đều từ trên xuống dưới, xoay vòng qua các rãnh
-      const slotIdx = spawnSlotRef.current % NUM_Y_SLOTS;
-      spawnSlotRef.current += 1;
-      const slotY = -Y_RANGE / 2 + (slotIdx + 0.5) * (Y_RANGE / NUM_Y_SLOTS);
-      const y = slotY + (Math.random() - 0.5) * 0.3; // jitter nhỏ cho tự nhiên
-      const z = (Math.random() - 0.5) * 2.0; // ~±1.0, tránh bị cắt ngang
-      // Bắt đầu từ ngoài màn hình bên phải, sẽ bay vào qua animation
-      const FLY_IN_START_X = 16.0;
-      mesh.position.set(FLY_IN_START_X, y, z);
+      let x, y, z, baseX, baseY, baseZ, FLY_IN_START;
+
+      if (isMobile) {
+        // ── MOBILE: ship spawn dưới cùng, dàn theo trục X ──────────
+        const { NUM_X_SLOTS, SHIP_X_RANGE, SHIP_BASE_Y } = SETTINGS_GAME_MOBILE;
+        const slotIdx = spawnSlotRef.current % NUM_X_SLOTS;
+        spawnSlotRef.current += 1;
+        const slotX = -SHIP_X_RANGE / 2 + (slotIdx + 0.5) * (SHIP_X_RANGE / NUM_X_SLOTS);
+        x = slotX + (Math.random() - 0.5) * 0.3;
+        y = SHIP_BASE_Y;
+        z = (Math.random() - 0.5) * 1.2;
+        // Fly-in từ dưới lên
+        FLY_IN_START = SHIP_BASE_Y - 10;
+        mesh.position.set(x, FLY_IN_START, z);
+        // Hướng ship lên trên (về phía boss)
+        mesh.rotation.set(0, 0, -Math.PI / 2);
+        baseX = x;
+        baseY = y;
+        baseZ = z;
+      } else {
+        // ── DESKTOP: slot-based Y, fly-in từ bên phải ───────────────
+        const slotIdx = spawnSlotRef.current % NUM_Y_SLOTS;
+        spawnSlotRef.current += 1;
+        const slotY = -Y_RANGE / 2 + (slotIdx + 0.5) * (Y_RANGE / NUM_Y_SLOTS);
+        y = slotY + (Math.random() - 0.5) * 0.3;
+        z = (Math.random() - 0.5) * 2.0;
+        FLY_IN_START = 16.0;
+        x = FLY_IN_START;
+        mesh.position.set(FLY_IN_START, y, z);
+        baseX = 7.0;
+        baseY = y;
+        baseZ = z;
+      }
 
       // --- SMART AUTO-FLARE INJECTION (ROOT ATTACHMENT VERSION) ---
       // Gắn trực tiếp vào root mesh để duy trì Scale và hướng (+X) chuẩn xác
@@ -136,10 +161,10 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         damage,
         fireRate,
         fireTimer: Math.random(),
-        baseX: 7.0,
-        baseY: y,
-        baseZ: z,
-        // Orbital movement — phase bắt đầu = 0 để sin(0)=0, tránh giật khi fly-in xong
+        isMobileShip: isMobile,
+        baseX,
+        baseY,
+        baseZ,
         orbitPhaseX: 0,
         orbitPhaseY: 0,
         orbitPhaseZ: 0,
@@ -156,10 +181,12 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         // Fly-in animation
         flyInProgress: 0,
         flyInDuration: 1.2,
+        flyInStartX: isMobile ? baseX : (FLY_IN_START || 16.0),
+        flyInStartY: isMobile ? (SETTINGS_GAME_MOBILE.SHIP_BASE_Y - 10) : baseY,
         // Shots / HP system
         maxShots,
         shotsLeft: maxShots,
-        shotsRef: { current: maxShots }, // shared ref cho label đọc
+        shotsRef: { current: maxShots },
         // Dissolve animation
         dissolving: false,
         dissolveProgress: 0,
@@ -182,17 +209,19 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
 
     s.dissolving = true;
     s.dissolveProgress = 0;
-    // Đánh dấu dead để missile/laser biết target đã bị huỷ
     if (s.aliveRef) s.aliveRef.current = false;
-    // Phát tiếng ship biến mất (hidden) mỗi khi bị huỷ bởi bất kỳ nguồn nào
     playHiddenSound();
-    // Tạo portal ngay sau đuôi tàu để nó "bị hút" vào
-    const portalPos = s.mesh.position.clone().add(new THREE.Vector3(1.2, 0, 0));
+    // Portal: mobile xuất hiện dưới đuôi (Y âm), desktop xuất hiện sau đuôi (X dương)
+    const portalOffset = s.isMobileShip
+      ? new THREE.Vector3(0, -1.2, 0)
+      : new THREE.Vector3(1.2, 0, 0);
+    const portalPos = s.mesh.position.clone().add(portalOffset);
     const portal = createPortal(portalPos, 0xdc00ff);
     scene.add(portal.group);
     portalsRef.current.push(portal);
     s.targetPortal = portalPos;
   }, [scene]);
+
 
   useEffect(() => {
     spawnShipFn.current = spawnShip;
@@ -284,7 +313,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         bossRef.current.getWorldPosition(bossPos);
 
         // Bắt đầu tụ tia (800ms)
-        const gunPos = bossPos.clone().add(new THREE.Vector3(2.5, 0, 0));
+        const gunOffset = isMobile ? new THREE.Vector3(0, -2.5, 0) : new THREE.Vector3(2.5, 0, 0);
+        const gunPos = bossPos.clone().add(gunOffset);
         const charge = createLaserCharge(gunPos, 0xff0000);
         scene.add(charge.group);
         const chargeObj = { ...charge, life: 0.8 };
@@ -430,14 +460,26 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
 
   // ── Set boss initial position khi BossModel mount xong ───────
   const bossInitializedRef = useRef(false);
+  // Reset khi isMobile thay đổi để boss được đặt lại đúng vị trí
+  const prevIsMobileRef = useRef(isMobile);
+  if (prevIsMobileRef.current !== isMobile) {
+    prevIsMobileRef.current = isMobile;
+    bossInitializedRef.current = false;
+  }
   useEffect(() => {
     if (bossRef.current && !bossInitializedRef.current) {
-      bossRef.current.position.set(SETTINGS_GAME.BOSS_START_X, 0, 0);
-
-      bossRef.current.rotation.y = Math.PI / 2;
+      if (isMobile) {
+        // Mobile: boss ở trên cùng, hướng xuống dưới
+        bossRef.current.position.set(0, SETTINGS_GAME_MOBILE.BOSS_START_Y, 0);
+        bossRef.current.rotation.set(Math.PI / 2, 0, 0);
+      } else {
+        // Desktop: boss bên trái, hướng sang phải
+        bossRef.current.position.set(SETTINGS_GAME.BOSS_START_X, 0, 0);
+        bossRef.current.rotation.y = Math.PI / 2;
+      }
       bossInitializedRef.current = true;
 
-      // Lưu materials GỐC ngay khi boss mount (trước khi bất kỳ flash nào xảy ra)
+      // Lưu materials GỐC ngay khi boss mount
       const saved = [];
       bossRef.current.traverse((child) => {
         if (child.isMesh)
@@ -460,41 +502,43 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       const bossPos = new THREE.Vector3();
       bossRef.current.getWorldPosition(bossPos);
 
+      const bulletSpeed = ship.isMobileShip
+        ? SETTINGS_GAME_MOBILE.BULLET_SPEED
+        : SETTINGS_GAME.BULLET_SPEED;
+
       const velocity = new THREE.Vector3()
         .subVectors(bossPos, startPos)
         .normalize()
-        .multiplyScalar(SETTINGS_GAME.BULLET_SPEED);
+        .multiplyScalar(bulletSpeed);
 
       const color = getBulletColor(ship.type);
       const bulletMesh = createBullet(color);
       bulletMesh.position.copy(startPos);
       bulletMesh.lookAt(bossPos);
 
-      // Kích hoạt độ giật
       ship.recoilTarget = 0.15;
 
-      // Trừ số đạn còn lại
       if (ship.shotsLeft > 0) {
         ship.shotsLeft--;
         ship.shotsRef.current = ship.shotsLeft;
-        // Khi hết đạn → mở cổng không gian hút tàu vào
         if (ship.shotsLeft <= 0 && !ship.dissolving) {
           ship.dissolving = true;
           ship.aliveRef.current = false;
           playHiddenSound();
 
-          // Tạo hố đen ngay phía SAU đuôi tàu
           const shipPos = new THREE.Vector3();
           ship.mesh.getWorldPosition(shipPos);
-          // Đặt portal ở +1.2 so với tàu (trục X) vì portal xuất hiện phía sau đuôi tàu
-          const portalPos = shipPos.clone().add(new THREE.Vector3(1.2, 0, 0));
+          // Mobile: portal phía dưới (theo Y), Desktop: phía sau (theo X)
+          const portalOffset = ship.isMobileShip
+            ? new THREE.Vector3(0, -1.2, 0)
+            : new THREE.Vector3(1.2, 0, 0);
+          const portalPos = shipPos.clone().add(portalOffset);
 
           const shipColor = getBulletColor(ship.type);
           const portal = createPortal(portalPos, shipColor);
           scene.add(portal.group);
           portalsRef.current.push(portal);
 
-          // Ship property settings for animation
           ship.targetPortal = portalPos;
           ship.dissolveProgress = 0;
         }
@@ -508,12 +552,11 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         ownerType: ship.type,
       });
     },
-    [scene, getBulletColor],
+    [scene, getBulletColor, isMobile],
   );
 
   // ── Reset ────────────────────────────────────────────────────
   const doReset = useCallback(() => {
-    // Đánh dấu tất cả ships là dead trước khi remove
     shipsRef.current.forEach((s) => {
       if (s.aliveRef) s.aliveRef.current = false;
       scene.remove(s.mesh);
@@ -526,10 +569,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     portalsRef.current.forEach((p) => scene.remove(p.group));
     portalsRef.current = [];
 
-    // Clear ship labels (avatar + tên người donate cũ)
     setShipLabels([]);
 
-    // ── Dọn flash state ──────────────────────────────────────
     if (bossFlashTimeoutRef.current) {
       clearTimeout(bossFlashTimeoutRef.current);
       bossFlashTimeoutRef.current = null;
@@ -541,10 +582,13 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     bossFlashStateRef.current = "none";
 
     if (bossRef.current) {
-      bossRef.current.position.set(SETTINGS_GAME.BOSS_START_X, 0, 0);
-      bossRef.current.rotation.y = Math.PI / 2;
-
-      // Restore materials về gốc trước khi bắt đầu lại
+      if (isMobile) {
+        bossRef.current.position.set(0, SETTINGS_GAME_MOBILE.BOSS_START_Y, 0);
+        bossRef.current.rotation.set(Math.PI / 2, 0, 0);
+      } else {
+        bossRef.current.position.set(SETTINGS_GAME.BOSS_START_X, 0, 0);
+        bossRef.current.rotation.y = Math.PI / 2;
+      }
       bossOrigMatsRef.current?.forEach(({ mesh, mat }) => {
         if (mesh) mesh.material = mat.clone();
       });
@@ -553,9 +597,9 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     bossHpRef.current = 100;
     setBossHp(100);
     setShipCount(0);
-    securityAlertFiredRef.current = false; // reset cảnh báo cho ván mới
+    securityAlertFiredRef.current = false;
+    spawnSlotRef.current = 0;
 
-    // Spawn lại 2 ship đầu đang active
     const resetShips = shipModelsRef.current.slice(0, 2);
     resetShips.forEach((m) => {
       spawnShipFn.current?.({
@@ -568,7 +612,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
 
     gameActiveRef.current = true;
     statusRef.current = "playing";
-  }, [scene, setBossHp, setShipCount]);
+  }, [scene, setBossHp, setShipCount, isMobile]);
 
   useEffect(() => {
     if (
@@ -587,21 +631,40 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     const boss = bossRef.current;
     if (!boss) return;
 
-    // Boss tiến về phía phải
-    boss.position.x += SETTINGS_GAME.BOSS_SPEED * 60 * delta;
+    if (isMobile) {
+      // ── MOBILE: Boss di chuyển theo trục Y (từ trên xuống) ──────
+      boss.position.y -= SETTINGS_GAME_MOBILE.BOSS_SPEED * 60 * delta;
 
-    if (boss.position.x >= SETTINGS_GAME.BOSS_END_X) {
-      statusRef.current = "lose";
-      gameActiveRef.current = false;
-      setGameStatus("lose");
-      prevGameStatus.current = "lose";
-      return;
-    }
+      if (boss.position.y <= SETTINGS_GAME_MOBILE.BOSS_END_Y) {
+        statusRef.current = "lose";
+        gameActiveRef.current = false;
+        setGameStatus("lose");
+        prevGameStatus.current = "lose";
+        return;
+      }
 
-    // Cảnh báo khi boss đi qua nửa màn hình (x ≥ 0)
-    if (boss.position.x >= 0 && !securityAlertFiredRef.current) {
-      securityAlertFiredRef.current = true;
-      playSecuritySound();
+      // Cảnh báo khi boss xuống qua nửa màn hình (y <= 0)
+      if (boss.position.y <= 0 && !securityAlertFiredRef.current) {
+        securityAlertFiredRef.current = true;
+        playSecuritySound();
+      }
+    } else {
+      // ── DESKTOP: Boss tiến về phía phải ─────────────────────────
+      boss.position.x += SETTINGS_GAME.BOSS_SPEED * 60 * delta;
+
+      if (boss.position.x >= SETTINGS_GAME.BOSS_END_X) {
+        statusRef.current = "lose";
+        gameActiveRef.current = false;
+        setGameStatus("lose");
+        prevGameStatus.current = "lose";
+        return;
+      }
+
+      // Cảnh báo khi boss đi qua nửa màn hình (x ≥ 0)
+      if (boss.position.x >= 0 && !securityAlertFiredRef.current) {
+        securityAlertFiredRef.current = true;
+        playSecuritySound();
+      }
     }
 
     // Tàu: orbital flight + bắn + recoil + engine pulse
@@ -618,9 +681,17 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         ship.flyInProgress = Math.min(1, ship.flyInProgress + delta / ship.flyInDuration);
         const t = ship.flyInProgress;
         const eased = 1 - Math.pow(1 - t, 3);
-        const startX = 16.0;
-        const currentX = startX + (ship.baseX - startX) * eased;
-        ship.mesh.position.set(currentX, ship.baseY, ship.baseZ);
+        if (ship.isMobileShip) {
+          // Mobile: fly-in từ dưới lên theo Y
+          const startY = ship.flyInStartY;
+          const currentY = startY + (ship.baseY - startY) * eased;
+          ship.mesh.position.set(ship.baseX, currentY, ship.baseZ);
+        } else {
+          // Desktop: fly-in từ phải sang
+          const startX = 16.0;
+          const currentX = startX + (ship.baseX - startX) * eased;
+          ship.mesh.position.set(currentX, ship.baseY, ship.baseZ);
+        }
         ship.fireTimer = 0;
         return;
       }
@@ -684,8 +755,12 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       // Vị trí cuối = Orbital + Recoil offset
       ship.mesh.position.copy(tmpVec1.current).addScaledVector(tmpVec2.current, ship.recoil);
 
-      // 5. Banking effect (tắt — tàu đứng yên)
-      ship.mesh.rotation.z = 0;
+      // 5. Banking / Rotation — mobile giữ hướng lên trên, desktop thì bằng 0
+      if (ship.isMobileShip) {
+        ship.mesh.rotation.set(0, 0, -Math.PI / 2); // hướng lên phía boss (trên đầu)
+      } else {
+        ship.mesh.rotation.z = 0;
+      }
 
       // 6. Smart Engine Pulse & Emissive Fix + Exhaust Flares Animation
       if (ship.mesh) {
@@ -710,7 +785,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
 
           // 7. Hoạt ảnh Flickering cho vệt lửa Mega (2 lớp)
           if (child.name === "engine_flare") {
-            const seed = ship.baseY * 1000;
+            const seed = (ship.isMobileShip ? ship.baseX : ship.baseY) * 1000;
             // Biên độ flicker cực mạnh (0.8 -> 1.4)
             const flicker = 1.0 + Math.sin(elapsedTime * 35 + seed) * 0.3;
             child.scale.x = flicker;
@@ -837,12 +912,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     }
 
     // ── Ship-to-Ship Separation ───────────────────────────────────────
-    // Không cần physics engine — dùng separation force thuần túy trên baseY/baseZ
-    const MIN_SHIP_DIST = 1.6; // khoảng cách tối thiểu giữa 2 tàu (world units)
-    const SEP_STRENGTH = 2.5; // độ mạnh của lực đẩy
-    const Y_LIMIT = Y_RANGE / 2 - 0.2; // giới hạn biên trên/dưới
-    const Z_LIMIT = 1.8;
-
+    const MIN_SHIP_DIST = 1.6;
+    const SEP_STRENGTH = 2.5;
     const activeShips = shipsRef.current.filter(s => s.flyInProgress >= 1);
     for (let i = 0; i < activeShips.length; i++) {
       for (let j = i + 1; j < activeShips.length; j++) {
@@ -856,16 +927,29 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
 
         if (distSq < MIN_SHIP_DIST * MIN_SHIP_DIST && distSq > 0.0001) {
           const dist = Math.sqrt(distSq);
-          // Lực đẩy: càng gần → càng mạnh, scale theo delta
           const force = ((MIN_SHIP_DIST - dist) / MIN_SHIP_DIST) * SEP_STRENGTH * delta;
-          const ny = dy / dist;
-          const nz = dz / dist;
 
-          // Đẩy baseY/baseZ — không đụng baseX (hướng bay)
-          a.baseY = Math.max(-Y_LIMIT, Math.min(Y_LIMIT, a.baseY + ny * force));
-          b.baseY = Math.max(-Y_LIMIT, Math.min(Y_LIMIT, b.baseY - ny * force));
-          a.baseZ = Math.max(-Z_LIMIT, Math.min(Z_LIMIT, a.baseZ + nz * force));
-          b.baseZ = Math.max(-Z_LIMIT, Math.min(Z_LIMIT, b.baseZ - nz * force));
+          if (isMobile) {
+            // Mobile: đẩy theo X và Z (không đụng Y vì Y cố định)
+            const X_LIMIT = SETTINGS_GAME_MOBILE.SHIP_X_RANGE / 2 - 0.2;
+            const Z_LIMIT = 1.2;
+            const nx = dx / dist;
+            const nz = dz / dist;
+            a.baseX = Math.max(-X_LIMIT, Math.min(X_LIMIT, a.baseX + nx * force));
+            b.baseX = Math.max(-X_LIMIT, Math.min(X_LIMIT, b.baseX - nx * force));
+            a.baseZ = Math.max(-Z_LIMIT, Math.min(Z_LIMIT, a.baseZ + nz * force));
+            b.baseZ = Math.max(-Z_LIMIT, Math.min(Z_LIMIT, b.baseZ - nz * force));
+          } else {
+            // Desktop: đẩy theo Y và Z
+            const Y_LIMIT = Y_RANGE / 2 - 0.2;
+            const Z_LIMIT = 1.8;
+            const ny = dy / dist;
+            const nz = dz / dist;
+            a.baseY = Math.max(-Y_LIMIT, Math.min(Y_LIMIT, a.baseY + ny * force));
+            b.baseY = Math.max(-Y_LIMIT, Math.min(Y_LIMIT, b.baseY - ny * force));
+            a.baseZ = Math.max(-Z_LIMIT, Math.min(Z_LIMIT, a.baseZ + nz * force));
+            b.baseZ = Math.max(-Z_LIMIT, Math.min(Z_LIMIT, b.baseZ - nz * force));
+          }
         }
       }
     }
@@ -879,7 +963,12 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     bulletsRef.current.forEach((bullet, idx) => {
       bullet.mesh.position.add(bullet.velocity);
 
-      if (bullet.mesh.position.x < -8 || bullet.mesh.position.x > 14) {
+      // Xoá đạn bay ra ngoài màn hình (cả desktop lẫn mobile)
+      const bp = bullet.mesh.position;
+      const outOfBounds = isMobile
+        ? (bp.y > 12 || bp.y < -10)
+        : (bp.x < -14 || bp.x > 16);
+      if (outOfBounds) {
         deadBullets.add(idx);
         return;
       }
@@ -1080,7 +1169,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         scale={activeBossModel?.scale ?? 4.5}
       />
       <BossLabel bossRef={bossRef} />
-      <BossShieldRing bossRef={bossRef} shieldEndTime={shieldEndTime} shieldDuration={activeBossModel?.shieldDuration ?? 5} />
+      <BossShieldRing bossRef={bossRef} shieldEndTime={shieldEndTime} shieldDuration={activeBossModel?.shieldDuration ?? 5} isMobile={isMobile} />
       <DamageManager onRegister={(fn) => { showDamageRef.current = fn; }} />
 
       {/* Render labels bằng Html đính vào scene position của từng tàu */}
