@@ -2,12 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { useGame } from "../hooks/useGame";
 import SidebarSetting from "./SidebarSetting";
 import ModelManagerPanel from "./ModelManagerPanel";
-import TriggerPanel from "./TriggerPanel";
 import PanelTextToSpeech from "./TextToSpeech/PanelTextToSpeech";
 import SoundSettingPanel from "./SoundSettingPanel";
 import { SiOpen3D } from "react-icons/si";
 import { IoIosGift } from "react-icons/io";
-import { IoMdSettings } from "react-icons/io";
 import { BsSoundwave } from "react-icons/bs";
 import { HiVolumeUp } from "react-icons/hi";
 import { MdOutlineWifiOff } from "react-icons/md";
@@ -28,7 +26,6 @@ export default function Navbar() {
   } = useGame();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [modelsOpen, setModelsOpen] = useState(false);
-  const [triggerOpen, setTriggerOpen] = useState(false);
   const [tts, setTts] = useState(false);
   const [soundOpen, setSoundOpen] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
@@ -70,15 +67,6 @@ export default function Navbar() {
       icon: <SiOpen3D size={18} />,
       onClick: () => {
         setModelsOpen(true);
-        setMenuOpen(false);
-      },
-    },
-    {
-      id: "trigger",
-      label: "Trigger Config",
-      icon: <IoMdSettings size={18} />,
-      onClick: () => {
-        setTriggerOpen(true);
         setMenuOpen(false);
       },
     },
@@ -249,10 +237,6 @@ export default function Navbar() {
       <ModelManagerPanel
         isOpen={modelsOpen}
         onClose={() => setModelsOpen(false)}
-      />
-      <TriggerPanel
-        isOpen={triggerOpen}
-        onClose={() => setTriggerOpen(false)}
       />
       <PanelTextToSpeech isOpen={tts} onClose={() => setTts(false)} />
       <SoundSettingPanel

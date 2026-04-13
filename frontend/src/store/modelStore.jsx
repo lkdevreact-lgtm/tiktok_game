@@ -45,8 +45,13 @@ export function ModelProvider({ children }) {
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          setTriggers(data);
-          ls.set("triggersCache", data);
+          // Backfill modelId from shipId for legacy triggers
+          const migrated = data.map((t) => ({
+            ...t,
+            modelId: t.modelId || t.shipId || null,
+          }));
+          setTriggers(migrated);
+          ls.set("triggersCache", migrated);
         }
       })
       .catch(() => { /* giữ cache */ });
@@ -159,12 +164,14 @@ export function ModelProvider({ children }) {
   models.forEach((m) => { allModelsById[m.id] = m; });
 
   triggers.forEach((t) => {
-    const model = allModelsById[t.shipId];
+    // Support new modelId field OR legacy shipId for backward compat
+    const resolvedId = t.modelId || t.shipId;
+    const model = allModelsById[resolvedId];
     if (!model) return;
     if (t.type === "comment" && t.content) {
-      commentTriggerMap[t.content.trim()] = { shipId: t.shipId, model };
+      commentTriggerMap[t.content.trim()] = { shipId: resolvedId, model };
     } else if (t.type === "tap" && t.quantity > 0) {
-      tapTriggers.push({ quantity: t.quantity, shipId: t.shipId, model });
+      tapTriggers.push({ quantity: t.quantity, shipId: resolvedId, model });
     }
   });
 

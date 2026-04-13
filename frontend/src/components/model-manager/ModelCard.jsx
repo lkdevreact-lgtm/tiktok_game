@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import RoleBadge from "../ui/RoleBadge";
 import ToggleSwitch from "../ui/ToggleSwitch";
 import EditForm from "./EditForm";
@@ -6,6 +6,7 @@ import { FaEdit, FaCamera } from "react-icons/fa";
 import { API_URL, IMAGES, assetUrl } from "../../utils/constant";
 import { FIRE_RATE_OPTIONS } from "../ui/styles";
 import { useGifts } from "../../hooks/useGifts";
+import { useModels } from "../../hooks/useModels";
 
 const actionBtn =
   "w-7 h-7 flex items-center justify-center rounded-md border cursor-pointer transition-all duration-150 text-[0]";
@@ -80,6 +81,235 @@ function fireRateLabel(v) {
   return found ? found.label.split(" ")[0] : `${v}`;
 }
 
+// ── TriggerModal per-model ─────────────────────────────────────────────
+function TriggerModal({ model, onClose }) {
+  const { triggers, saveTriggers } = useModels();
+
+  // Find existing trigger for this model
+  const existing = triggers.find((t) => t.modelId === model.id);
+
+  const [enabled, setEnabled] = useState(!!existing);
+  const [type, setType] = useState(existing?.type || "comment");
+  const [content, setContent] = useState(existing?.content || "");
+  const [quantity, setQuantity] = useState(existing?.quantity || 50);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+
+  // Close on Escape
+  useEffect(() => {
+    const fn = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [onClose]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Remove old trigger for this model, add new one if enabled
+      const filtered = triggers.filter((t) => t.modelId !== model.id);
+      const next = enabled
+        ? [
+            ...filtered,
+            {
+              id: existing?.id || `trigger_${model.id}_${Date.now()}`,
+              modelId: model.id,
+              shipId: model.id, // backward compat
+              type,
+              content: type === "comment" ? content : "",
+              quantity: type === "tap" ? Number(quantity) : 50,
+            },
+          ]
+        : filtered;
+      await saveTriggers(next);
+      setFeedback({ ok: true, msg: "✅ Đã lưu!" });
+      setTimeout(() => { setFeedback(null); onClose(); }, 1000);
+    } catch {
+      setFeedback({ ok: false, msg: "❌ Lỗi lưu!" });
+    }
+    setSaving(false);
+  };
+
+  const isBoss = model.role === "boss";
+  const accentColor = isBoss ? "#ff4466" : "#00f5ff";
+  const accentDim = isBoss ? "rgba(255,68,102,0.15)" : "rgba(0,245,255,0.1)";
+  const accentBorder = isBoss ? "rgba(255,68,102,0.35)" : "rgba(0,245,255,0.3)";
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm"
+      />
+      {/* Modal */}
+      <div className="fixed inset-0 z-[401] flex items-center justify-center p-4 pointer-events-none">
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="pointer-events-auto relative w-full max-w-[420px] rounded-2xl overflow-hidden flex flex-col"
+          style={{
+            background: "radial-gradient(circle at 20% 20%, #1e1b4b, #020617)",
+            border: `1px solid ${accentBorder}`,
+            boxShadow: `0 0 60px rgba(0,0,0,0.7), 0 0 30px ${accentDim}`,
+            animation: "triggerModalIn 0.22s cubic-bezier(0.34,1.56,0.64,1) forwards",
+          }}
+        >
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-5 py-3.5 border-b"
+            style={{ borderColor: accentBorder }}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="text-lg">🎯</span>
+              <div>
+                <p className="text-[0.8rem] font-bold text-white tracking-wide">Trigger Settings</p>
+                <p className="text-[0.6rem] mt-0.5" style={{ color: accentColor }}>
+                  {model.label || model.id}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/5 cursor-pointer transition-all"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="px-5 py-4 flex flex-col gap-4">
+            {/* Toggle enable trigger */}
+            <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: accentDim, border: `1px solid ${accentBorder}` }}>
+              <div>
+                <p className="text-[0.78rem] font-semibold text-white">Bật Trigger</p>
+                <p className="text-[0.62rem] text-white/40 mt-0.5">
+                  Khi bật, viewer tương tác sẽ spawn model này
+                </p>
+              </div>
+              <ToggleSwitch
+                value={enabled}
+                onChange={() => setEnabled((v) => !v)}
+              />
+            </div>
+
+            {/* Trigger config — only show when enabled */}
+            {enabled && (
+              <div className="flex flex-col gap-3">
+                {/* Type select */}
+                <div>
+                  <label className="block text-[0.62rem] uppercase tracking-[0.15em] text-white/35 font-semibold mb-1.5">
+                    Loại hành động
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-white appearance-none cursor-pointer outline-none transition-all duration-200"
+                      style={{
+                        background: "rgba(255,255,255,0.06)",
+                        border: `1px solid ${accentBorder}`,
+                      }}
+                    >
+                      <option value="comment" className="bg-[#0a1020] text-white">💬 Comment (CMT)</option>
+                      <option value="tap" className="bg-[#0a1020] text-white">❤️ Tap tap (Tim)</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none text-xs">▾</div>
+                  </div>
+                </div>
+
+                {/* Comment content */}
+                {type === "comment" && (
+                  <div>
+                    <label className="block text-[0.62rem] uppercase tracking-[0.15em] text-white/35 font-semibold mb-1.5">
+                      💬 Nội dung Comment
+                    </label>
+                    <input
+                      type="text"
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      placeholder='VD: "111", "go", "attack"'
+                      className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none transition-all duration-200 placeholder:text-white/20"
+                      style={{ background: "rgba(255,255,255,0.06)", border: `1px solid ${accentBorder}` }}
+                    />
+                    <p className="text-[0.6rem] text-white/25 mt-1">
+                      Viewer comment nội dung này → spawn <span style={{ color: accentColor }}>{model.label}</span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Tap quantity */}
+                {type === "tap" && (
+                  <div>
+                    <label className="block text-[0.62rem] uppercase tracking-[0.15em] text-white/35 font-semibold mb-1.5">
+                      ❤️ Số lượng Tim
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={quantity}
+                      onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none transition-all duration-200"
+                      style={{ background: "rgba(255,255,255,0.06)", border: `1px solid ${accentBorder}` }}
+                    />
+                    <p className="text-[0.6rem] text-white/25 mt-1">
+                      Mỗi {quantity} tim tích lũy → spawn <span style={{ color: accentColor }}>{model.label}</span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Summary preview */}
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${accentBorder}` }}>
+                  <span className="text-[0.6rem] text-white/30">→</span>
+                  <span className="text-[0.65rem]" style={{ color: accentColor }}>
+                    {type === "comment"
+                      ? `Comment "${content || "..."}" → spawn "${model.label || model.id}"`
+                      : `Mỗi ${quantity} tim → spawn "${model.label || model.id}"`
+                    }
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Feedback */}
+            {feedback && (
+              <div
+                className={`px-3 py-2 rounded-lg text-[0.72rem] text-center ${
+                  feedback.ok ? "bg-green-500/10 border border-green-500/30 text-green-400" : "bg-red-500/10 border border-red-500/30 text-red-400"
+                }`}
+              >
+                {feedback.msg}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 pb-5">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider cursor-pointer transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: `linear-gradient(135deg, ${accentDim}, rgba(255,255,255,0.05))`,
+                border: `1px solid ${accentBorder}`,
+                color: accentColor,
+              }}
+            >
+              {saving ? "Đang lưu..." : "💾 Lưu Trigger"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes triggerModalIn {
+          from { opacity: 0; transform: scale(0.92) translateY(10px); }
+          to   { opacity: 1; transform: scale(1)   translateY(0);    }
+        }
+      `}</style>
+    </>
+  );
+}
+
+// ── ModelCard ───────────────────────────────────────────────────────────
 export default function ModelCard({
   model,
   isActiveBoss = false,
@@ -89,6 +319,7 @@ export default function ModelCard({
   onSetActiveBoss,
 }) {
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showTriggerModal, setShowTriggerModal] = useState(false);
   const [local, setLocal] = useState({
     label: model.label,
     scale: model.scale,
@@ -112,6 +343,10 @@ export default function ModelCard({
 
   const isBoss = model.role === "boss";
   const isActive = isBoss ? isActiveBoss : model.active;
+
+  // Trigger badge: check if this model has a trigger
+  const { triggers } = useModels();
+  const hasTrigger = triggers.some((t) => t.modelId === model.id);
   const color = model.bulletColor || "#00f5ff";
 
   // ── Gift lookup ─────────────────────────────────────────────
@@ -379,6 +614,27 @@ export default function ModelCard({
         </div>
         <div className="flex items-end justify-end">
           <div className="flex items-center gap-3 shrink-0">
+            {/* Trigger button */}
+            <button
+              onClick={() => setShowTriggerModal(true)}
+              title="Cấu hình Trigger"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[0.68rem] font-semibold cursor-pointer transition-all duration-200 border"
+              style={{
+                background: hasTrigger ? "rgba(250,204,21,0.12)" : "rgba(255,255,255,0.04)",
+                borderColor: hasTrigger ? "rgba(250,204,21,0.45)" : "rgba(255,255,255,0.12)",
+                color: hasTrigger ? "#facc15" : "rgba(255,255,255,0.4)",
+                boxShadow: hasTrigger ? "0 0 12px rgba(250,204,21,0.1)" : "none",
+              }}
+            >
+              🎯
+              <span>{hasTrigger ? "Trigger: ON" : "Trigger"}</span>
+              {hasTrigger && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse"
+                />
+              )}
+            </button>
+
             {/* Edit */}
             <button
               onClick={() => setShowEditModal(true)}
@@ -413,6 +669,13 @@ export default function ModelCard({
           onClose={() => setShowEditModal(false)}
           isBoss={isBoss}
           modelPath={assetUrl(model.path)}
+        />
+      )}
+
+      {showTriggerModal && (
+        <TriggerModal
+          model={model}
+          onClose={() => setShowTriggerModal(false)}
         />
       )}
     </div>

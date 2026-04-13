@@ -58,7 +58,7 @@ export default function EarthBackground() {
     >
       {/* Earth model */}
       <group ref={groupRef}>
-        <primitive object={cloned} scale={0.028}/>
+        <primitive object={cloned} scale={0.028} />
       </group>
 
       {/* Lớp khí quyển (atmosphere glow) */}
