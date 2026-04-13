@@ -119,14 +119,16 @@ export default function Navbar() {
     <>
       <nav
         id="game-navbar"
-        className="fixed top-0 left-0 right-0 flex items-center gap-4 px-5 py-4 z-50 backdrop-blur-lg"
+        className="fixed top-0 left-0 right-0 flex items-center gap-4 px-5 py-4 z-50 sm:backdrop-blur-lg"
       >
         {/* Username */}
-        <div className="flex items-center gap-2 bg-purple/20 py-1.5 px-3 rounded-full">
-          <div className="w-2 h-2 rounded-full bg-white animate-pulse shadow-[0_0_10px_rgba(0,245,255,0.6)]" />
-          <span className="text-sm text-white whitespace-nowrap">
-            @{username || "User test live"}
-          </span>
+        <div className="sm:block hidden">
+          <div className="flex items-center gap-2 bg-purple/20 py-1.5 px-3 rounded-full">
+            <div className="w-2 h-2 rounded-full bg-white animate-pulse shadow-[0_0_10px_rgba(0,245,255,0.6)]" />
+            <span className="text-sm text-white whitespace-nowrap">
+              @{username || "User test live"}
+            </span>
+          </div>
         </div>
 
         <div className="flex-1" />
@@ -139,7 +141,7 @@ export default function Navbar() {
         </div>
 
         {/* Right section */}
-        <div className="flex items-center gap-3.5 text-sm">
+        <div className="flex items-center gap-3.5 text-sm sm:block hidden">
           <span className="text-white whitespace-nowrap">
             Total Ships: {shipCount}
           </span>
@@ -159,7 +161,7 @@ export default function Navbar() {
               uppercase tracking-wider cursor-pointer transition-all duration-200
               bg-[rgba(255,51,102,0.12)] border border-[rgba(255,51,102,0.35)] text-red-400
               hover:bg-[rgba(255,51,102,0.25)] hover:border-red-400/60 hover:text-red-300
-              disabled:opacity-40 disabled:cursor-not-allowed
+              disabled:opacity-40 disabled:cursor-not-allowed sm:block hidden
             "
           >
             {disconnecting ? "..." : "Disconnect"}
@@ -173,10 +175,9 @@ export default function Navbar() {
               className={`
                 flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold
                 cursor-pointer transition-all duration-200 border
-                ${
-                  menuOpen
-                    ? "bg-purple/30 border-purple/60 text-purple-300 shadow-[0_0_14px_rgba(168,85,247,0.35)]"
-                    : "bg-white/5 border-white/15 text-white/80 hover:bg-purple/15 hover:border-purple/40 hover:text-purple-200"
+                ${menuOpen
+                  ? "bg-purple/30 border-purple/60 text-purple-300 shadow-[0_0_14px_rgba(168,85,247,0.35)]"
+                  : "bg-white/5 border-white/15 text-white/80 hover:bg-purple/15 hover:border-purple/40 hover:text-purple-200"
                 }
               `}
             >
@@ -184,7 +185,7 @@ export default function Navbar() {
                 size={17}
                 className={`transition-transform duration-500 ${menuOpen ? "rotate-90" : "rotate-0"}`}
               />
-              Menu Settings
+              <p className="sm:block hidden">Menu Settings</p>
             </button>
 
             {/* Dropdown menu */}

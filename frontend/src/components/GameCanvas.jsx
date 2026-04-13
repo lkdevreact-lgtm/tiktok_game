@@ -480,7 +480,7 @@ export default function GameCanvas() {
             className="
               uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer transition-colors duration-200
               bg-[rgba(74,222,128,0.12)] border border-[rgba(74,222,128,0.35)] text-green-400
-              hover:bg-[rgba(74,222,128,0.22)]
+              hover:bg-[rgba(74,222,128,0.22)] sm:block hidden
             "
           >
             Test Heal ( Boss )
@@ -488,21 +488,21 @@ export default function GameCanvas() {
 
           <button
             onClick={() => bossShieldRef.current?.()}
-            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(0,245,255,0.06)] border border-[rgba(0,245,255,0.5)] text-cyan-400 hover:bg-[rgba(0,245,255,0.18)]"
+            className="sm:block hidden uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(0,245,255,0.06)] border border-[rgba(0,245,255,0.5)] text-cyan-400 hover:bg-[rgba(0,245,255,0.18)]"
           >
             Shield ( Boss )
           </button>
 
           <button
             onClick={() => bossLaserTriggerRef.current?.()}
-            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.35)] text-red-500 hover:bg-[rgba(239,68,68,0.22)]"
+            className="sm:block hidden uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.35)] text-red-500 hover:bg-[rgba(239,68,68,0.22)]"
           >
             Laser ( Boss )
           </button>
 
           <button
             onClick={() => bossMissileTriggerRef.current?.()}
-            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(251,146,60,0.12)] border border-[rgba(251,146,60,0.35)] text-orange-400 hover:bg-[rgba(251,146,60,0.22)]"
+            className="sm:block hidden uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(251,146,60,0.12)] border border-[rgba(251,146,60,0.35)] text-orange-400 hover:bg-[rgba(251,146,60,0.22)]"
           >
             Missile ( Boss )
           </button>
