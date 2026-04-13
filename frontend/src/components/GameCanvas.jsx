@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGame } from "../hooks/useGame";
+import { useIsMobile } from "../hooks/useIsMobile";
 import GameScene from "../game/GameScene";
 import Navbar from "./Navbar";
 import socket from "../socket/socketClient";
@@ -16,6 +17,7 @@ export default function GameCanvas() {
   const { gameStatus, setBossHp, notifications, addNotification, resetGame } =
     useGame();
   const { settings } = usePanelSettings();
+  const isMobile = useIsMobile(); // true khi viewport < 768px
   const {
     giftModelMap,
     commentTriggerMap,
@@ -408,16 +410,22 @@ export default function GameCanvas() {
   const isOver = gameStatus === "win" || gameStatus === "lose";
   const isWin = gameStatus === "win";
 
+  // Camera settings tùy theo layout
+  const cameraProps = isMobile
+    ? { position: [0, 0, 10], zoom: 52 }   // portrait: zoom out để thấy toàn cảnh dọc
+    : { position: [0, 0, 10], zoom: 80 };  // landscape: desktop default
+
   return (
     <div className="fixed inset-0 flex flex-col">
       <Navbar />
 
-      <div className="flex-1 relative mt-14">
+      <div className="flex-1 relative sm:mt-14">
         <Canvas
           orthographic
-          camera={{ position: [0, 0, 10], zoom: 80 }}
+          camera={cameraProps}
           gl={{ antialias: true, alpha: false }}
           style={{ background: "#000" }}
+          key={isMobile ? "mobile" : "desktop"}  // remount canvas khi đổi mode
         >
           <GameScene
             onGiftSpawn={handleGiftSpawn}
@@ -426,6 +434,7 @@ export default function GameCanvas() {
             onBossLaser={handleBossLaserTrigger}
             onBossMissile={handleBossMissileTrigger}
             onBossNuclear={handleBossNuclearTrigger}
+            isMobile={isMobile}
           />
         </Canvas>
 
@@ -480,7 +489,7 @@ export default function GameCanvas() {
             className="
               uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer transition-colors duration-200
               bg-[rgba(74,222,128,0.12)] border border-[rgba(74,222,128,0.35)] text-green-400
-              hover:bg-[rgba(74,222,128,0.22)]
+              hover:bg-[rgba(74,222,128,0.22)] sm:block hidden
             "
           >
             Test Heal ( Boss )
@@ -488,21 +497,21 @@ export default function GameCanvas() {
 
           <button
             onClick={() => bossShieldRef.current?.()}
-            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(0,245,255,0.06)] border border-[rgba(0,245,255,0.5)] text-cyan-400 hover:bg-[rgba(0,245,255,0.18)]"
+            className="sm:block hidden uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(0,245,255,0.06)] border border-[rgba(0,245,255,0.5)] text-cyan-400 hover:bg-[rgba(0,245,255,0.18)]"
           >
             Shield ( Boss )
           </button>
 
           <button
             onClick={() => bossLaserTriggerRef.current?.()}
-            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.35)] text-red-500 hover:bg-[rgba(239,68,68,0.22)]"
+            className="sm:block hidden uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.35)] text-red-500 hover:bg-[rgba(239,68,68,0.22)]"
           >
             Laser ( Boss )
           </button>
 
           <button
             onClick={() => bossMissileTriggerRef.current?.()}
-            className="uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(251,146,60,0.12)] border border-[rgba(251,146,60,0.35)] text-orange-400 hover:bg-[rgba(251,146,60,0.22)]"
+            className="sm:block hidden uppercase rounded-lg px-4 py-2 text-[0.65rem] tracking-widest cursor-pointer bg-[rgba(251,146,60,0.12)] border border-[rgba(251,146,60,0.35)] text-orange-400 hover:bg-[rgba(251,146,60,0.22)]"
           >
             Missile ( Boss )
           </button>

@@ -12,6 +12,7 @@ export default function BossShieldRing({
   shieldDuration = 5,
   shieldScale = 0.03,
   shieldOffset = [-2.75, 0.6, 12],
+  isMobile = false,
 }) {
   const { bossShield } = useGame();
   const groupRef = useRef();
@@ -33,9 +34,15 @@ export default function BossShieldRing({
   // Follow boss position every frame
   useFrame(() => {
     if (groupRef.current && bossRef.current) {
-      groupRef.current.position
-        .copy(bossRef.current.position)
-        .add({ x: shieldOffset[0], y: shieldOffset[1], z: shieldOffset[2] });
+      if (isMobile) {
+        groupRef.current.position
+          .copy(bossRef.current.position)
+          .add({ x: 0, y: -2.75, z: shieldOffset[2] });
+      } else {
+        groupRef.current.position
+          .copy(bossRef.current.position)
+          .add({ x: shieldOffset[0], y: shieldOffset[1], z: shieldOffset[2] });
+      }
     }
   });
 
@@ -48,8 +55,8 @@ export default function BossShieldRing({
 
   return (
     <group ref={groupRef} scale={shieldScale}>
-      {/* Render shield model as-is */}
-      <primitive object={shieldScene} rotation={[0,0,0]} scale={[2,0.8,2]}/>
+      {/* Render shield model as-is, xoay theo layout mobile */}
+      <primitive object={shieldScene} rotation={isMobile ? [0, 0, -Math.PI / 2] : [0, 0, 0]} scale={[2, 0.8, 2]} />
 
       <Html
         center
