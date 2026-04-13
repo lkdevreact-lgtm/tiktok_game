@@ -190,6 +190,7 @@ export default function TriggerPanel({ isOpen, onClose }) {
 function TriggerCard({ trigger, index, activeShips, onUpdate, onRemove }) {
   const isComment = trigger.type === "comment";
   const isTap = trigger.type === "tap";
+  const isFollow = trigger.type === "follow";
 
   // Tìm model được chọn để hiển thị icon
   const selectedShip = activeShips.find((m) => m.id === trigger.shipId);
@@ -230,10 +231,13 @@ function TriggerCard({ trigger, index, activeShips, onUpdate, onRemove }) {
               "
             >
               <option value="comment" className="bg-[#0a1020] text-white">
-                💬 Comment (CMT)
+                Comment (CMT)
               </option>
               <option value="tap" className="bg-[#0a1020] text-white">
-                ❤️ Tap tap (Tim)
+                Tap tap (Tim)
+              </option>
+              <option value="follow" className="bg-[#0a1020] text-white">
+                Follow
               </option>
             </select>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none text-xs">
@@ -262,6 +266,14 @@ function TriggerCard({ trigger, index, activeShips, onUpdate, onRemove }) {
             />
             <p className="text-[0.6rem] text-white/20 mt-1">
               Khi viewer comment nội dung này sẽ spawn chiến cơ
+            </p>
+          </div>
+        )}
+
+        {isFollow && (
+          <div>
+            <p className="text-[0.6rem] text-white/20 mt-1">
+              Khi viewer follow sẽ spawn chiến cơ
             </p>
           </div>
         )}
@@ -357,6 +369,8 @@ function TriggerCard({ trigger, index, activeShips, onUpdate, onRemove }) {
             <span className="text-[0.65rem] text-yellow-400/70">
               {isComment
                 ? `Comment "${trigger.content || "..."}" → spawn "${selectedShip.label || selectedShip.id}"`
+                : isFollow
+                ? `Follow → spawn "${selectedShip.label || selectedShip.id}"`
                 : `Mỗi ${trigger.quantity || 50} tim → spawn "${selectedShip.label || selectedShip.id}"`
               }
             </span>

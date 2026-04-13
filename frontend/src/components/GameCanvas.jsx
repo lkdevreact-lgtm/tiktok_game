@@ -22,6 +22,7 @@ export default function GameCanvas() {
     tapTriggers,
     commentBossTriggerMap,
     tapBossTriggers,
+    followTriggers,
     bossHealGiftMap,
     bossShieldGiftMap,
     bossLaserGiftMap,
@@ -40,6 +41,7 @@ export default function GameCanvas() {
   const bossNuclearGiftMapRef = useRef(bossNuclearGiftMap);
   const commentTriggerMapRef = useRef(commentTriggerMap);
   const tapTriggersRef = useRef(tapTriggers);
+  const followTriggersRef = useRef(followTriggers);
   const commentBossTriggerMapRef = useRef(commentBossTriggerMap);
   const tapBossTriggersRef = useRef(tapBossTriggers);
 
@@ -79,6 +81,9 @@ export default function GameCanvas() {
     tapTriggersRef.current = tapTriggers;
     tapSpawnedCountRef.current = {};
   }, [tapTriggers]);
+  useEffect(() => {
+    followTriggersRef.current = followTriggers;
+  }, [followTriggers]);
   useEffect(() => {
     commentBossTriggerMapRef.current = commentBossTriggerMap;
   }, [commentBossTriggerMap]);
@@ -330,6 +335,41 @@ export default function GameCanvas() {
 
     socket.on("like_received", handleLike);
     return () => socket.off("like_received", handleLike);
+  }, [addNotification]);
+
+  // ── Listen for TikTok follows (follow trigger) ────────────────
+  useEffect(() => {
+    const handleFollow = (data) => {
+      const currentTriggers = followTriggersRef.current;
+      if (!currentTriggers || currentTriggers.length === 0) return;
+
+      const userName = data.nickname || data.uniqueId || "Viewer";
+      const userAvatar = data.avatarUrl || "";
+
+      currentTriggers.forEach((t) => {
+        const { model } = t;
+        if (!model) return;
+
+        addNotification({
+          user: userName,
+          giftName: "Followed!",
+          imgUrl: null,
+          type: "trigger",
+        });
+
+        spawnShipRef.current?.({
+          type: model.id,
+          damage: model.damage ?? 1,
+          fireRate: model.fireRate ?? 1.0,
+          maxShots: model.maxShots ?? 20,
+          nickname: userName,
+          avatarUrl: userAvatar,
+        });
+      });
+    };
+
+    socket.on("follow_received", handleFollow);
+    return () => socket.off("follow_received", handleFollow);
   }, [addNotification]);
 
   const handleReset = () => {

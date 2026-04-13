@@ -161,6 +161,8 @@ export function ModelProvider({ children }) {
   const tapTriggers = [];
   // Boss comment trigger: { [code]: bossSkill string }
   const commentBossTriggerMap = {};
+  // Ship follow trigger: [{ shipId, model }]
+  const followTriggers = [];
   // Boss tap trigger: [{ quantity, bossSkill }]
   const tapBossTriggers = [];
 
@@ -188,6 +190,8 @@ export function ModelProvider({ children }) {
         commentTriggerMap[t.content.trim()] = { shipId: resolvedId, model };
       } else if (t.type === "tap" && t.quantity > 0) {
         tapTriggers.push({ quantity: t.quantity, shipId: resolvedId, model });
+      } else if (t.type === "follow") {
+        followTriggers.push({ shipId: resolvedId, model });
       }
     }
   });
@@ -334,6 +338,7 @@ export function ModelProvider({ children }) {
         tapTriggers,
         commentBossTriggerMap,
         tapBossTriggers,
+        followTriggers,
         triggers,
         saveTriggers: saveTriggersFn,
         bossHealGiftMap,

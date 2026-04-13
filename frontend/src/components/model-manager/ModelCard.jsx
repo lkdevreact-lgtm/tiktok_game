@@ -116,7 +116,7 @@ function TriggerModal({ model, onClose }) {
               shipId: model.id, // backward compat
               type,
               content: type === "comment" ? content : "",
-              quantity: type === "tap" ? Number(quantity) : 50,
+              quantity: type === "tap" ? Number(quantity) : 0,
             },
           ]
         : filtered;
@@ -211,6 +211,7 @@ function TriggerModal({ model, onClose }) {
                     >
                       <option value="comment" className="bg-[#0a1020] text-white">💬 Comment (CMT)</option>
                       <option value="tap" className="bg-[#0a1020] text-white">❤️ Tap tap (Tim)</option>
+                      <option value="follow" className="bg-[#0a1020] text-white">➕ Follow</option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none text-xs">▾</div>
                   </div>
@@ -232,6 +233,15 @@ function TriggerModal({ model, onClose }) {
                     />
                     <p className="text-[0.6rem] text-white/25 mt-1">
                       Viewer comment nội dung này → spawn <span style={{ color: accentColor }}>{model.label}</span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Follow description */}
+                {type === "follow" && (
+                  <div>
+                    <p className="text-[0.6rem] text-white/25 mt-1">
+                      Khi viewer follow → spawn <span style={{ color: accentColor }}>{model.label}</span>
                     </p>
                   </div>
                 )}
@@ -262,6 +272,8 @@ function TriggerModal({ model, onClose }) {
                   <span className="text-[0.65rem]" style={{ color: accentColor }}>
                     {type === "comment"
                       ? `Comment "${content || "..."}" → spawn "${model.label || model.id}"`
+                      : type === "follow"
+                      ? `Follow → spawn "${model.label || model.id}"`
                       : `Mỗi ${quantity} tim → spawn "${model.label || model.id}"`
                     }
                   </span>

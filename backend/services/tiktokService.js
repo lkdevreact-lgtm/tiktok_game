@@ -97,6 +97,17 @@ export async function connectTikTok(username, socketId, io) {
     io.to(socketId).emit("like_received", likeData);
   });
 
+  tiktok.on("follow", (data) => {
+    const followData = {
+      userId: data.userId,
+      uniqueId: data.uniqueId,
+      nickname: data.nickname,
+      avatarUrl: data.profilePictureUrl || null,
+    };
+    console.log(`➕ New follower: @${followData.uniqueId}`);
+    io.to(socketId).emit("follow_received", followData);
+  });
+
   tiktok.on("member", (data) => {
     const memberData = {
       userId: data.userId,
