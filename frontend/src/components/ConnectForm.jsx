@@ -67,16 +67,16 @@ export default function ConnectForm() {
     : usernames;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[radial-gradient(ellipse_at_center,#020d1e_0%,#000_100%)]">
+    <div className="fixed inset-0 flex items-center justify-center z-[100] sm:bg-[radial-gradient(ellipse_at_center,#020d1e_0%,#000_100%)]">
       <StarsBg />
 
       {/* Card */}
       <div className="
-        relative w-[420px] flex flex-col gap-6 overflow-hidden rounded-xl
+        relative sm:w-[420px] flex flex-col gap-6 overflow-hidden sm:rounded-xl
         px-9 py-10
-        bg-panel backdrop-blur-2xl
-        border border-border
-        shadow-[0_24px_80px_rgba(0,0,0,0.7)]
+        sm:bg-panel bg-transparent backdrop-blur-2xl
+        sm:border border-border
+        sm:shadow-[0_24px_80px_rgba(0,0,0,0.7)]
       ">
         <h1 className="text-center text-4xl font-bold text-shadow-2xs text-shadow-cyan-300">
           Star Wars
