@@ -274,25 +274,67 @@ export function createBullet(color = 0x00f5ff) {
 // ── Explosion Particles (Tia lửa Spark 3D) ──
 export function createExplosion(position, color = 0xff6600) {
   const particles = [];
-  const count = 12;
 
+  // 1. Lõi sáng bùng flash (Core Flash)
+  const coreGeo = new THREE.SphereGeometry(0.18, 16, 16);
+  const coreMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 1.0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+  coreMesh.position.copy(position);
+  particles.push({ mesh: coreMesh, velocity: new THREE.Vector3(0,0,0), life: 1.0, isCoreFlash: true });
+
+  // 2. Vòng shockwave bùng ra (Shockwave Ring)
+  const waveGeo = new THREE.TorusGeometry(0.12, 0.02, 8, 48);
+  const waveMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const waveMesh = new THREE.Mesh(waveGeo, waveMat);
+  waveMesh.position.copy(position);
+  // Hướng vòng ra vuông góc với hướng nhìn camera (trục Z)
+  waveMesh.rotation.x = Math.PI / 2;
+  particles.push({ mesh: waveMesh, velocity: new THREE.Vector3(0,0,0), life: 1.0, isShockwave: true });
+
+  // 3. Vòng glow ngoài (màu ship)
+  const glowGeo = new THREE.SphereGeometry(0.22, 16, 16);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+  glowMesh.position.copy(position);
+  particles.push({ mesh: glowMesh, velocity: new THREE.Vector3(0,0,0), life: 0.7, isCoreFlash: true });
+
+  // 4. Tia lửa văng ra (Sparks)
+  const count = 18;
   for (let i = 0; i < count; i++) {
-    // Dùng khối hộp dài để tạo tia lửa văng ra thay vì khối tròn cầu
-    const geo = new THREE.BoxGeometry(0.01, 0.01, 0.08 + Math.random() * 0.06);
-    const mat = new THREE.MeshStandardMaterial({
-      color: Math.random() > 0.6 ? 0xffffff : color,
-      emissive: color,
-      emissiveIntensity: 5,
+    const isLong = i < 6; // 6 tia dài chính
+    const length = isLong ? 0.14 + Math.random() * 0.10 : 0.05 + Math.random() * 0.06;
+    const geo = new THREE.BoxGeometry(0.012, 0.012, length);
+    const mat = new THREE.MeshBasicMaterial({
+      color: i % 3 === 0 ? 0xffffff : (i % 3 === 1 ? color : 0xffdd88),
       transparent: true,
-      opacity: 1,
+      opacity: 1.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(position);
 
-    // Văng 3D theo hình cầu
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(Math.random() * 2 - 1);
-    const speed = 0.06 + Math.random() * 0.08;
+    const speed = isLong ? (0.09 + Math.random() * 0.10) : (0.04 + Math.random() * 0.06);
 
     const velocity = new THREE.Vector3(
       Math.sin(phi) * Math.cos(theta) * speed,
@@ -300,10 +342,14 @@ export function createExplosion(position, color = 0xff6600) {
       Math.cos(phi) * speed
     );
 
-    // Hướng tia lửa nhọn theo chiều đang văng tới
     mesh.lookAt(position.clone().add(velocity));
 
-    particles.push({ mesh, velocity, rotationSpeed: null, life: 1.0 });
+    particles.push({
+      mesh,
+      velocity,
+      rotationSpeed: null,
+      life: 0.8 + Math.random() * 0.4,
+    });
   }
 
   return particles;

@@ -10,8 +10,8 @@ export default function BossShieldRing({
   bossRef,
   shieldEndTime,
   shieldDuration = 5,
-  shieldScale = 0.03,
-  shieldOffset = [-2.75, 0.6, 12],
+  shieldScale = 3.5,
+  shieldOffset = [7.5, 0.6, 12],
   isMobile = false,
 }) {
   const { bossShield } = useGame();
