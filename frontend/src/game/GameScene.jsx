@@ -98,7 +98,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         // Xoay tàu 90 độ quanh trục Z của thế giới (World Z = camera nhìn thẳng)
         // Điều này giúp lật phần mũi tàu từ "hướng TRÁI" thành "hướng LÊN"
         mesh.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 2);
-        
+
         // Lật phi thuyền nằm ngửa ra (cuộn 90 độ quanh trục dọc Y) để nó không bị thấy phần hông (nghiêng)
         mesh.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
         baseX = x;
@@ -981,14 +981,20 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
 
       if (hitShield) {
         // Đạn trúng KHIÊN → nổ tại khiên, không gây sát thương boss
+        // ── CHỈNH VỊ TRÍ HIỆU ỨNG ĐẠN TRÚNG KHIÊN Ở ĐÂY ──
+        const SHIELD_HIT_OFFSET = { x: -1, y: -0.5, z: 1.5 }; // ← Chỉnh x/y/z tuỳ ý
+        const shieldHitPos = bullet.mesh.position.clone().add(
+          new THREE.Vector3(SHIELD_HIT_OFFSET.x, SHIELD_HIT_OFFSET.y, SHIELD_HIT_OFFSET.z)
+        );
+
         showDamageRef.current?.(
           "",
-          bullet.mesh.position.clone(),
+          shieldHitPos,
           "shield",
           "#00f5ff"
         );
 
-        const exps = createExplosion(bullet.mesh.position.clone(), "#00f5ff");
+        const exps = createExplosion(shieldHitPos, "#00f5ff");
         exps.forEach(({ mesh }) => scene.add(mesh));
         explosionsRef.current.push(...exps);
 
