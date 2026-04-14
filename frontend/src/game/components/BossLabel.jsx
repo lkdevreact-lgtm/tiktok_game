@@ -27,7 +27,7 @@ export default function BossLabel({ bossRef }) {
         style={{ pointerEvents: "none", userSelect: "none" }}
         className="relative"
       >
-        <div className=" absolute -top-64 -left-80 -translate-1/2 flex items-center gap-3 justify-center">
+        <div className=" absolute sm:-top-64 top-14 sm:-left-80 -translate-1/2 flex items-center gap-3 justify-center">
           <img
             src="/images/evil_boss.png"
             alt="Boss"
@@ -44,7 +44,7 @@ export default function BossLabel({ bossRef }) {
                 {hpPercent.toFixed(1)}%
               </span>
             </span>
-            <div className="w-[460px] h-2 rounded bg-white/10 overflow-hidden">
+            <div className="sm:w-[460px] w-[300px] h-2 rounded bg-white/10 overflow-hidden">
               <div
                 className="h-full transition-[width] duration-200 ease-out"
                 style={{

@@ -22,7 +22,7 @@ function loadPos(fallback) {
   return fallback;
 }
 
-export default function BossGiftPanel({ visible = true }) {
+export default function BossGiftPanel({ visible = true, isMobile = false }) {
   const { activeBossModel } = useModels();
   const { gifts: allGifts } = useGifts();
 
@@ -91,6 +91,48 @@ export default function BossGiftPanel({ visible = true }) {
 
   if (!visible || !sections.length) return null;
 
+  // ── Mobile: cố định góc trái, không drag, không blur ──────────
+  if (isMobile) {
+    return (
+      <div className="fixed left-2 top-12 z-[20] select-none animate-fade-in">
+        <div className="">
+          <div className="flex flex-col items-center justify-center py-2">
+            <span className="text-red-400 text-sm font-bold">Team Boss</span>
+          </div>
+          <div className="flex flex-col gap-1.5 p-1.5">
+            {sections.map(({ key, label, icon, gifts }, sIdx) => (
+              <div key={key}>
+                <div className="flex items-center gap-1.5">
+                  <div className="flex flex-col gap-1">
+                    {gifts.map((g) => (
+                      <div key={g.giftId} className="flex items-center gap-1">
+                        {g.image ? (
+                          <img
+                            src={g.image}
+                            alt={g.giftName}
+                            className="w-5 h-5 rounded object-contain shrink-0"
+                          />
+                        ) : (
+                          <span className="text-sm shrink-0">🎁</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-white/50 text-xs">=</span>
+                  <span className="text-xs font-semibold flex items-center gap-0.5">
+                    {icon}
+                  </span>
+                  <p className="text-xs">{label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Desktop: draggable, blur ───────────────────────────────────
   return (
     <div
       ref={panelRef}
@@ -127,9 +169,6 @@ export default function BossGiftPanel({ visible = true }) {
                         ) : (
                           <span className="text-base shrink-0">🎁</span>
                         )}
-                        {/* <span className="text-sm font-semibold truncate">
-                        {g.giftName}
-                      </span> */}
                       </div>
                     ))}
                   </div>
