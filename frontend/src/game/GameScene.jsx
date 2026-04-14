@@ -65,6 +65,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
   const tmpVec1 = useRef(new THREE.Vector3());
   const tmpVec2 = useRef(new THREE.Vector3());
   const tmpBossPos = useRef(new THREE.Vector3());
+  const bossBoxRef = useRef(new THREE.Box3());          // tái sử dụng, không new mỗi frame
+  const tmpPortalOrigin = useRef(new THREE.Vector3(0, 0, 0)); // tái sử dụng trong portal loop
 
   const [shipLabels, setShipLabels] = useState([]);
 
@@ -122,6 +124,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       // --- SMART AUTO-FLARE INJECTION (ROOT ATTACHMENT VERSION) ---
       // Gắn trực tiếp vào root mesh để duy trì Scale và hướng (+X) chuẩn xác
       const enginePositions = [];
+      const _engineMeshes = []; // cache để update pulse — tránh traverse mỗi frame
       mesh.updateWorldMatrix(true, true); // Cập nhật matrix để lấy world position chính xác
 
       mesh.traverse((child) => {
@@ -139,17 +142,20 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
             child.getWorldPosition(worldPos);
             const localPos = mesh.worldToLocal(worldPos);
             enginePositions.push(localPos.clone());
+            _engineMeshes.push(child); // lưu ref mesh để dùng lại
           }
         }
       });
 
-      // Gắn flare vào root mesh
+      // Gắn flare vào root mesh — cache object để animate không traverse
+      const _flareMeshes = [];
       enginePositions.forEach(pos => {
         const bulletColor = getBulletColor(type);
         const flare = createExhaustFlare(bulletColor);
         flare.position.copy(pos); // Đặt đúng chỗ động cơ
         // Flare KHÔNG cần bù trừ scale vì nó đã thuộc root mesh (scale ~1.0)
         mesh.add(flare);
+        _flareMeshes.push(flare); // cache để animate
       });
 
       scene.add(mesh);
@@ -194,6 +200,8 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         // Dissolve animation
         dissolving: false,
         dissolveProgress: 0,
+        _engineMeshes,  // cached engine mesh refs — tránh traverse mỗi frame
+        _flareMeshes,   // cached flare refs — tránh traverse mỗi frame
       });
 
       setShipLabels((prev) => [
@@ -762,44 +770,36 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       // 5. Banking effect (tắt — tàu đứng yên)
       // Không ghi đè rotation.z ở đây nữa để giữ nguyên góc xoay chuẩn từ lúc spawn
 
-      // 6. Smart Engine Pulse & Emissive Fix + Exhaust Flares Animation
-      if (ship.mesh) {
-        ship.mesh.traverse((child) => {
-          if (child.isMesh) {
-            const mat = child.material;
-            if (mat && mat.emissive) {
-              const name = child.name.toLowerCase();
-              const isEngine = name.includes("engine") || name.includes("glow") || name.includes("thruster");
-
-              if (isEngine && mat.emissive.r === 0 && mat.emissive.g === 0 && mat.emissive.b === 0) {
-                if (mat.color) mat.emissive.copy(mat.color);
-                else mat.emissive.setHex(0x00f5ff);
-                mat.emissiveIntensity = 2.0;
-              }
-
-              if (mat.emissive.r > 0 || mat.emissive.g > 0 || mat.emissive.b > 0) {
-                mat.emissiveIntensity = pulseIntensity;
-              }
+      // 6. Engine Pulse — dùng cached mesh list, không traverse toàn cây mỗi frame
+      if (ship._engineMeshes) {
+        ship._engineMeshes.forEach((child) => {
+          const mat = child.material;
+          if (mat?.emissive) {
+            const name = child.name.toLowerCase();
+            const isEngine = name.includes("engine") || name.includes("glow") || name.includes("thruster");
+            if (isEngine && mat.emissive.r === 0 && mat.emissive.g === 0 && mat.emissive.b === 0) {
+              if (mat.color) mat.emissive.copy(mat.color);
+              else mat.emissive.setHex(0x00f5ff);
+              mat.emissiveIntensity = 2.0;
+            }
+            if (mat.emissive.r > 0 || mat.emissive.g > 0 || mat.emissive.b > 0) {
+              mat.emissiveIntensity = pulseIntensity;
             }
           }
+        });
+      }
 
-          // 7. Hoạt ảnh Flickering cho vệt lửa Mega (2 lớp)
-          if (child.name === "engine_flare") {
-            const seed = (ship.isMobileShip ? ship.baseX : ship.baseY) * 1000;
-            // Biên độ flicker cực mạnh (0.8 -> 1.4)
-            const flicker = 1.0 + Math.sin(elapsedTime * 35 + seed) * 0.3;
-            child.scale.x = flicker;
-            child.scale.y = 1.0 + Math.sin(elapsedTime * 40 + seed) * 0.12;
-
-            const outer = child.getObjectByName("flare_outer");
-            const inner = child.getObjectByName("flare_inner");
-            if (outer && outer.material) {
-              outer.material.opacity = 0.3 + Math.sin(elapsedTime * 30 + seed) * 0.2;
-            }
-            if (inner && inner.material) {
-              inner.material.opacity = 0.7 + Math.sin(elapsedTime * 45 + seed) * 0.25;
-            }
-          }
+      // 7. Flare animation — dùng cached flare list
+      if (ship._flareMeshes?.length > 0) {
+        const seed = (ship.isMobileShip ? ship.baseX : ship.baseY) * 1000;
+        const flicker = 1.0 + Math.sin(elapsedTime * 35 + seed) * 0.3;
+        ship._flareMeshes.forEach((child) => {
+          child.scale.x = flicker;
+          child.scale.y = 1.0 + Math.sin(elapsedTime * 40 + seed) * 0.12;
+          const outer = child.getObjectByName("flare_outer");
+          const inner = child.getObjectByName("flare_inner");
+          if (outer?.material) outer.material.opacity = 0.3 + Math.sin(elapsedTime * 30 + seed) * 0.2;
+          if (inner?.material) inner.material.opacity = 0.7 + Math.sin(elapsedTime * 45 + seed) * 0.25;
         });
       }
 
@@ -812,12 +812,12 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     });
 
     // 7. Update Boss Attacks
-    const deadMissiles = [];
+    const deadMissiles = new Set(); // Set → O(1) lookup thay vì O(n) includes
     bossMissilesRef.current.forEach((m, idx) => {
       m.life -= delta;
       // Bỏ qua nếu hết thời gian HOẶC target đã bị huỷ bởi nguồn khác
       if (m.life <= 0 || !m.targetShip.aliveRef.current || m.targetShip.dissolving) {
-        deadMissiles.push(idx);
+        deadMissiles.add(idx);
         scene.remove(m.group);
         return;
       }
@@ -825,20 +825,20 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
       // Va chạm tên lửa — hitbox 0.8 để dễ chạm hơn
       if (m.group.position.distanceTo(m.targetShip.mesh.position) < 0.8) {
         destroyShip(m.targetShip.id);
-        deadMissiles.push(idx);
+        deadMissiles.add(idx);
         scene.remove(m.group);
         const exp = createExplosion(m.group.position, 0xffaa00);
         exp.forEach(p => scene.add(p.mesh));
         explosionsRef.current.push(...exp);
       }
     });
-    bossMissilesRef.current = bossMissilesRef.current.filter((_, i) => !deadMissiles.includes(i));
+    bossMissilesRef.current = bossMissilesRef.current.filter((_, i) => !deadMissiles.has(i));
 
-    const deadLasers = [];
+    const deadLasers = new Set();
     bossLasersRef.current.forEach((l, idx) => {
       l.life -= delta;
       if (l.life <= 0) {
-        deadLasers.push(idx);
+        deadLasers.add(idx);
         scene.remove(l.group);
       } else {
         const t = l.life / l.maxLife;
@@ -853,13 +853,13 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         }
       }
     });
-    bossLasersRef.current = bossLasersRef.current.filter((_, i) => !deadLasers.includes(i));
+    bossLasersRef.current = bossLasersRef.current.filter((_, i) => !deadLasers.has(i));
 
-    const deadNukes = [];
+    const deadNukes = new Set();
     nukeExplosionsRef.current.forEach((n, idx) => {
       n.life -= delta;
       if (n.life <= 0) {
-        deadNukes.push(idx);
+        deadNukes.add(idx);
         scene.remove(n.mesh);
       } else {
         const t = 1.0 - n.life;
@@ -879,7 +879,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
         }
       }
     });
-    nukeExplosionsRef.current = nukeExplosionsRef.current.filter((_, i) => !deadNukes.includes(i));
+    nukeExplosionsRef.current = nukeExplosionsRef.current.filter((_, i) => !deadNukes.has(i));
 
     // 8. Update portals
     const dissolvedIds = new Set();
@@ -955,9 +955,10 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
     }
     // ─────────────────────────────────────────────────────────────
 
-    // Collision detection
-    const bossBox = new THREE.Box3().setFromObject(boss);
-    bossBox.expandByScalar(0.12);
+    // Collision detection — tái sử dụng bossBoxRef, không new Box3 mỗi frame
+    bossBoxRef.current.setFromObject(boss);
+    bossBoxRef.current.expandByScalar(0.12);
+    const bossBox = bossBoxRef.current;
     const deadBullets = new Set();
 
     bulletsRef.current.forEach((bullet, idx) => {
@@ -1128,7 +1129,7 @@ export default function GameScene({ onGiftSpawn, onBossHeal, onBossShield, onBos
 
       // Hút bụi không gian vào tâm siêu nhanh
       p.particles.forEach(pm => {
-        pm.position.lerp(new THREE.Vector3(0, 0, 0), delta * 8.0); // Tăng tốc độ hút
+        pm.position.lerp(tmpPortalOrigin.current, delta * 8.0); // Tăng tốc độ hút — tái sử dụng Vector3
         if (pm.position.length() < 0.2) {
           // Bị nuốt xong thì nhả ra lại ở ngoài xa để liên tục hút vào
           pm.position.set((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
