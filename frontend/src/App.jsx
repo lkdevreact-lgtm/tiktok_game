@@ -29,7 +29,7 @@ function AppInner() {
     };
   }, [setConnected, setUsername, setGameStatus]);
 
-  if (connected) return <ConnectForm />;
+  if (!connected) return <ConnectForm />;
   return <GameCanvas />;
 }
 
