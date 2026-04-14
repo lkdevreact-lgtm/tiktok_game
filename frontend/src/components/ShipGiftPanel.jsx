@@ -117,7 +117,7 @@ export default function ShipGiftPanel({ visible = true, isMobile = false }) {
   if (isMobile) {
     return (
       <div className="fixed right-0 top-1/4 z-20 select-none animate-fade-in">
-        <div className="">
+        <div className="max-w-xs">
           <div className="flex flex-col items-center justify-center py-2">
             <span className="text-cyan-400 text-sm font-bold">Team Ship</span>
           </div>
@@ -144,8 +144,8 @@ export default function ShipGiftPanel({ visible = true, isMobile = false }) {
                     ) : (
                       <div className="flex items-center gap-1 text-xs">
                         {row.trigger.type === "comment" ? (
-                          <span className="text-yellow-300 font-medium truncate max-w-[50px]">
-                            💬
+                          <span className="text-yellow-300 font-medium">
+                            "{row.trigger.content}"
                           </span>
                         ) : row.trigger.type === "follow" ? (
                           <span className="text-yellow-300 font-medium">

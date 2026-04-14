@@ -26,7 +26,7 @@ export const SETTINGS_GAME_MOBILE = {
   MAX_SHIPS: 30,
   BOSS_START_Y: 12.0,
   BOSS_END_Y: -3.5,     
-  BOSS_SPEED: 0.0005,   
+  BOSS_SPEED: 0.0006,   
   BULLET_SPEED: 0.18,
   SHIP_BASE_Y: -7,    
   SHIP_X_RANGE: 6.0,    
