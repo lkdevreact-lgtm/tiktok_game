@@ -15,7 +15,7 @@ function loadPos(fallback) {
   return fallback;
 }
 
-export default function ShipGiftPanel({ visible = true }) {
+export default function ShipGiftPanel({ visible = true, isMobile = false }) {
   const { shipModels, triggers, allShipModels } = useModels();
   const { gifts: allGifts } = useGifts();
 
@@ -114,6 +114,76 @@ export default function ShipGiftPanel({ visible = true }) {
 
   if (!visible || !rows.length) return null;
 
+  if (isMobile) {
+    return (
+      <div className="fixed right-0 top-1/4 z-20 select-none animate-fade-in">
+        <div className="">
+          <div className="flex flex-col items-center justify-center py-2">
+            <span className="text-cyan-400 text-sm font-bold">Team Ship</span>
+          </div>
+          <div className="flex flex-col gap-1.5 p-1.5">
+            {rows.map((row, idx) => (
+              <div key={row.key}>
+                <div className="flex items-center gap-1.5">
+                  {/* Gift / trigger icon */}
+                  <div className="flex flex-col gap-1">
+                    {row.type === "gift" ? (
+                      row.gifts.map((g) => (
+                        <div key={g.giftId} className="flex items-center gap-1">
+                          {g.image ? (
+                            <img
+                              src={g.image}
+                              alt={g.giftName}
+                              className="w-5 h-5 rounded object-contain shrink-0"
+                            />
+                          ) : (
+                            <span className="text-sm shrink-0">🎁</span>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-center gap-1 text-xs">
+                        {row.trigger.type === "comment" ? (
+                          <span className="text-yellow-300 font-medium truncate max-w-[50px]">
+                            💬
+                          </span>
+                        ) : row.trigger.type === "follow" ? (
+                          <span className="text-yellow-300 font-medium">
+                            👤
+                          </span>
+                        ) : (
+                          <span className="text-yellow-300 font-medium">
+                            {row.trigger.quantity} ❤️
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-white/50 text-xs">=</span>
+                  {/* Ship icon */}
+                  <img
+                    src={
+                      row.ship.iconUrl
+                        ? assetUrl(row.ship.iconUrl)
+                        : IMAGES.SHIP_USER
+                    }
+                    alt={row.ship.label}
+                    className="w-6 h-6 rounded-md object-cover shrink-0"
+                    style={{ border: "1px solid rgba(255,255,255,0.15)" }}
+                  />
+                </div>
+                {idx < rows.length - 1 && (
+                  <div className="border-t border-white/[0.06] mt-1" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Desktop: draggable, blur ───────────────────────────────────
   return (
     <div
       ref={panelRef}
@@ -169,7 +239,9 @@ export default function ShipGiftPanel({ visible = true }) {
                           </>
                         ) : row.trigger.type === "follow" ? (
                           <>
-                            <span className="text-yellow-300 font-medium">Follow</span>
+                            <span className="text-yellow-300 font-medium">
+                              Follow
+                            </span>
                           </>
                         ) : (
                           <>
@@ -190,14 +262,15 @@ export default function ShipGiftPanel({ visible = true }) {
                   <p>x1</p>
                   <div className="flex items-center gap-2">
                     <img
-                      src={row.ship.iconUrl ? assetUrl(row.ship.iconUrl) : IMAGES.SHIP_USER}
+                      src={
+                        row.ship.iconUrl
+                          ? assetUrl(row.ship.iconUrl)
+                          : IMAGES.SHIP_USER
+                      }
                       alt={row.ship.label}
                       className="w-7 h-7 rounded-md object-cover shrink-0"
                       style={{ border: "1px solid rgba(255,255,255,0.15)" }}
                     />
-                    {/* <span className="text-sm font-semibold text-white/85 truncate">
-                      {row.ship.label}
-                    </span> */}
                   </div>
                 </div>
               </div>

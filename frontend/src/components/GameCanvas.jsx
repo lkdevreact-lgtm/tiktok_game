@@ -439,8 +439,8 @@ export default function GameCanvas() {
         </Canvas>
 
         {/* Gift info panels */}
-        <BossGiftPanel visible={settings.showBossGiftPanel} />
-        <ShipGiftPanel visible={settings.showShipGiftPanel} />
+        <BossGiftPanel visible={settings.showBossGiftPanel} isMobile={isMobile} />
+        <ShipGiftPanel visible={settings.showShipGiftPanel} isMobile={isMobile} />
         <LeaderboardPanel visible={settings.showTopDonorsPanel} />
 
         <div className="absolute bottom-5 left-5 flex flex-col-reverse gap-2 pointer-events-none z-[15] max-h-60 overflow-hidden">
