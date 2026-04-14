@@ -72,7 +72,7 @@ export default function ConnectForm() {
 
       {/* Card */}
       <div className="
-        relative sm:w-[420px] flex flex-col gap-6 overflow-hidden sm:rounded-xl
+        relative sm:w-[420px] w-full flex flex-col gap-6 overflow-hidden sm:rounded-xl
         px-9 py-10
         sm:bg-panel bg-transparent sm:backdrop-blur-2xl
         sm:border border-border
