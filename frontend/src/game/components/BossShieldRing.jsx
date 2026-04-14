@@ -37,7 +37,7 @@ export default function BossShieldRing({
       if (isMobile) {
         groupRef.current.position
           .copy(bossRef.current.position)
-          .add({ x: 0, y: -2.75, z: shieldOffset[2] });
+          .add({ x: 0, y: -5.8, z: shieldOffset[2] });
       } else {
         groupRef.current.position
           .copy(bossRef.current.position)
@@ -56,7 +56,7 @@ export default function BossShieldRing({
   return (
     <group ref={groupRef} scale={shieldScale}>
       {/* Render shield model as-is, xoay theo layout mobile */}
-      <primitive object={shieldScene} rotation={isMobile ? [0, 0, -Math.PI / 2] : [0, 0, 0]} scale={[2, 0.8, 2]} />
+      <primitive object={shieldScene} rotation={isMobile ? [0, Math.PI/2, -Math.PI / 2] : [0, 0, 0]} scale={[2, 0.8, 2]} />
 
       <Html
         center
