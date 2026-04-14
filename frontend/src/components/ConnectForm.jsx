@@ -74,7 +74,7 @@ export default function ConnectForm() {
       <div className="
         relative sm:w-[420px] flex flex-col gap-6 overflow-hidden sm:rounded-xl
         px-9 py-10
-        sm:bg-panel bg-transparent backdrop-blur-2xl
+        sm:bg-panel bg-transparent sm:backdrop-blur-2xl
         sm:border border-border
         sm:shadow-[0_24px_80px_rgba(0,0,0,0.7)]
       ">
