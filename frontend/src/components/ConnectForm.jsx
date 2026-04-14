@@ -60,11 +60,11 @@ export default function ConnectForm() {
   const handleKeyDown = (e) => { if (e.key === "Enter") handleConnect(); };
 
   // Lọc username theo input
-  const filtered = input.trim()
-    ? usernames.filter((u) =>
-        u.username.toLowerCase().includes(input.trim().toLowerCase())
-      )
-    : usernames;
+  // const filtered = input.trim()
+  //   ? usernames.filter((u) =>
+  //       u.username.toLowerCase().includes(input.trim().toLowerCase())
+  //     )
+  //   : usernames;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[100] sm:bg-[radial-gradient(ellipse_at_center,#020d1e_0%,#000_100%)]">
@@ -112,7 +112,7 @@ export default function ConnectForm() {
         </div>
 
         {/* Username history */}
-        {filtered.length > 0 && (
+        {/* {filtered.length > 0 && (
           <div className="flex flex-col gap-1.5 -mt-3 max-h-[140px] overflow-y-auto">
             <span className="text-[0.6rem] text-white/30 uppercase tracking-widest">
               📋 Đã kết nối trước đó
@@ -140,7 +140,7 @@ export default function ConnectForm() {
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Error */}
         {error && (
